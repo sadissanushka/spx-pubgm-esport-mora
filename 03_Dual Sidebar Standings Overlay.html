@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>SPX - Dual Sidebar HUD (Alive vs Dead)</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;display=swap" rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: { extend: { colors: { "primary": "#adc6ff", "secondary": "#ffb690", "on-surface": "#dae2fd", "surface-container-highest": "#2d3449" } } }
+    }
+  </script>
+  <style>
+    body {
+      background-color: transparent;
+      margin: 0;
+      overflow: hidden;
+      width: 1920px;
+      height: 1080px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    #wrapper {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .asymmetric-header {
+      clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+    }
+
+    .asymmetric-header-right {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 5% 100%);
+    }
+
+    @keyframes slideLeft {
+      from {
+        transform: translateX(-100%);
+      }
+
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideRight {
+      from {
+        transform: translateX(100%);
+      }
+
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    .animate-left {
+      animation: slideLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .animate-right {
+      animation: slideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+
+<body class="text-on-surface">
+  <div id="wrapper">
+    <!-- HUD TOP BAR -->
+    <header
+      class="fixed top-0 left-0 w-full z-[60] flex justify-between items-center px-6 h-12 bg-slate-950/90 backdrop-blur-lg border-b border-white/5">
+      <div class="flex items-center gap-4">
+        <span id="f1"
+          class="text-blue-400 font-bold text-xs uppercase tracking-widest border-l border-white/10 pl-4 leading-none">PHASE
+          04</span>
+      </div>
+      <div class="flex gap-4">
+        <div class="px-3 py-1 bg-surface-container-highest flex items-center gap-2">
+          <span class="w-2 h-2 bg-secondary animate-pulse rounded-full"></span>
+          <span id="alive-counter" class="text-xs font-bold uppercase tracking-widest text-on-surface">ALIVE: 0 /
+            0</span>
+        </div>
+        <div id="match-info"
+          class="px-3 py-1 bg-primary text-black font-black text-xs uppercase tracking-widest leading-none">ZONE FEED
+        </div>
+      </div>
+    </header>
+
+    <!-- LEFT SIDEBAR (Surviving Teams) -->
+    <aside id="sidebar-left"
+      class="fixed left-0 top-0 h-screen z-50 flex flex-col w-64 bg-slate-950/85 backdrop-blur-md pt-12 border-r border-white/5">
+      <div class="p-6">
+        <h1 id="f0" class="text-xl font-black italic tracking-tighter text-blue-100">BATTLEGROUNDS</h1>
+        <p class="text-[10px] text-blue-300 font-bold tracking-[0.2em] mt-1">SURVIVING TEAMS</p>
+      </div>
+      <div class="asymmetric-header bg-primary px-4 py-2 mb-2">
+        <span class="text-black font-black text-xs">STATUS: STANDING</span>
+      </div>
+      <div id="list-left" class="flex-1 overflow-y-auto space-y-[2px] custom-scrollbar"></div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR (Eliminated Teams) -->
+    <aside id="sidebar-right"
+      class="fixed right-0 top-0 h-screen z-50 flex flex-col w-64 bg-slate-950/85 backdrop-blur-md pt-12 border-l border-white/5">
+      <div class="p-6 text-right">
+        <h2 class="text-xl font-black italic tracking-tighter text-blue-100 uppercase">MATCH INTEL</h2>
+        <p class="text-[10px] text-secondary font-bold tracking-[0.2em] mt-1 uppercase">ELIMINATED TEAMS</p>
+      </div>
+      <div class="asymmetric-header-right bg-red-600 px-4 py-2 mb-2 text-right">
+        <span class="text-white font-black text-xs">STATUS: DEAD</span>
+      </div>
+      <div id="list-right" class="flex-1 overflow-y-auto space-y-[2px] custom-scrollbar"></div>
+      <div class="p-6 bg-surface-container-highest/20 mt-auto flex justify-between items-center">
+        <span class="text-[10px] font-black uppercase text-gray-500 tracking-widest leading-none">TIMER:</span>
+        <span id="f3" class="text-secondary text-base font-black leading-none">00:00</span>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    let sheetInterval = null;
+
+    async function fetchSheet(url) {
+      try {
+        let cleanUrl = url.trim();
+        if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+        if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+        const response = await fetch(cleanUrl);
+        const csv = await response.text();
+        if (csv.includes('<!DOCTYPE html>')) return;
+
+        const lines = csv.split('\n').filter(l => l.trim().includes(','));
+        if (lines.length < 2) return;
+
+        let totalAlive = 0;
+        let totalParticipating = 0;
+        let rawTime = "";
+
+        lines.forEach(line => {
+          const cols = line.split(',');
+          cols.forEach(col => { if (col.includes(':') && !rawTime) rawTime = col.trim(); });
+        });
+
+        const allRows = lines.slice(2).map(line => {
+          const cols = line.split(',');
+          if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+
+          const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+          totalAlive += pips;
+          totalParticipating += 4;
+
+          return {
+            slot: cols[0]?.trim() || '0', name: cols[1].trim(), logo: cols[2]?.trim() || '',
+            pts: cols[10]?.trim() || '0', rank: cols[9]?.trim() || '', alive: pips
+          };
+        }).filter(r => r !== null);
+
+        document.getElementById('alive-counter').innerText = `ALIVE: ${totalAlive} / ${totalParticipating}`;
+        if (rawTime) {
+          const m = rawTime.match(/\d{1,2}:\d{2}/);
+          if (m) document.getElementById('f3').innerText = m[0];
+        }
+
+        renderSeparatedSidebars(allRows);
+      } catch (e) { console.error("Sync Error"); }
+    }
+
+    function renderSeparatedSidebars(rows) {
+      const left = document.getElementById('list-left');
+      const right = document.getElementById('list-right');
+      left.innerHTML = '';
+      right.innerHTML = '';
+
+      rows.forEach((row) => {
+        const isAlive = row.alive > 0;
+        let pips = '';
+        for (let p = 0; p < 4; p++) pips += `<span class="w-1.5 h-3 ${p < row.alive ? 'bg-primary' : (isAlive ? 'bg-primary/10' : 'bg-red-900/40')}"></span>`;
+
+        const html = `
+          <div class="px-4 py-2.5 flex items-center justify-between ${isAlive ? 'bg-white/5 border-l-2 border-primary' : 'bg-red-900/10 opacity-70 border-r-2 border-red-800'}">
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] font-black italic ${isAlive ? 'text-primary' : 'text-red-500'}">#${row.rank || row.slot}</span>
+              <div class="flex flex-col">
+                  <span class="text-[11px] font-black tracking-widest truncate w-24 leading-none uppercase">${row.name}</span>
+                  <div class="flex gap-0.5 mt-1">${pips}</div>
+              </div>
+            </div>
+            <span class="text-sm font-black italic text-on-surface">${row.pts}</span>
+          </div>`;
+
+        if (isAlive) left.innerHTML += html;
+        else right.innerHTML += html;
+      });
+    }
+
+    function update(rawData) {
+      const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+      if (data.f1) document.getElementById('f1').innerText = data.f1.toUpperCase();
+      if (data.f3 && !data.f5) document.getElementById('f3').innerText = data.f3;
+
+      if (data.f5 && data.f5.startsWith('http')) {
+        if (sheetInterval) clearInterval(sheetInterval);
+        fetchSheet(data.f5);
+        sheetInterval = setInterval(() => fetchSheet(data.f5), 3500);
+      }
+    }
+
+    function play() {
+      document.getElementById('wrapper').style.opacity = '1';
+      document.getElementById('sidebar-left').classList.add('animate-left');
+      document.getElementById('sidebar-right').classList.add('animate-right');
+    }
+    function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+
+    window.SPXGCTemplateDefinition = {
+      "description": "Dual Sidebar - Surviving vs Dead",
+      "playserver": "OVERLAY", "playchannel": "1", "playlayer": "10", "webplayout": "10",
+      "out": "manual", "uicolor": "2",
+      "DataFields": [
+        { "field": "f5", "ftype": "textfield", "title": "Spreadsheet URL", "value": "" },
+        { "field": "f0", "ftype": "textfield", "title": "Main Title", "value": "BATTLEGROUNDS" },
+        { "field": "f1", "ftype": "textfield", "title": "Phase Info", "value": "PHASE 04" },
+        { "field": "f3", "ftype": "textfield", "title": "Manual Timer", "value": "00:00" }
+      ]
+    };
+  </script>
+</body>
+
+</html>

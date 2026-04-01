@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Map Overview</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#adc6ff",
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "on-surface": "#dae2fd",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
+        #wrapper { opacity: 0; transition: opacity 1s ease; width: 100%; height: 100%; }
+        .map-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1400px; height: 800px;
+            background: rgba(11, 19, 38, 0.4);
+            backdrop-blur: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            display: flex;
+        }
+        .map-image { width: 800px; height: 800px; background: #000; overflow: hidden; position: relative; }
+        .map-image img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .map-sidebar {
+            flex-grow: 1;
+            padding: 40px;
+            background: rgba(11, 19, 38, 0.9);
+            border-left: 4px solid #ffb690;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .flight-path {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .flight-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            height: 2px;
+            transform-origin: left;
+        }
+    </style>
+</head>
+<body class="bg-transparent font-body text-on-surface">
+    <div id="wrapper">
+        <div class="map-container shadow-2xl">
+            <div class="map-image">
+                <img id="map-asset" src="images/maps/erangel.jpeg" alt="">
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent to-surface-dim"></div>
+                <!-- Flight Path Placeholder -->
+                <div class="flight-path">
+                    <svg width="100%" height="100%" viewBox="0 0 800 800">
+                        <line x1="100" y1="100" x2="700" y2="700" stroke="white" stroke-width="2" stroke-dasharray="10,5" opacity="0.4" />
+                        <circle cx="100" cy="100" r="5" fill="#ffb690" />
+                        <circle cx="700" cy="700" r="5" fill="#ffb690" />
+                    </svg>
+                </div>
+            </div>
+            <div class="map-sidebar">
+                <div class="flex items-center gap-3 border-b border-white/10 pb-4">
+                    <span class="material-symbols-outlined text-secondary">explore</span>
+                    <h1 id="f0" class="text-4xl font-black italic tracking-tighter uppercase">MAP OVERVIEW</h1>
+                </div>
+                
+                <div class="flex flex-col gap-8 mt-4">
+                    <div>
+                        <span class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">CURRENT MAP</span>
+                        <h2 id="f1" class="text-6xl font-black uppercase text-primary">ERANGEL</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/5 p-4 flex flex-col">
+                            <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">WEATHER</span>
+                            <span id="f2" class="text-2xl font-bold uppercase">CLEAR SKY</span>
+                        </div>
+                        <div class="bg-white/5 p-4 flex flex-col">
+                            <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">E-PORTAL</span>
+                            <span id="f3" class="text-2xl font-bold uppercase">ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto border-t border-white/10 pt-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">MATCH PROGRESS</span>
+                            <span class="text-xs font-bold text-secondary">75%</span>
+                        </div>
+                        <div class="w-full h-1 bg-white/10">
+                            <div class="w-3/4 h-full bg-secondary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                if (data.f1) {
+                    const mapName = data.f1.toUpperCase();
+                    document.getElementById('f1').innerText = mapName;
+                    // Auto-load map image
+                    let m = mapName.toLowerCase();
+                    document.getElementById('map-asset').src = `images/maps/${m}.jpeg`;
+                }
+                if (data.f2) document.getElementById('f2').innerText = data.f2.toUpperCase();
+                if (data.f3) document.getElementById('f3').innerText = data.f3.toUpperCase();
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+        }
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Map Overview Overlay",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "6",
+            "webplayout": "6",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "9",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "MAP OVERVIEW" },
+                { "field": "f1", "ftype": "textfield", "title": "Map Name", "value": "ERANGEL" },
+                { "field": "f2", "ftype": "textfield", "title": "Weather", "value": "Clear Sky" },
+                { "field": "f3", "ftype": "textfield", "title": "Special Status", "value": "Active" }
+            ]
+        };
+    </script>
+</body>
+</html>

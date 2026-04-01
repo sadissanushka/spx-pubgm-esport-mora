@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Player Stats</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#adc6ff",
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                        "surface-container-high": "#222a3d",
+                        "outline-variant": "#424754",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
+        #wrapper { opacity: 0; transition: opacity 0.5s ease; width: 100%; height: 100%; }
+        .player-card {
+            position: absolute;
+            left: 200px; top: 150px;
+            width: 1500px;
+            height: 780px;
+            display: flex;
+            align-items: flex-end;
+        }
+        .portrait-container {
+            width: 600px;
+            height: 100%;
+            position: relative;
+            z-index: 10;
+        }
+        .portrait-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: bottom;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+        }
+        .stats-content {
+            flex-grow: 1;
+            background: rgba(11, 19, 38, 0.85);
+            backdrop-blur: 24px;
+            height: 600px;
+            margin-left: -100px;
+            padding: 60px 80px 60px 140px;
+            border-left: 8px solid #ffb690;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 5% 100%);
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes slideUpIn {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-in { animation: slideUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="bg-transparent font-body text-on-surface">
+    <div id="wrapper">
+        <div id="card" class="player-card">
+            <div class="portrait-container">
+                <img id="f2" src="images/characters/1.png" alt="Player Portrait">
+            </div>
+            <div class="stats-content">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                        <img id="team-logo" src="team_logos/titan.png" class="w-12 h-12 object-contain" alt="">
+                        <span id="f1" class="text-secondary font-black tracking-[0.4em] uppercase text-xl">TEAM TITANS</span>
+                    </div>
+                    <h1 id="f0" class="font-black text-8xl uppercase italic tracking-tighter leading-none mb-4">TITAN_REX</h1>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">KILLS</span>
+                        <span id="f3" class="text-primary font-black text-5xl">45</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">DAMAGE</span>
+                        <span id="f4" class="text-on-surface font-black text-5xl">12,480</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">HEADSHOTS</span>
+                        <span id="f5" class="text-on-surface font-black text-5xl">14</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">SURVIVAL TIME</span>
+                        <span id="f6" class="text-on-surface font-black text-5xl">22:14</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">ASSISTS</span>
+                        <span id="f7" class="text-on-surface font-black text-5xl">12</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">ACCURACY</span>
+                        <span id="f8" class="text-on-surface font-black text-5xl">34%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                if (data.f1) {
+                    document.getElementById('f1').innerText = data.f1.toUpperCase();
+                    // Auto-load logo if icon asset specified
+                    let logo = data.f1.split(' ')[0].toLowerCase();
+                    document.getElementById('team-logo').src = `team_logos/${logo}.png`;
+                }
+                if (data.f2) {
+                    let path = data.f2;
+                    if (!path.includes('/')) path = 'images/characters/' + path;
+                    if (!path.includes('.')) path += '.png';
+                    document.getElementById('f2').src = path;
+                }
+                
+                ['f3', 'f4', 'f5', 'f6', 'f7', 'f8'].forEach(field => {
+                    if (data[field]) document.getElementById(field).innerText = data[field];
+                });
+                
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+            const card = document.getElementById('card');
+            card.classList.remove('animate-in');
+            void card.offsetWidth;
+            card.classList.add('animate-in');
+        }
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Player Highlight Stats",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "13",
+            "webplayout": "13",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "6",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Player Name", "value": "TITAN_REX" },
+                { "field": "f1", "ftype": "textfield", "title": "Team Name", "value": "TEAM TITANS" },
+                { "field": "f2", "ftype": "textfield", "title": "Portrait ID", "value": "1" },
+                { "field": "f3", "ftype": "textfield", "title": "Kills", "value": "45" },
+                { "field": "f4", "ftype": "textfield", "title": "Damage", "value": "12,480" },
+                { "field": "f5", "ftype": "textfield", "title": "Headshots", "value": "14" },
+                { "field": "f6", "ftype": "textfield", "title": "Survival Time", "value": "22:14" },
+                { "field": "f7", "ftype": "textfield", "title": "Assists", "value": "12" },
+                { "field": "f8", "ftype": "textfield", "title": "Accuracy", "value": "34%" }
+            ]
+        };
+    </script>
+</body>
+</html>

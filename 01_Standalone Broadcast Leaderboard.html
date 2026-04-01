@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>SPX - Dynamic Tactical HUD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;display=swap" rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: { extend: { colors: { "primary": "#adc6ff", "secondary": "#ffb690", "on-surface": "#dae2fd" } } }
+    }
+  </script>
+  <style>
+    .hud-glass {
+      background-color: rgba(11, 19, 38, 0.9);
+      backdrop-filter: blur(12px);
+    }
+
+    body {
+      background-color: transparent;
+      margin: 0;
+      overflow: hidden;
+      width: 1920px;
+      height: 1080px;
+    }
+
+    #wrapper {
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(-20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .animate-in {
+      animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+
+<body class="bg-transparent text-on-surface font-body">
+  <div id="wrapper">
+    <div id="leaderboard" class="absolute top-12 left-12 w-80 flex flex-col gap-0 shadow-2xl">
+      <!-- HEADER -->
+      <div class="hud-glass border-l-4 border-primary p-4 mb-1">
+        <div class="text-primary font-black italic text-[9px] tracking-widest uppercase mb-1 flex items-center gap-2">
+          LIVE BROADCAST FEED</div>
+        <h1 id="f0" class="text-2xl font-black text-on-surface tracking-tighter leading-none uppercase truncate">
+          LEADERBOARD</h1>
+        <div class="flex justify-between items-end mt-2">
+          <span id="f1"
+            class="bg-primary text-black px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase truncate max-w-[120px]">PHASE
+            5</span>
+          <span id="alive-counter"
+            class="text-gray-400 text-[10px] font-bold uppercase tracking-widest tabular-nums font-mono tracking-tighter">ALIVE:
+            0/0</span>
+        </div>
+      </div>
+      <!-- HEADERS -->
+      <div
+        class="grid grid-cols-[40px_1fr_48px] items-center px-4 py-1.5 bg-black/40 text-[9px] font-black tracking-widest text-gray-500 uppercase border-b border-white/5">
+        <div>SLOT</div>
+        <div class="pl-8 text-center uppercase">TEAM / STATUS</div>
+        <div class="text-right uppercase">PTS</div>
+      </div>
+      <div id="leaderboard-rows" class="flex flex-col gap-[2px]"></div>
+      <!-- FOOTER -->
+      <div
+        class="mt-1 hud-glass border-t border-white/10 p-3 flex justify-between items-center bg-gradient-to-r from-transparent to-black/10">
+        <span class="text-[10px] font-black uppercase text-gray-500 tracking-tighter">NEXT ZONE TIMER:</span>
+        <span id="f3" class="text-secondary font-black tabular-nums border-b border-secondary/20">00:00</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sheetInterval = null;
+
+    async function fetchSheet(url) {
+      try {
+        let cleanUrl = url.trim();
+        if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+        if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+        const response = await fetch(cleanUrl);
+        const csv = await response.text();
+        if (csv.includes('<!DOCTYPE html>')) return;
+
+        const lines = csv.split('\n').filter(l => l.trim().includes(','));
+        if (lines.length < 2) return;
+
+        let totalAlive = 0;
+        let totalParticipating = 0;
+        let rawTime = "";
+
+        lines.forEach(line => {
+          const cols = line.split(',');
+          cols.forEach(col => { if (col.includes(':') && !rawTime) rawTime = col.trim(); });
+        });
+
+        const allParsedRows = lines.slice(2).map(line => {
+          const cols = line.split(',');
+          if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+
+          const pips = [
+            cols[4]?.trim().toUpperCase() === 'TRUE', cols[5]?.trim().toUpperCase() === 'TRUE',
+            cols[6]?.trim().toUpperCase() === 'TRUE', cols[7]?.trim().toUpperCase() === 'TRUE'
+          ];
+
+          const aliveCount = pips.filter(p => p).length;
+          totalAlive += aliveCount;
+          totalParticipating += 4;
+
+          return {
+            slot: cols[0]?.trim() || '0', name: cols[1]?.trim() || '', logo: cols[2]?.trim() || '',
+            pts: parseInt(cols[10]?.trim()) || 0,
+            rank: cols[9]?.trim() || '',
+            players: pips,
+            isAlive: aliveCount > 0
+          };
+        }).filter(r => r !== null);
+
+        document.getElementById('alive-counter').innerText = `ALIVE: ${totalAlive}/${totalParticipating}`;
+
+        if (rawTime) {
+          const timeMatch = rawTime.match(/\d{1,2}:\d{2}/);
+          if (timeMatch) document.getElementById('f3').innerText = timeMatch[0];
+        }
+
+        // SEPARATION LOGIC
+        const aliveTeams = allParsedRows.filter(r => r.isAlive);
+        aliveTeams.sort((a, b) => {
+          const rA = parseInt(a.rank) || 999;
+          const rB = parseInt(b.rank) || 999;
+          if (rA !== rB) return rA - rB;
+          return parseInt(a.slot) - parseInt(b.slot);
+        });
+
+        const deadTeams = allParsedRows.filter(r => !r.isAlive);
+        deadTeams.sort((a, b) => b.pts - a.pts); // Highest score first
+
+        // COMBINE: Fill gaps with dead teams
+        let finalRows = [...aliveTeams];
+        if (finalRows.length < 10) {
+          const needed = 10 - finalRows.length;
+          finalRows = finalRows.concat(deadTeams.slice(0, needed));
+        }
+
+        renderRows(finalRows.slice(0, 10));
+      } catch (e) { console.error("Sync Error"); }
+    }
+
+    function renderRows(rows) {
+      const container = document.getElementById('leaderboard-rows');
+      container.innerHTML = '';
+      rows.forEach((row, i) => {
+        let pips = '';
+        row.players.forEach(alive => pips += `<div class="w-1.5 h-1.5 ${alive ? 'bg-primary' : 'bg-white/10'}"></div>`);
+        const displayId = (row.rank && row.rank !== '') ? row.rank : row.slot;
+
+        // Use Secondary color (Orange) for dead teams
+        const borderColor = row.isAlive ? (i == 0 ? 'border-primary' : 'border-primary/30') : 'border-secondary/40';
+        const rankColor = row.isAlive ? 'text-primary' : 'text-secondary/60';
+        const ptsColor = row.isAlive ? 'text-secondary font-black' : 'text-secondary/50 font-bold';
+
+        container.innerHTML += `
+          <div class="hud-glass grid grid-cols-[40px_1fr_48px] items-center px-4 py-3 border-l-2 ${borderColor} border-b border-white/5">
+            <div class="${rankColor} font-black text-xs italic">#${displayId}</div>
+            <div class="flex items-center gap-3">
+              <img class="w-6 h-6 object-contain" src="team_logos/${row.logo}.png" onerror="this.style.opacity=${row.isAlive ? 1 : 0.4}">
+              <div class="flex flex-col gap-0">
+                <span class="text-[11px] font-black uppercase ${row.isAlive ? 'text-on-surface' : 'text-gray-500'} tracking-tighter leading-none">${row.name}</span>
+                <div class="flex gap-1 mt-1">${pips}</div>
+              </div>
+            </div>
+            <div class="text-right text-sm tabular-nums ${ptsColor}">${row.pts}</div>
+          </div>`;
+      });
+    }
+
+    function update(rawData) {
+      const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+      if (data.f1) document.getElementById('f1').innerText = data.f1.toUpperCase();
+      if (data.f3 && !data.f5) document.getElementById('f3').innerText = data.f3;
+
+      if (data.f5 && data.f5.startsWith('http')) {
+        if (sheetInterval) clearInterval(sheetInterval);
+        fetchSheet(data.f5);
+        sheetInterval = setInterval(() => fetchSheet(data.f5), 3500);
+      }
+    }
+
+    function play() {
+      document.getElementById('wrapper').style.opacity = '1';
+      document.getElementById('leaderboard').classList.add('animate-in');
+    }
+    function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+
+    window.SPXGCTemplateDefinition = {
+      "description": "Dynamic HUD - Full Board Guarantee",
+      "playserver": "OVERLAY", "playchannel": "1", "playlayer": "5", "webplayout": "5",
+      "out": "manual", "uicolor": "2",
+      "DataFields": [
+        { "field": "f5", "ftype": "textfield", "title": "Spreadsheet URL", "value": "" },
+        { "field": "f0", "ftype": "textfield", "title": "Main Title", "value": "LIVE LEADERBOARD" },
+        { "field": "f1", "ftype": "textfield", "title": "Phase Info", "value": "PHASE 5" },
+        { "field": "f3", "ftype": "textfield", "title": "Manual Time", "value": "00:00" }
+      ]
+    };
+  </script>
+</body>
+
+</html>

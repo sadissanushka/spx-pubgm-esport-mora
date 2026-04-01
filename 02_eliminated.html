@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Team Eliminated</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#222a3d",
+                        "surface-container": "#171f33",
+                        "outline": "#8c909f",
+                        "secondary": "#ffb690",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-secondary-container": "#4a1c00",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-dim": "#0b1326",
+                        "on-error": "#690005",
+                        "on-background": "#dae2fd",
+                        "secondary-fixed-dim": "#ffb690",
+                        "on-secondary": "#552100",
+                        "tertiary": "#c4c7c9",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#ec6a06",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary": "#2d3133",
+                        "on-primary-container": "#00285d",
+                        "inverse-surface": "#dae2fd",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#060e20",
+                        "on-secondary-fixed-variant": "#783200",
+                        "surface-tint": "#adc6ff",
+                        "on-primary-fixed-variant": "#004395",
+                        "inverse-on-surface": "#283044",
+                        "on-primary": "#002e6a",
+                        "surface": "#0b1326",
+                        "outline-variant": "#424754",
+                        "surface-variant": "#2d3449",
+                        "tertiary-container": "#8e9193",
+                        "surface-container-low": "#131b2e",
+                        "primary-container": "#4d8eff",
+                        "inverse-primary": "#005ac2",
+                        "surface-bright": "#31394d",
+                        "on-primary-fixed": "#001a42",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "secondary-fixed": "#ffdbca",
+                        "primary": "#adc6ff",
+                        "on-secondary-fixed": "#341100",
+                        "background": "#0b1326",
+                        "on-surface": "#dae2fd",
+                        "on-surface-variant": "#c2c6d6",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-container": "#272a2c"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background-color: transparent;
+            margin: 0;
+            overflow: hidden;
+            width: 1920px;
+            height: 1080px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-gradient {
+            background: linear-gradient(135deg, rgba(173, 198, 255, 0.15) 0%, rgba(77, 142, 255, 0.05) 100%);
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-in {
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        #wrapper {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .team-logo-container {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.05);
+            backdrop-blur: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            margin-right: 20px;
+        }
+    </style>
+</head>
+<body class="bg-transparent font-body text-on-surface">
+    <div id="wrapper">
+        <main class="flex items-center justify-center h-screen bg-transparent">
+            <div id="card" class="relative w-full max-w-3xl">
+                <!-- Header Bar -->
+                <div class="bg-secondary-container flex items-center justify-between px-6 py-2">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-secondary-container text-xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+                        <h2 class="text-on-secondary-container font-headline font-black tracking-widest text-lg uppercase italic">
+                            TEAM ELIMINATED
+                        </h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-on-secondary-container"></div>
+                        <div class="w-12 h-1 bg-on-secondary-container opacity-30"></div>
+                    </div>
+                </div>
+                <!-- Content Area -->
+                <div class="bg-surface-dim/90 backdrop-blur-xl kinetic-gradient p-1 flex flex-col gap-1 border-l-4 border-secondary shadow-2xl">
+                    <!-- Main Data Row -->
+                    <div class="bg-surface-container-high px-8 py-10 flex items-center justify-between relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03]">
+                            <span class="text-9xl font-black italic select-none">TERMINATED</span>
+                        </div>
+                        
+                        <!-- Team Identity with Logo -->
+                        <div class="relative z-10 flex items-center">
+                            <div class="team-logo-container">
+                                <img id="team-logo" src="team_logos/titan.png" alt="" class="max-w-full max-h-full object-contain">
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-secondary text-[0.6875rem] font-black tracking-[0.3em] uppercase mb-2">RANKED SQUAD</span>
+                                <h1 id="f0" class="text-on-surface font-headline font-black text-6xl tracking-tighter uppercase italic leading-none">
+                                    TEAM TITANS
+                                </h1>
+                            </div>
+                        </div>
+
+                        <!-- Elimination Stats -->
+                        <div class="relative z-10 flex flex-col items-end border-l border-outline-variant/30 pl-12">
+                            <span class="text-on-surface-variant text-[0.6875rem] font-bold tracking-widest uppercase mb-1">TOTAL ELIMS</span>
+                            <div class="flex items-baseline gap-2">
+                                <span id="f3" class="text-secondary font-headline font-black text-7xl leading-none">14</span>
+                                <span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">skull</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Stats Strip -->
+                    <div class="grid grid-cols-4 gap-1">
+                        <div class="bg-surface-container py-3 px-4 flex flex-col">
+                            <span class="text-on-surface-variant text-[0.6rem] font-bold uppercase tracking-widest">PLACEMENT</span>
+                            <span id="f2" class="text-primary font-bold text-xl uppercase">#16</span>
+                        </div>
+                        <div class="bg-surface-container py-3 px-4 flex flex-col">
+                            <span class="text-on-surface-variant text-[0.6rem] font-bold uppercase tracking-widest">DAMAGE</span>
+                            <span id="damage" class="text-on-surface font-bold text-xl uppercase">2,480</span>
+                        </div>
+                        <div class="bg-surface-container py-3 px-4 flex flex-col">
+                            <span class="text-on-surface-variant text-[0.6rem] font-bold uppercase tracking-widest">SURVIVAL</span>
+                            <span id="survival" class="text-on-surface font-bold text-xl uppercase">24:12</span>
+                        </div>
+                        <div class="bg-surface-container-highest py-3 px-4 flex flex-col relative">
+                            <div class="absolute right-0 top-0 bottom-0 w-1 bg-secondary"></div>
+                            <span class="text-secondary text-[0.6rem] font-bold uppercase tracking-widest">MVP TAG</span>
+                            <span id="f4" class="text-on-surface font-bold text-xl uppercase">TITAN_REX</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Asymmetrical Accent Flaps -->
+                <div class="absolute -bottom-1 left-0 w-1/3 h-[2px] bg-secondary shadow-[0_0_10px_rgba(236,106,6,0.5)]"></div>
+                <div class="absolute -top-1 right-0 w-24 h-1 bg-primary/40"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                
+                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                
+                if (data.f1) {
+                    // Assuming f1 is the logo filename or path
+                    let logoPath = data.f1;
+                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                    if (!logoPath.includes('.')) logoPath = logoPath + '.png';
+                    document.getElementById('team-logo').src = logoPath;
+                }
+
+                if (data.f2) {
+                    let rank = data.f2;
+                    if (!String(rank).startsWith('#')) rank = '#' + rank;
+                    document.getElementById('f2').innerText = rank;
+                }
+
+                if (data.f3) document.getElementById('f3').innerText = data.f3;
+                if (data.f4) document.getElementById('f4').innerText = data.f4.toUpperCase();
+
+                // Bonus stats (using f5, f6 if you want to extend)
+                if (data.f5) document.getElementById('damage').innerText = data.f5;
+                if (data.f6) document.getElementById('survival').innerText = data.f6;
+                
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+            const card = document.getElementById('card');
+            if (card) {
+                card.classList.remove('animate-slide-in');
+                void card.offsetWidth;
+                card.classList.add('animate-slide-in');
+            }
+        }
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Esports Eliminated Screen (HUD Style)",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "19",
+            "webplayout": "19",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "2",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Team Name", "value": "TEAM TITANS" },
+                { "field": "f1", "ftype": "textfield", "title": "Logo Asset", "value": "titan" },
+                { "field": "f2", "ftype": "textfield", "title": "Rank", "value": "16" },
+                { "field": "f3", "ftype": "textfield", "title": "Kills", "value": "14" },
+                { "field": "f4", "ftype": "textfield", "title": "MVP Tag", "value": "TITAN_REX" },
+                { "field": "f5", "ftype": "textfield", "title": "Damage", "value": "2480" },
+                { "field": "f6", "ftype": "textfield", "title": "Survival", "value": "24:12" }
+            ]
+        };
+    </script>
+</body>
+</html>

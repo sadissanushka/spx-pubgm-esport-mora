@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Match Result</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#adc6ff",
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
+        #wrapper { opacity: 0; transition: opacity 0.5s ease; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .table-card { width: 1200px; }
+        .table-row {
+            display: grid;
+            grid-template-columns: 80px 100px 1fr 120px 120px 120px;
+            gap: 2px;
+            margin-bottom: 2px;
+            align-items: center;
+        }
+        .header-row {
+            background: #ffb690;
+            color: #552100;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 2px;
+            padding: 10px 0;
+            font-style: italic;
+        }
+        .data-row {
+            background: rgba(34, 42, 61, 0.85);
+            backdrop-blur: 16px;
+            color: #dae2fd;
+            font-weight: 700;
+            padding: 15px 0;
+            border-left: 4px solid transparent;
+        }
+        .data-row:nth-child(even) { background: rgba(23, 31, 51, 0.85); }
+        .data-row.winner { border-left-color: #ffb690; background: rgba(45, 52, 73, 0.95); }
+        .rank-cell { text-align: center; font-size: 24px; color: #ffb690; }
+        .logo-cell { display: flex; justify-content: center; align-items: center; }
+        .logo-cell img { height: 40px; width: 40px; object-fit: contain; }
+        .name-cell { padding-left: 20px; text-transform: uppercase; font-size: 20px; letter-spacing: 1px; }
+        .stat-cell { text-align: center; font-size: 20px; }
+        .total-cell { color: #adc6ff; font-weight: 900; font-size: 24px; }
+    </style>
+</head>
+<body class="bg-transparent font-body">
+    <div id="wrapper">
+        <div class="table-card">
+            <div class="mb-10 w-full border-b-2 border-secondary pb-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <span class="material-symbols-outlined text-secondary text-5xl">inventory</span>
+                    <h1 id="f0" class="text-on-surface font-black text-5xl uppercase italic tracking-tighter">MATCH RESULT</h1>
+                </div>
+                <div id="f2" class="text-secondary font-bold tracking-widest uppercase opacity-60">MACTH 08 / DAY 02</div>
+            </div>
+
+            <div class="table-row header-row">
+                <div class="rank-cell">RANK</div>
+                <div class="logo-cell">LOGO</div>
+                <div class="name-cell">TEAM NAME</div>
+                <div class="stat-cell">PLACE</div>
+                <div class="stat-cell">KILLS</div>
+                <div class="stat-cell">POINTS</div>
+            </div>
+
+            <div id="table-body">
+                <!-- Rows injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                if (data.f2) document.getElementById('f2').innerText = data.f2.toUpperCase();
+                
+                let teams = [];
+                if (data.f1) {
+                    teams = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                } else {
+                    // Placeholder
+                    teams = [
+                        {"rank":1,"logo":"titan","name":"TEAM TITANS","place":15,"kills":18,"total":33},
+                        {"rank":2,"logo":"epic","name":"EPIC ESPORTS","place":12,"kills":6,"total":18},
+                        {"rank":3,"logo":"aut","name":"ALPHA UT","place":10,"kills":8,"total":18},
+                        {"rank":4,"logo":"gs","name":"GLOBAL STARS","place":8,"kills":7,"total":15},
+                        {"rank":5,"logo":"abn","name":"ABN OFFICIAL","place":6,"kills":5,"total":11}
+                    ];
+                }
+
+                const body = document.getElementById('table-body');
+                body.innerHTML = '';
+                
+                teams.forEach((team, index) => {
+                    const row = document.createElement('div');
+                    row.className = `table-row data-row ${team.rank === 1 ? 'winner' : ''}`;
+                    
+                    let logoPath = team.logo;
+                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                    if (!logoPath.includes('.')) logoPath += '.png';
+
+                    row.innerHTML = `
+                        <div class="rank-cell">#${team.rank}</div>
+                        <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
+                        <div class="name-cell">${team.name}</div>
+                        <div class="stat-cell">${team.place}</div>
+                        <div class="stat-cell">${team.kills}</div>
+                        <div class="stat-cell total-cell">${team.total}</div>
+                    `;
+                    body.appendChild(row);
+                });
+                
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() { document.getElementById('wrapper').style.opacity = '1'; }
+        function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Match Result Table",
+            "playserver": "OVERLAY", "playchannel": "1", "playlayer": "13", "webplayout": "13",
+            "out": "manual", "dataformat": "json", "uicolor": "10",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "MATCH RESULT" },
+                { "field": "f2", "ftype": "textfield", "title": "Subheading", "value": "MATCH 08 / DAY 02" },
+                { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": '[{"rank":1,"logo":"titan","name":"TEAM TITANS","place":15,"kills":18,"total":33}]' }
+            ]
+        };
+    </script>
+</body>
+</html>

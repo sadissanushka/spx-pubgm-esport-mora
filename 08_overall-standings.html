@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Overall Standings</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#adc6ff",
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                        "outline-variant": "#424754",
+                        "surface-container-high": "#222a3d",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
+        #wrapper { opacity: 0; transition: opacity 0.5s ease; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .standings-card { width: 1200px; }
+        .table-row {
+            display: grid;
+            grid-template-columns: 80px 100px 1fr 120px 120px 120px;
+            gap: 2px;
+            margin-bottom: 2px;
+            align-items: center;
+        }
+        .header-row {
+            background: #ffb690;
+            color: #552100;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 2px;
+            padding: 10px 0;
+            font-style: italic;
+        }
+        .data-row {
+            background: rgba(34, 42, 61, 0.85);
+            backdrop-blur: 16px;
+            color: #dae2fd;
+            font-weight: 700;
+            padding: 15px 0;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .data-row:nth-child(even) { background: rgba(23, 31, 51, 0.85); }
+        .data-row.top-3 { border-left-color: #ffb690; background: rgba(45, 52, 73, 0.95); }
+        .rank-cell { text-align: center; font-size: 24px; color: #ffb690; }
+        .logo-cell { display: flex; justify-content: center; align-items: center; }
+        .logo-cell img { height: 40px; width: 40px; object-contain; }
+        .name-cell { padding-left: 20px; text-transform: uppercase; font-size: 20px; letter-spacing: 1px; }
+        .stat-cell { text-align: center; font-size: 20px; }
+        .total-cell { color: #adc6ff; font-weight: 900; font-size: 24px; }
+        
+        @keyframes slideRight {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-row { animation: slideRight 0.5s ease-out forwards; opacity: 0; }
+    </style>
+</head>
+<body class="bg-transparent font-body">
+    <div id="wrapper">
+        <div class="standings-card">
+            <!-- Header Ttle -->
+            <div class="mb-10 flex items-center justify-between border-b-2 border-secondary pb-4">
+                <div class="flex items-center gap-4">
+                    <span class="material-symbols-outlined text-secondary text-4xl">leaderboard</span>
+                    <h1 id="f0" class="text-on-surface font-black text-5xl uppercase italic tracking-tighter">OVERALL STANDINGS</h1>
+                </div>
+                <div class="text-secondary font-bold tracking-widest uppercase opacity-60">MATCH 08 / DAY 02</div>
+            </div>
+
+            <!-- Table Header -->
+            <div class="table-row header-row">
+                <div class="rank-cell">RANK</div>
+                <div class="logo-cell">LOGO</div>
+                <div class="name-cell">TEAM NAME</div>
+                <div class="stat-cell">WWCD</div>
+                <div class="stat-cell">KILLS</div>
+                <div class="stat-cell">POINTS</div>
+            </div>
+
+            <!-- Table Body -->
+            <div id="standings-list">
+                <!-- Rows will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                
+                // Expecting f1 to be a JSON string of teams
+                // Example: [{"rank":1,"logo":"titan","name":"TITANS","wwcd":2,"kills":45,"pts":85}, ...]
+                let teams = [];
+                if (data.f1) {
+                    teams = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                } else {
+                    // Placeholder data for preview
+                    teams = [
+                        {"rank":1,"logo":"titan","name":"TEAM TITANS","wwcd":2,"kills":45,"pts":85},
+                        {"rank":2,"logo":"epic","name":"EPIC ESPORTS","wwcd":1,"kills":38,"pts":72},
+                        {"rank":3,"logo":"aut","name":"ALPHA UT","wwcd":1,"kills":33,"pts":68},
+                        {"rank":4,"logo":"gs","name":"GLOBAL STARS","wwcd":0,"kills":40,"pts":62},
+                        {"rank":5,"logo":"abn","name":"ABN OFFICIAL","wwcd":1,"kills":28,"pts":55},
+                        {"rank":6,"logo":"b4","name":"B4 MENA","wwcd":0,"kills":31,"pts":52}
+                    ];
+                }
+
+                const list = document.getElementById('standings-list');
+                list.innerHTML = '';
+                
+                teams.forEach((team, index) => {
+                    const row = document.createElement('div');
+                    row.className = `table-row data-row animate-row ${team.rank <= 3 ? 'top-3' : ''}`;
+                    row.style.animationDelay = `${index * 0.1}s`;
+                    
+                    let logoPath = team.logo;
+                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                    if (!logoPath.includes('.')) logoPath += '.png';
+
+                    row.innerHTML = `
+                        <div class="rank-cell">#${team.rank}</div>
+                        <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
+                        <div class="name-cell">${team.name}</div>
+                        <div class="stat-cell">${team.wwcd}</div>
+                        <div class="stat-cell">${team.kills}</div>
+                        <div class="stat-cell total-cell">${team.pts}</div>
+                    `;
+                    list.appendChild(row);
+                });
+                
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+        }
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Overall Standings",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "12",
+            "webplayout": "12",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "4",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "OVERALL STANDINGS" },
+                { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": '[{"rank":1,"logo":"titan","name":"TEAM TITANS","wwcd":2,"kills":45,"pts":85},{"rank":2,"logo":"epic","name":"EPIC ESPORTS","wwcd":1,"kills":38,"pts":72}]' }
+            ]
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Live Ticker</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#adc6ff",
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                        "on-surface-variant": "#c2c6d6",
+                        "secondary-container": "#ec6a06",
+                        "on-secondary-container": "#4a1c00",
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background-color: transparent;
+            margin: 0; padding: 0;
+            overflow: hidden;
+            width: 1920px; height: 1080px;
+        }
+        #wrapper {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .ticker-container {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1800px;
+            height: 60px;
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border-left: 4px solid #ec6a06;
+        }
+        .ticker-header {
+            background: #ec6a06;
+            color: #4a1c00;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 20;
+            white-space: nowrap;
+        }
+        .ticker-content-wrapper {
+            flex-grow: 1;
+            background: rgba(11, 19, 38, 0.9);
+            backdrop-blur: 16px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .ticker-text {
+            white-space: nowrap;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #dae2fd;
+            display: inline-block;
+            animation: scroll 30s linear infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 50px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-transparent font-body text-on-surface">
+    <div id="wrapper">
+        <div id="ticker" class="ticker-container">
+            <div class="ticker-header">
+                <span class="material-symbols-outlined mr-2" style="font-variation-settings: 'FILL' 1;">campaign</span>
+                LIVE UPDATES
+            </div>
+            <div class="ticker-content-wrapper">
+                <div id="f0" class="ticker-text">
+                    LATEST NEWS FROM THE BATTLEGROUNDS... TEAM TITANS SECURES ANOTHER CHICKEN DINNER! ... MVP OF THE MATCH: TITAN_REX ... STAY TUNED FOR MORE ACTION!
+                </div>
+            </div>
+            <!-- Accents -->
+            <div class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-surface-dim to-transparent pointer-events-none"></div>
+        </div>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) {
+                    const el = document.getElementById('f0');
+                    el.innerText = data.f0.toUpperCase();
+                    // Reset animation if needed?
+                    el.style.animation = 'none';
+                    void el.offsetWidth;
+                    el.style.animation = 'scroll 30s linear infinite';
+                }
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+            const ticker = document.getElementById('ticker');
+            ticker.classList.remove('animate-slide-up');
+            void ticker.offsetWidth;
+            ticker.classList.add('animate-slide-up');
+        }
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Live Ticker",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "10",
+            "webplayout": "10",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "3",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Ticker Text", "value": "LATEST NEWS FROM THE BATTLEGROUNDS... TEAM TITANS SECURES ANOTHER CHICKEN DINNER! ... MVP OF THE MATCH: TITAN_REX ... STAY TUNED FOR MORE ACTION!" }
+            ]
+        };
+    </script>
+</body>
+</html>

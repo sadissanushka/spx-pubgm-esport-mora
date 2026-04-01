@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Map Overlay</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#adc6ff",
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
+        #wrapper { opacity: 0; transition: opacity 0.5s ease; }
+        .map-widget {
+            position: absolute;
+            top: 50px; left: 50px;
+            width: 380px;
+            background: rgba(11, 19, 38, 0.85);
+            backdrop-blur: 16px;
+            border-left: 4px solid #ffb690;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .widget-header {
+            background: #ffb690;
+            color: #552100;
+            padding: 8px 15px;
+            font-weight: 950;
+            font-style: italic;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .widget-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 8px;
+        }
+        .stat-label {
+            color: rgba(218, 226, 253, 0.6);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat-value {
+            color: #dae2fd;
+            font-size: 20px;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="bg-transparent font-body">
+    <div id="wrapper">
+        <div id="widget" class="map-widget">
+            <div class="widget-header">
+                <span>MATCH INFO</span>
+                <span id="f0" class="opacity-80">ERANGEL</span>
+            </div>
+            <div class="widget-content">
+                <div class="stat-line">
+                    <span class="stat-label">ALIVE</span>
+                    <span id="f1" class="stat-value text-secondary">64</span>
+                </div>
+                <div class="stat-line">
+                    <span class="stat-label">TEAMS</span>
+                    <span id="f2" class="stat-value">16</span>
+                </div>
+                <div class="stat-line">
+                    <span class="stat-label">ZONE PHASE</span>
+                    <span id="f3" class="stat-value text-primary">04</span>
+                </div>
+                <div class="stat-line">
+                    <span class="stat-label">NEXT CIRCLE</span>
+                    <span id="f4" class="stat-value">01:45</span>
+                </div>
+            </div>
+            <!-- Accents -->
+            <div class="flex">
+                <div class="h-1 flex-grow bg-secondary opacity-50"></div>
+                <div class="h-1 w-10 bg-secondary"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                if (data.f1) document.getElementById('f1').innerText = data.f1;
+                if (data.f2) document.getElementById('f2').innerText = data.f2;
+                if (data.f3) document.getElementById('f3').innerText = data.f3;
+                if (data.f4) document.getElementById('f4').innerText = data.f4;
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+        }
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Match Info Overlay",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "5",
+            "webplayout": "5",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "7",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Map Name", "value": "ERANGEL" },
+                { "field": "f1", "ftype": "textfield", "title": "Players Alive", "value": "64" },
+                { "field": "f2", "ftype": "textfield", "title": "Teams Alive", "value": "16" },
+                { "field": "f3", "ftype": "textfield", "title": "Phase", "value": "04" },
+                { "field": "f4", "ftype": "textfield", "title": "Zone Time", "value": "01:45" }
+            ]
+        };
+    </script>
+</body>
+</html>
