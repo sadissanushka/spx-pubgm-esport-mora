@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>SPX - PUBG Mobile - Map Overlay</title>
+    <title>SPX - PUBG Mobile - Map Overlay Redesign</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -74,7 +74,84 @@
     </script>
     <style>
         body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
-        #wrapper { opacity: 0; transition: opacity 0.5s ease; }
+        
+        #wrapper { opacity: 0; transition: opacity 0.5s ease; position: relative; width: 1920px; height: 1080px; }
+        
+        /* Intro Sequence Selection Styling */
+        #intro-sequence {
+            transition: opacity 0.5s ease;
+        }
+
+        .intro-card {
+            width: 260px;
+            height: 200px;
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-blur: 16px;
+            border-bottom: 5px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0; /* Intial state for keyframes */
+            transform: scale(0.9);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        .card-match-header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.4); padding: 8px 0;
+            text-align: center; font-size: 14px; font-weight: 800;
+            color: #ffb690; letter-spacing: 3px; font-style: italic;
+        }
+
+        .card-map-name {
+            font-size: 32px; font-weight: 900; color: #fff;
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-top: 10px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+        .card-completed-status {
+            background: rgba(255,255,255,0.1);
+            color: #dae2fd;
+            padding: 5px 15px; border-radius: 4px;
+            font-size: 13px; font-weight: 700; letter-spacing: 1px;
+            margin-top: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .time-text { font-size: 18px; font-variant-numeric: tabular-nums; color: #ffb690;}
+
+        /* Card Animation Flow States */
+        @keyframes cardEnter {
+            0% { transform: translateY(100px) scale(0.9); opacity: 0; filter: blur(5px); }
+            100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
+        }
+
+        .intro-card.dimmed {
+            filter: blur(3px) brightness(0.4);
+            transform: scale(0.95);
+        }
+
+        .intro-card.selected {
+            border-bottom: 5px solid #ffb690;
+            transform: scale(1.15);
+            box-shadow: 0 20px 60px rgba(236,106,6,0.3);
+            z-index: 10;
+        }
+
+        .intro-card.selected .card-match-header { background: #ffb690; color: #0b1326; }
+        .intro-card.selected .card-map-name { color: #ffb690; text-shadow: 0 0 20px rgba(255,182,144,0.6); }
+
+        /* Zoom to top left */
+        .intro-card.zoom-out {
+            transform: scale(3) translate(-200px, -150px) !important;
+            opacity: 0 !important;
+            filter: blur(20px) !important;
+            pointer-events: none;
+        }
+
+        /* Persistent Map Widget Styling */
         .map-widget {
             position: absolute;
             top: 50px; left: 50px;
@@ -82,55 +159,46 @@
             background: rgba(11, 19, 38, 0.85);
             backdrop-blur: 16px;
             border-left: 4px solid #ffb690;
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
+            display: flex; flex-direction: column; gap: 1px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            opacity: 0; transition: opacity 0.5s ease;
         }
+
+        .widget-enter {
+            animation: widgetFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes widgetFadeIn {
+            0% { transform: scale(1.1); opacity: 0; filter: blur(10px); }
+            100% { transform: scale(1); opacity: 1; filter: blur(0); }
+        }
+
         .widget-header {
-            background: #ffb690;
-            color: #552100;
-            padding: 8px 15px;
-            font-weight: 950;
-            font-style: italic;
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            background: #ffb690; color: #552100;
+            padding: 8px 15px; font-weight: 950; font-style: italic;
+            text-transform: uppercase; font-size: 14px; letter-spacing: 2px;
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .widget-content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        .widget-content { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
         .stat-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;
         }
-        .stat-label {
-            color: rgba(218, 226, 253, 0.6);
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .stat-value {
-            color: #dae2fd;
-            font-size: 20px;
-            font-weight: 900;
-            font-variant-numeric: tabular-nums;
-        }
+        .stat-label { color: rgba(218, 226, 253, 0.6); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { color: #dae2fd; font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
     </style>
 </head>
-<body class="bg-transparent font-body">
+<body class="bg-transparent font-body relative">
+
     <div id="wrapper">
-        <div id="widget" class="map-widget">
+        <!-- Fullscreen animated Map Selector -->
+        <div id="intro-sequence" class="absolute inset-0 flex items-center justify-center gap-6 z-0">
+            <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Stable Corner Live Data Widget -->
+        <div id="widget" class="map-widget z-20">
             <div class="widget-header">
                 <span>MATCH INFO</span>
                 <span id="f0" class="opacity-80">ERANGEL</span>
@@ -167,6 +235,11 @@
 
     <script>
         let sheetInterval = null;
+        let currentMapConfigJSON = "";
+        let globalCurrentMatchIndex = 1;
+        let animationPlaying = false; 
+        let isDataLoaded = false;
+        let queuedPlayCommand = false;
 
         async function fetchSheet(url) {
             try {
@@ -187,7 +260,7 @@
                         let playersAlive = 0;
                         let teamsAlive = 0;
 
-                        rawLines.slice(2, 30).forEach(cols => {
+                        rawLines.slice(2, 27).forEach(cols => {
                             const teamName = cols[1]?.trim() || "";
                             if (!cols[1] || teamName === "" || teamName === "TeamName") return;
                             
@@ -208,7 +281,6 @@
                         if (playersAlive > 0) countEl1.innerText = (playersAlive < 10 ? '0' : '') + playersAlive;
                         if (teamsAlive > 0) countEl2.innerText = (teamsAlive < 10 ? '0' : '') + teamsAlive;
 
-                        // Headers logic (Zone Phase, Times)
                         const headers = rawLines[0];
                         if (headers && headers.length > 8 && headers[8]) {
                             const phaseStr = headers[8].trim();
@@ -223,18 +295,35 @@
                             document.getElementById('f5').innerText = closeStr !== '' ? closeStr : '-';
                         }
 
-                        // Row 32 -> Index 31 (Maps)
-                        // Row 33 -> Index 32 (Selected Map Index in B33 / Index 1)
                         if (rawLines.length > 32) {
+                            const mapsRow = rawLines[31];
                             const selectRow = rawLines[32];
-                            const b33Value = parseInt(selectRow[1]?.trim());
-                            if (!isNaN(b33Value) && b33Value >= 1 && b33Value <= 7) {
-                                const mapsRow = rawLines[31];
-                                const mapName = mapsRow[b33Value]?.trim();
-                                if (mapName) {
-                                     document.getElementById('f0').innerText = mapName.toUpperCase();
+                            const timesRow = rawLines.length > 33 ? rawLines[33] : [];
+                            
+                            const b33Value = parseInt(selectRow[1]?.trim()) || 1;
+                            globalCurrentMatchIndex = b33Value;
+
+                            let mapConfig = [];
+                            for(let i = 1; i <= 6; i++) {
+                                if (mapsRow && mapsRow[i] && mapsRow[i].trim() !== '') {
+                                    let timeCompleted = "";
+                                    if (timesRow && timesRow[i] && timesRow[i].trim() !== '') {
+                                        timeCompleted = timesRow[i].trim();
+                                    }
+                                    mapConfig.push({
+                                        id: i,
+                                        name: mapsRow[i].trim().toUpperCase(),
+                                        time: timeCompleted
+                                    });
                                 }
                             }
+
+                            if (!animationPlaying) {
+                                buildIntroSequenceDOM(mapConfig, globalCurrentMatchIndex);
+                            }
+
+                            const selMap = mapConfig.find(m => m.id === globalCurrentMatchIndex);
+                            if (selMap) document.getElementById('f0').innerText = selMap.name;
                         }
                     }
                 });
@@ -243,20 +332,58 @@
             }
         }
 
+        function buildIntroSequenceDOM(mapConfig, currentIndex) {
+            const freshJSON = JSON.stringify({mapConfig});
+            if (freshJSON === currentMapConfigJSON) {
+                return;
+            }
+            currentMapConfigJSON = freshJSON;
+
+            const introContainer = document.getElementById('intro-sequence');
+            introContainer.innerHTML = '';
+            
+            mapConfig.forEach(mapObj => {
+                let statusHTML = '';
+                if (mapObj.time) {
+                    statusHTML = `<div class="card-completed-status"><span>COMPLETED</span><span class="time-text">${mapObj.time}</span></div>`;
+                }
+
+                const cardHTML = `
+                    <div class="intro-card" data-id="${mapObj.id}">
+                        <div class="card-match-header">MATCH 0${mapObj.id}</div>
+                        <div class="card-map-name">${mapObj.name}</div>
+                        ${statusHTML}
+                    </div>
+                `;
+                introContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            isDataLoaded = true;
+            if (queuedPlayCommand && !animationPlaying) {
+                executeAnimationFlow();
+            }
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
-                if (data.f1) document.getElementById('f1').innerText = data.f1;
-                if (data.f2) document.getElementById('f2').innerText = data.f2;
-                if (data.f3) document.getElementById('f3').innerText = data.f3;
-                if (data.f4) document.getElementById('f4').innerText = data.f4;
-                if (data.f5) document.getElementById('f5').innerText = data.f5;
                 
                 if (data.f7 && data.f7.startsWith('http')) {
                     if (sheetInterval) clearInterval(sheetInterval);
                     fetchSheet(data.f7);
                     sheetInterval = setInterval(() => fetchSheet(data.f7), 3500);
+                } else {
+                    // Mock data when no spreadsheet loaded
+                    const mockConfig = [
+                        {id: 1, name: "ERANGEL", time: "22:15"},
+                        {id: 2, name: "MIRAMAR", time: "25:40"},
+                        {id: 3, name: "SANHOK", time: "18:05"},
+                        {id: 4, name: "ERANGEL", time: ""},
+                        {id: 5, name: "MIRAMAR", time: ""}
+                    ];
+                    globalCurrentMatchIndex = 4;
+                    buildIntroSequenceDOM(mockConfig, globalCurrentMatchIndex);
+                    document.getElementById('f0').innerText = "ERANGEL";
                 }
             } catch (e) {
                 console.error("Update failed:", e);
@@ -264,22 +391,88 @@
         }
 
         function play() {
-            document.getElementById('wrapper').style.opacity = '1';
+            let wrapper = document.getElementById('wrapper');
+            wrapper.style.opacity = '1';
+            
+            queuedPlayCommand = true;
+
+            // If PapaParse already loaded data, instantly fire sequence
+            if (isDataLoaded && !animationPlaying) {
+                executeAnimationFlow();
+            }
+            // Else, executeAnimationFlow will be called gracefully by buildIntroSequenceDOM() when data comes in
+        }
+
+        function executeAnimationFlow() {
+            animationPlaying = true;
+            queuedPlayCommand = false;
+            
+            let intro = document.getElementById('intro-sequence');
+            let widget = document.getElementById('widget');
+            
+            intro.style.display = 'flex';
+            intro.style.opacity = '1';
+            widget.style.opacity = '0';
+            widget.classList.remove('widget-enter');
+            
+            let cards = intro.querySelectorAll('.intro-card');
+            
+            // Phase 1: Sliding Enter
+            cards.forEach((card, index) => {
+                card.classList.remove('dimmed', 'selected', 'zoom-out');
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                card.style.animation = `cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.15}s forwards`;
+            });
+            
+            // Phase 2: Highlight
+            setTimeout(() => {
+                cards.forEach(card => {
+                    const cardId = parseInt(card.dataset.id);
+                    if (cardId !== globalCurrentMatchIndex) {
+                        card.classList.add('dimmed');
+                    } else {
+                        card.classList.add('selected');
+                    }
+                });
+            }, 2000); 
+            
+            // Phase 3: Zoom
+            setTimeout(() => {
+                let selectedCard = intro.querySelector('.selected');
+                if (selectedCard) {
+                    selectedCard.classList.add('zoom-out');
+                }
+                
+                cards.forEach(card => {
+                    if (parseInt(card.dataset.id) !== globalCurrentMatchIndex) {
+                        card.style.opacity = '0';
+                        card.style.transition = 'opacity 0.3s ease';
+                    }
+                });
+            }, 3800);
+            
+            // Phase 4: Final static widget
+            setTimeout(() => {
+                intro.style.opacity = '0';
+                setTimeout(() => { 
+                    intro.style.display = 'none'; 
+                    animationPlaying = false; 
+                }, 500); 
+                
+                widget.classList.add('widget-enter'); 
+            }, 4400);
         }
 
         function stop() {
             document.getElementById('wrapper').style.opacity = '0';
+            animationPlaying = false;
         }
 
         window.SPXGCTemplateDefinition = {
-            "description": "PUBGM Match Info Overlay",
-            "playserver": "OVERLAY",
-            "playchannel": "1",
-            "playlayer": "5",
-            "webplayout": "5",
-            "out": "manual",
-            "dataformat": "json",
-            "uicolor": "7",
+            "description": "PUBGM Dynamic Map Selection Overlay",
+            "playserver": "OVERLAY", "playchannel": "1", "playlayer": "5", "webplayout": "5",
+            "out": "manual", "dataformat": "json", "uicolor": "7",
             "DataFields": [
                 { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Map Name (Manual Overide)", "value": "ERANGEL" },

@@ -148,6 +148,23 @@
         .animate-float {
             animation: float 4s ease-in-out infinite;
         }
+
+        .crown {
+            position: absolute;
+            top: -50px;
+            left: -40px;
+            font-size: 110px;
+            color: #ffb690;
+            transform: rotate(-25deg);
+            filter: drop-shadow(0 0 20px rgba(236,106,6,0.8));
+            animation: floatCrown 3s infinite ease-in-out;
+            z-index: 20;
+        }
+
+        @keyframes floatCrown {
+            0%, 100% { transform: translateY(0) rotate(-25deg) scale(1); }
+            50% { transform: translateY(-15px) rotate(-15deg) scale(1.1); }
+        }
         @keyframes zoomIn {
             from { transform: translate(-50%, -40%) scale(0.8); opacity: 0; }
             to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
@@ -189,6 +206,7 @@
                 <div class="glow-overlay"></div>
                 <div class="flex items-center gap-12 z-10">
                     <div class="winner-logo animate-float">
+                        <div class="material-symbols-outlined crown" style="font-variation-settings: 'FILL' 1;">crown</div>
                         <img id="f1" src="team_logos/titan.png" alt="" class="max-w-full max-h-full object-contain filter drop-shadow-[0_0_15px_rgba(236,106,6,0.3)]">
                     </div>
                     <div class="flex flex-col">

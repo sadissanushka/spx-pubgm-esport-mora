@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>SPX - PUBG Mobile - Match Result</title>
+    <title>SPX - PUBG Mobile - Match Result Redesign</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -73,72 +73,199 @@
         }
     </script>
     <style>
-        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
-        #wrapper { opacity: 0; transition: opacity 0.5s ease; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        .table-card { width: 1200px; }
-        .table-row {
+        body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; display: flex; align-items: center; justify-content: center; }
+        
+        #wrapper { 
+            width: 1740px; 
+            height: 960px; 
+            display: flex; 
+            flex-direction: column; 
+            opacity: 0; 
+            transition: opacity 0.5s ease;
+        }
+
+        .header-bar {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 3px solid rgba(255, 182, 144, 0.4);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .main-grid {
             display: grid;
-            grid-template-columns: 80px 100px 1fr 120px 120px 120px;
-            gap: 2px;
-            margin-bottom: 2px;
-            align-items: center;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 60px;
+            row-gap: 12px;
+            flex-grow: 1;
+            align-content: start;
         }
-        .header-row {
-            background: #ffb690;
-            color: #552100;
-            font-weight: 900;
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 2px;
-            padding: 10px 0;
-            font-style: italic;
-        }
-        .data-row {
-            background: rgba(34, 42, 61, 0.85);
+
+        .team-row {
+            display: grid;
+            grid-template-columns: 60px 80px 1fr 220px;
+            height: 60px;
+            background: rgba(19, 27, 46, 0.75);
             backdrop-blur: 16px;
-            color: #dae2fd;
-            font-weight: 700;
-            padding: 10px 0;
-            border-left: 4px solid transparent;
+            border-left: 5px solid rgba(255,255,255,0.05);
+            align-items: center;
+            opacity: 0;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .data-row:nth-child(even) { background: rgba(23, 31, 51, 0.85); }
-        .data-row.winner { border-left-color: #ffb690; background: rgba(45, 52, 73, 0.95); }
-        .rank-cell { text-align: center; font-size: 22px; color: #ffb690; }
-        .logo-cell { display: flex; justify-content: center; align-items: center; }
-        .logo-cell img { height: 30px; width: 40px; object-fit: contain; }
-        .name-cell { padding-left: 20px; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
-        .stat-cell { text-align: center; font-size: 20px; }
-        .total-cell { color: #adc6ff; font-weight: 900; font-size: 22px; }
+        
+        .team-row:nth-child(even) {
+            background: rgba(11, 19, 38, 0.85);
+        }
+
+        .team-row.winner {
+            background: linear-gradient(90deg, rgba(236, 106, 6, 0.25) 0%, rgba(23, 31, 51, 0.8) 100%);
+            border-left: 5px solid #ffb690;
+            height: 70px;
+            margin-bottom: 6px;
+            box-shadow: inset 0 0 40px rgba(236,106,6,0.1), 0 8px 15px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        @keyframes slideInLeft {
+            0% { transform: translateX(-80px); opacity: 0; filter: blur(4px); }
+            100% { transform: translateX(0); opacity: 1; filter: blur(0); }
+        }
+        @keyframes slideInRight {
+            0% { transform: translateX(80px); opacity: 0; filter: blur(4px); }
+            100% { transform: translateX(0); opacity: 1; filter: blur(0); }
+        }
+
+        .anim-left { animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim-right { animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .rank {
+            font-size: 24px; font-weight: 900; color: #ffb690; text-align: center;
+            font-style: italic; opacity: 0.9;
+        }
+        .team-row.winner .rank { color: #fff; text-shadow: 0 0 10px #ffb690; font-size: 32px; }
+        
+        .logo { width: 55px; height: 40px; object-fit: contain; margin: 0 auto; }
+        .team-row.winner .logo { width: 65px; height: 50px; filter: drop-shadow(0 0 5px rgba(255,182,144,0.5)); }
+
+        .name {
+            font-size: 22px; font-weight: 800; color: #dae2fd;
+            text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding-left: 10px; letter-spacing: 1.5px;
+        }
+        .team-row.winner .name { font-size: 26px; color: #fff; letter-spacing: 2px; }
+
+        .stats-block {
+            display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; gap: 8px;
+        }
+        
+        .pill {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 44px; width: 60px; border-radius: 4px; line-height: 1.1;
+        }
+        .pill-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+        .pill-val { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+        
+        .pill-place { background: rgba(255,255,255,0.05); color: #c2c6d6; border: 1px solid rgba(255,255,255,0.05); }
+        .pill-kill { background: rgba(255, 180, 171, 0.1); color: #ffb4ab; border: 1px solid rgba(255,180,171,0.15); }
+        .pill-total { background: rgba(173, 198, 255, 0.15); color: #adc6ff; width: 70px; border: 1px solid rgba(173, 198, 255, 0.3); }
+
+        .team-row.winner .pill { height: 50px; }
+        .team-row.winner .pill-val { font-size: 24px; }
+        .team-row.winner .pill-total { 
+            background: #ec6a06; color: #fff; border-color: #ffb690; width: 75px;
+            box-shadow: 0 0 15px rgba(236,106,6,0.4); 
+        }
+        .team-row.winner .pill-total .pill-label { opacity: 0.9; color: rgba(255,255,255,0.8); }
+
+        /* The crown for winner */
+        .crown { display:none; position: absolute; left: 100px; top: -14px; font-size: 24px; color: #ffb690; transform: rotate(-15deg); filter: drop-shadow(0 0 5px #ec6a06); }
+        .team-row.winner .crown { display:block; animation: float 3s infinite ease-in-out; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-15deg); }
+            50% { transform: translateY(-5px) rotate(-15deg); }
+        }
+
+        /* Animated Background Orbs */
+        #bg-anim { transition: opacity 0.5s ease; }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        .orb-1 {
+            width: 700px; height: 700px;
+            background: rgba(255, 182, 144, 0.15); /* Secondary */
+            top: -200px; left: -100px;
+            animation: drift1 25s infinite ease-in-out alternate;
+        }
+
+        .orb-2 {
+            width: 900px; height: 900px;
+            background: rgba(173, 198, 255, 0.12); /* Primary */
+            bottom: -300px; right: -200px;
+            animation: drift2 30s infinite ease-in-out alternate-reverse;
+        }
+
+        .orb-3 {
+            width: 600px; height: 600px;
+            background: rgba(236, 106, 6, 0.10); /* Accents */
+            top: 20%; left: 40%;
+            animation: drift3 20s infinite linear alternate;
+        }
+
+        @keyframes drift1 {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+            100% { transform: translate(400px, 300px) scale(1.3); opacity: 0.8; }
+        }
+
+        @keyframes drift2 {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+            100% { transform: translate(-500px, -200px) scale(0.8); opacity: 0.7; }
+        }
+
+        @keyframes drift3 {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            100% { transform: translate(300px, -200px) scale(1.4); opacity: 0.5; }
+        }
     </style>
 </head>
-<body class="bg-transparent font-body">
+<body class="bg-transparent font-body relative">
+    
+    <!-- Dynamic Cinematic Background Engine -->
+    <div id="bg-anim" class="opacity-0 absolute inset-0 z-[-1] overflow-hidden pointer-events-none w-[1920px] h-[1080px]">
+        <div class="bg-orb orb-1"></div>
+        <div class="bg-orb orb-2"></div>
+        <div class="bg-orb orb-3"></div>
+    </div>
+    
     <div id="wrapper">
-        <div class="table-card">
-            <div class="mb-10 w-full border-b-2 border-secondary pb-4 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <span class="material-symbols-outlined text-secondary text-5xl">inventory</span>
-                    <h1 id="f0" class="text-on-surface font-black text-5xl uppercase italic tracking-tighter">MATCH RESULT</h1>
+        <div class="header-bar">
+            <div class="flex items-end gap-5">
+                <span class="material-symbols-outlined text-secondary text-6xl" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+                <div class="flex flex-col">
+                    <span class="text-on-surface-variant font-bold text-lg uppercase tracking-[4px] mb-1">OFFICIAL STANDINGS</span>
+                    <h1 id="f0" class="text-on-surface font-black text-6xl uppercase italic tracking-tighter leading-none m-0">MATCH RESULT</h1>
                 </div>
-                <div id="f2" class="text-secondary font-bold tracking-widest uppercase opacity-60">MACTH 08 / DAY 02</div>
             </div>
+            <div class="text-right">
+                <div id="f2" class="text-secondary font-black text-3xl tracking-widest uppercase opacity-80">MATCH 08 / DAY 02</div>
+            </div>
+        </div>
 
-            <div class="table-row header-row">
-                <div class="rank-cell">RANK</div>
-                <div class="logo-cell">LOGO</div>
-                <div class="name-cell">TEAM NAME</div>
-                <div class="stat-cell">PLACE</div>
-                <div class="stat-cell">KILLS</div>
-                <div class="stat-cell">POINTS</div>
-            </div>
-
-            <div id="table-body">
-                <!-- Rows injected here -->
-            </div>
+        <div id="table-body" class="main-grid">
+            <!-- Rows injected here via JS -->
         </div>
     </div>
 
     <script>
         let sheetInterval = null;
+        let playCount = 0; // For animation tracking
 
         async function fetchSheet(url) {
             try {
@@ -185,7 +312,9 @@
             });
             
             const body = document.getElementById('table-body');
-            const targetCount = Math.min(16, sorted.length);
+            
+            // Adjust to perfectly fit 2 columns (Max 20 rows looks amazing split: 10 and 10)
+            const targetCount = Math.min(20, sorted.length); 
             
             while (body.children.length < targetCount) {
                 body.appendChild(document.createElement('div'));
@@ -196,8 +325,18 @@
             
             sorted.slice(0, targetCount).forEach((team, index) => {
                 const row = body.children[index];
-                const newClass = `table-row data-row ${team.rank === 1 ? 'winner' : ''}`;
+                
+                // Keep animation states if they have them, else reset
+                let animClass = "";
+                if (document.getElementById('wrapper').style.opacity === '1') {
+                    // It's playing. Decide left/right animations only if fresh creation or re-assigning
+                    const isLeftColumn = index % 2 === 0; // Simple masonry-like alternating or strict half/half
+                    animClass = (index < Math.ceil(targetCount / 2)) ? 'anim-left' : 'anim-right'; 
+                }
+
+                const newClass = `team-row ${team.rank === 1 ? 'winner' : ''} ${animClass}`;
                 if (row.className !== newClass) row.className = newClass;
+                row.style.animationDelay = `${(index % Math.ceil(targetCount / 2)) * 0.08}s`;
                 
                 let logoPath = team.logo;
                 if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
@@ -207,12 +346,15 @@
                 if (placePts < 0) placePts = 0;
 
                 const newHTML = `
-                    <div class="rank-cell">#${team.rank === 999 ? '-' : team.rank}</div>
-                    <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
-                    <div class="name-cell">${team.name}</div>
-                    <div class="stat-cell">${placePts}</div>
-                    <div class="stat-cell">${team.kills}</div>
-                    <div class="stat-cell total-cell">${team.total}</div>
+                    <div class="material-symbols-outlined crown" style="font-variation-settings: 'FILL' 1;">crown</div>
+                    <div class="rank">#${team.rank === 999 ? '-' : team.rank}</div>
+                    <div><img class="logo" src="${logoPath}" onerror="this.style.opacity=0"></div>
+                    <div class="name">${team.name}</div>
+                    <div class="stats-block">
+                        <div class="pill pill-place"><div class="pill-label">Place</div><div class="pill-val">${placePts}</div></div>
+                        <div class="pill pill-kill"><div class="pill-label">Kills</div><div class="pill-val">${team.kills}</div></div>
+                        <div class="pill pill-total"><div class="pill-label">Points</div><div class="pill-val">${team.total}</div></div>
+                    </div>
                 `;
                 
                 if (row.innerHTML !== newHTML) {
@@ -236,58 +378,76 @@
                     if (data.f1) {
                         teams = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
                     } else {
+                        // Dummy sample data illustrating the 2 column spread
                         teams = [
                             {"rank":1,"logo":"titan","name":"TEAM TITANS","place":15,"kills":18,"total":33},
-                            {"rank":2,"logo":"epic","name":"EPIC ESPORTS","place":12,"kills":6,"total":18},
+                            {"rank":2,"logo":"epic","name":"EPIC ESPORTS","place":12,"kills":10,"total":22},
                             {"rank":3,"logo":"aut","name":"ALPHA UT","place":10,"kills":8,"total":18},
                             {"rank":4,"logo":"gs","name":"GLOBAL STARS","place":8,"kills":7,"total":15},
-                            {"rank":5,"logo":"abn","name":"ABN OFFICIAL","place":6,"kills":5,"total":11}
+                            {"rank":5,"logo":"abn","name":"ABN OFFICIAL","place":6,"kills":7,"total":13},
+                            {"rank":6,"logo":"nova","name":"NOVA ESPORTS","place":4,"kills":6,"total":10},
+                            {"rank":7,"logo":"navi","name":"NATUS VINCERE","place":3,"kills":5,"total":8},
+                            {"rank":8,"logo":"secret","name":"TEAM SECRET","place":2,"kills":4,"total":6},
+                            {"rank":9,"logo":"vpe","name":"VAMPIRE ESPORTS","place":1,"kills":4,"total":5},
+                            {"rank":10,"logo":"stt","name":"STALWART","place":1,"kills":3,"total":4},
+                            {"rank":11,"logo":"rng","name":"ROYAL NEVER GIVE UP","place":0,"kills":3,"total":3},
+                            {"rank":12,"logo":"sz","name":"SZ STEALTH","place":0,"kills":2,"total":2},
+                            {"rank":13,"logo":"bx","name":"BOX GAMING","place":0,"kills":2,"total":2},
+                            {"rank":14,"logo":"btr","name":"BIGETRON RA","place":0,"kills":1,"total":1},
+                            {"rank":15,"logo":"rsg","name":"RSG ESPORTS","place":0,"kills":1,"total":1},
+                            {"rank":16,"logo":"xqn","name":"XQF","place":0,"kills":0,"total":0}
                         ];
                     }
 
-                    const body = document.getElementById('table-body');
-                    const targetCount = teams.length;
-                    
-                    while (body.children.length < targetCount) {
-                        body.appendChild(document.createElement('div'));
-                    }
-                    while (body.children.length > targetCount) {
-                        body.removeChild(body.lastChild);
-                    }
-                    
-                    teams.forEach((team, index) => {
-                        const row = body.children[index];
-                        const newClass = `table-row data-row ${team.rank === 1 ? 'winner' : ''}`;
-                        if (row.className !== newClass) row.className = newClass;
-                        
-                        let logoPath = team.logo;
-                        if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
-                        if (!logoPath.includes('.')) logoPath += '.png';
-
-                        const newHTML = `
-                            <div class="rank-cell">#${team.rank}</div>
-                            <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
-                            <div class="name-cell">${team.name}</div>
-                            <div class="stat-cell">${team.place}</div>
-                            <div class="stat-cell">${team.kills}</div>
-                            <div class="stat-cell total-cell">${team.total}</div>
-                        `;
-                        
-                        if (row.innerHTML !== newHTML) {
-                            row.innerHTML = newHTML;
-                        }
-                    });
+                    processTeams(teams);
                 }
             } catch (e) {
                 console.error("Update failed:", e);
             }
         }
 
-        function play() { document.getElementById('wrapper').style.opacity = '1'; }
-        function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+        function triggerAnimations() {
+            const body = document.getElementById('table-body');
+            const targetCount = body.children.length;
+            const half = Math.ceil(targetCount / 2);
+            
+            for(let i=0; i<targetCount; i++) {
+                const row = body.children[i];
+                // Remove existing anim
+                row.classList.remove('anim-left', 'anim-right');
+                void row.offsetWidth; // trigger reflow
+                
+                // Add right anim based on column structure (CSS grid flows left to right inherently if rows are populated,
+                // but actually here we'll split half to left via DOM order? 
+                // Ah, CSS grid with 1fr 1fr naturally flows: 1(L), 2(R), 3(L), 4(R). 
+                // So even indices are left column, odd indices are right column natively in CSS Grid!
+                
+                const isLeftColumn = (i % 2 === 0);
+                if (isLeftColumn) {
+                    row.classList.add('anim-left');
+                } else {
+                    row.classList.add('anim-right');
+                }
+                
+                // Delay staggering downward.
+                // i=0 (row 1 L), i=1 (row 1 R), i=2 (row 2 L)... Delay is Math.floor(i/2)
+                row.style.animationDelay = `${Math.floor(i / 2) * 0.08}s`;
+            }
+        }
+
+        function play() { 
+            document.getElementById('wrapper').style.opacity = '1'; 
+            document.getElementById('bg-anim').classList.replace('opacity-0', 'opacity-100');
+            triggerAnimations();
+        }
+        
+        function stop() { 
+            document.getElementById('wrapper').style.opacity = '0'; 
+            document.getElementById('bg-anim').classList.replace('opacity-100', 'opacity-0');
+        }
 
         window.SPXGCTemplateDefinition = {
-            "description": "PUBGM Match Result Table",
+            "description": "PUBGM Match Result Table (1920x1080 2-Col Redesign)",
             "playserver": "OVERLAY", "playchannel": "1", "playlayer": "13", "webplayout": "13",
             "out": "manual", "dataformat": "json", "uicolor": "10",
             "DataFields": [

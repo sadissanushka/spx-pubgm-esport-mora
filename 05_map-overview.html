@@ -74,7 +74,83 @@
     </script>
     <style>
         body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
-        #wrapper { opacity: 0; transition: opacity 1s ease; width: 100%; height: 100%; }
+        #wrapper { opacity: 0; transition: opacity 1s ease; width: 100%; height: 100%; position: relative; }
+        
+        /* Intro Sequence Selection Styling */
+        #intro-sequence {
+            transition: opacity 0.5s ease;
+        }
+
+        .intro-card {
+            width: 260px;
+            height: 200px;
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-blur: 16px;
+            border-bottom: 5px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0; 
+            transform: scale(0.9);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        .card-match-header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.4); padding: 8px 0;
+            text-align: center; font-size: 14px; font-weight: 800;
+            color: #ffb690; letter-spacing: 3px; font-style: italic;
+        }
+
+        .card-map-name {
+            font-size: 32px; font-weight: 900; color: #fff;
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-top: 10px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+        .card-completed-status {
+            background: rgba(255,255,255,0.1);
+            color: #dae2fd;
+            padding: 5px 15px; border-radius: 4px;
+            font-size: 13px; font-weight: 700; letter-spacing: 1px;
+            margin-top: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .time-text { font-size: 18px; font-variant-numeric: tabular-nums; color: #ffb690;}
+
+        /* Card Animation Flow States */
+        @keyframes cardEnter {
+            0% { transform: translateY(100px) scale(0.9); opacity: 0; filter: blur(5px); }
+            100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
+        }
+
+        .intro-card.dimmed {
+            filter: blur(3px) brightness(0.4);
+            transform: scale(0.95);
+        }
+
+        .intro-card.selected {
+            border-bottom: 5px solid #ffb690;
+            transform: scale(1.15);
+            box-shadow: 0 20px 60px rgba(236,106,6,0.3);
+            z-index: 10;
+        }
+
+        .intro-card.selected .card-match-header { background: #ffb690; color: #0b1326; }
+        .intro-card.selected .card-map-name { color: #ffb690; text-shadow: 0 0 20px rgba(255,182,144,0.6); }
+
+        /* Zoom into the huge center map panel */
+        .intro-card.zoom-out {
+            transform: scale(5) !important;
+            opacity: 0 !important;
+            filter: blur(20px) !important;
+            pointer-events: none;
+        }
+
+        /* Persistent Final Widget Form */
         .map-container {
             position: absolute;
             top: 50%; left: 50%;
@@ -85,7 +161,19 @@
             border: 1px solid rgba(255,255,255,0.1);
             overflow: hidden;
             display: flex;
+            opacity: 0; 
+            transition: opacity 0.5s ease;
         }
+
+        .widget-enter {
+            animation: widgetFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes widgetFadeIn {
+            0% { transform: translate(-50%, -45%) scale(0.95); opacity: 0; filter: blur(10px); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: blur(0); }
+        }
+
         .map-image { width: 800px; height: 800px; background: #000; overflow: hidden; position: relative; }
         .map-image img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
         .map-sidebar {
@@ -102,17 +190,16 @@
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
         }
-        .flight-line {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.3);
-            height: 2px;
-            transform-origin: left;
-        }
     </style>
 </head>
 <body class="bg-transparent font-body text-on-surface">
     <div id="wrapper">
-        <div class="map-container shadow-2xl">
+        <!-- Fullscreen animated Map Selector -->
+        <div id="intro-sequence" class="absolute inset-0 flex items-center justify-center gap-6 z-0">
+            <!-- Dynamically populated via JS -->
+        </div>
+
+        <div id="widget" class="map-container shadow-2xl z-20">
             <div class="map-image">
                 <img id="map-asset" src="images/maps/erangel.jpeg" alt="">
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent to-surface-dim"></div>
@@ -166,7 +253,13 @@
         let sheetInterval = null;
         let progressInterval = null;
         let matchStartTimeObj = null;
-        const FULL_MATCH_SECONDS = 1920; // Approx 32 mins normal PUBG match duration
+        const FULL_MATCH_SECONDS = 1920; 
+
+        let currentMapConfigJSON = "";
+        let globalCurrentMatchIndex = 1;
+        let animationPlaying = false;
+        let isDataLoaded = false;
+        let queuedPlayCommand = false;
 
         async function fetchSheet(url) {
             try {
@@ -190,22 +283,74 @@
                         }
 
                         if (rawLines.length > 32) {
+                            const mapsRow = rawLines[31];
                             const selectRow = rawLines[32];
-                            const b33Value = parseInt(selectRow[1]?.trim());
-                            if (!isNaN(b33Value) && b33Value >= 1 && b33Value <= 7) {
-                                const mapsRow = rawLines[31];
-                                const mapName = mapsRow[b33Value]?.trim();
-                                if (mapName) {
-                                    const nameStr = mapName.toUpperCase();
-                                    document.getElementById('f1').innerText = nameStr;
-                                    document.getElementById('map-asset').src = `images/maps/${nameStr.toLowerCase()}.jpeg`;
+                            const timesRow = rawLines.length > 33 ? rawLines[33] : [];
+                            
+                            const b33Value = parseInt(selectRow[1]?.trim()) || 1;
+                            globalCurrentMatchIndex = b33Value;
+
+                            let mapConfig = [];
+                            for(let i = 1; i <= 6; i++) {
+                                if (mapsRow && mapsRow[i] && mapsRow[i].trim() !== '') {
+                                    let timeCompleted = "";
+                                    if (timesRow && timesRow[i] && timesRow[i].trim() !== '') {
+                                        timeCompleted = timesRow[i].trim();
+                                    }
+                                    mapConfig.push({
+                                        id: i,
+                                        name: mapsRow[i].trim().toUpperCase(),
+                                        time: timeCompleted
+                                    });
                                 }
+                            }
+
+                            if (!animationPlaying) {
+                                buildIntroSequenceDOM(mapConfig, globalCurrentMatchIndex);
+                            }
+
+                            const selMap = mapConfig.find(m => m.id === globalCurrentMatchIndex);
+                            if (selMap) {
+                                document.getElementById('f1').innerText = selMap.name;
+                                document.getElementById('map-asset').src = `images/maps/${selMap.name.toLowerCase()}.jpeg`;
                             }
                         }
                     }
                 });
             } catch (e) {
                 console.error("Auto Sync Error:", e);
+            }
+        }
+
+        function buildIntroSequenceDOM(mapConfig, currentIndex) {
+            const freshJSON = JSON.stringify({mapConfig});
+            if (freshJSON === currentMapConfigJSON) {
+                return; 
+            }
+            currentMapConfigJSON = freshJSON;
+
+            const introContainer = document.getElementById('intro-sequence');
+            introContainer.innerHTML = '';
+            
+            mapConfig.forEach(mapObj => {
+                let statusHTML = '';
+                if (mapObj.time) {
+                    statusHTML = `<div class="card-completed-status"><span>COMPLETED</span><span class="time-text">${mapObj.time}</span></div>`;
+                }
+
+                const cardHTML = `
+                    <div class="intro-card" data-id="${mapObj.id}">
+                        <div class="card-match-header">MATCH 0${mapObj.id}</div>
+                        <div class="card-map-name">${mapObj.name}</div>
+                        ${statusHTML}
+                    </div>
+                `;
+                introContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            isDataLoaded = true;
+            if (queuedPlayCommand && !animationPlaying) {
+                executeAnimationFlow();
             }
         }
 
@@ -256,11 +401,14 @@
                     if (progressInterval) clearInterval(progressInterval);
                     
                     fetchSheet(data.f7);
-                    sheetInterval = setInterval(() => fetchSheet(data.f7), 10000);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 5000);
                     progressInterval = setInterval(updateProgress, 1000);
                 } else {
                     if (data.f1) {
                         const mapName = data.f1.toUpperCase();
+                        const mockConfig = [{id: 1, name: mapName, time: ""}];
+                        buildIntroSequenceDOM(mockConfig, 1);
+                        
                         document.getElementById('f1').innerText = mapName;
                         let m = mapName.toLowerCase();
                         document.getElementById('map-asset').src = `images/maps/${m}.jpeg`;
@@ -275,15 +423,79 @@
         }
 
         function play() {
-            document.getElementById('wrapper').style.opacity = '1';
+            let wrapper = document.getElementById('wrapper');
+            wrapper.style.opacity = '1';
+            queuedPlayCommand = true;
+
+            if (isDataLoaded && !animationPlaying) {
+                executeAnimationFlow();
+            }
+        }
+
+        function executeAnimationFlow() {
+            animationPlaying = true;
+            queuedPlayCommand = false;
+            
+            let intro = document.getElementById('intro-sequence');
+            let widget = document.getElementById('widget');
+            
+            intro.style.display = 'flex';
+            intro.style.opacity = '1';
+            widget.style.opacity = '0';
+            widget.classList.remove('widget-enter');
+            
+            let cards = intro.querySelectorAll('.intro-card');
+            
+            cards.forEach((card, index) => {
+                card.classList.remove('dimmed', 'selected', 'zoom-out');
+                card.style.opacity = '0'; 
+                card.style.transform = 'scale(0.9)';
+                card.style.animation = `cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.15}s forwards`;
+            });
+            
+            setTimeout(() => {
+                cards.forEach(card => {
+                    const cardId = parseInt(card.dataset.id);
+                    if (cardId !== globalCurrentMatchIndex) {
+                        card.classList.add('dimmed');
+                    } else {
+                        card.classList.add('selected');
+                    }
+                });
+            }, 2000); 
+            
+            setTimeout(() => {
+                let selectedCard = intro.querySelector('.selected');
+                if (selectedCard) {
+                    selectedCard.classList.add('zoom-out'); // Zooms heavily
+                }
+                
+                cards.forEach(card => {
+                    if (parseInt(card.dataset.id) !== globalCurrentMatchIndex) {
+                        card.style.opacity = '0';
+                        card.style.transition = 'opacity 0.3s ease';
+                    }
+                });
+            }, 3800);
+            
+            setTimeout(() => {
+                intro.style.opacity = '0';
+                setTimeout(() => { 
+                    intro.style.display = 'none'; 
+                    animationPlaying = false; 
+                }, 500); 
+                
+                widget.classList.add('widget-enter'); 
+            }, 4400);
         }
 
         function stop() {
             document.getElementById('wrapper').style.opacity = '0';
+            animationPlaying = false;
         }
 
         window.SPXGCTemplateDefinition = {
-            "description": "PUBGM Map Overview Overlay",
+            "description": "PUBGM Map Overview (With Cinematic Intro)",
             "playserver": "OVERLAY",
             "playchannel": "1",
             "playlayer": "6",
