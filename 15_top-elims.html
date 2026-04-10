@@ -83,56 +83,136 @@
     </div>
 
     <script>
+        let sheetInterval = null;
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csv = await response.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+
+                const lines = csv.split('\n').filter(l => l.trim().includes(','));
+                if (lines.length < 2) return;
+
+                const teams = lines.slice(2).map(line => {
+                    const cols = line.split(',');
+                    if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                    return {
+                        name: cols[1].trim(),
+                        logo: cols[2]?.trim() || '',
+                        kills: parseInt(cols[8]?.trim()) || 0
+                    };
+                }).filter(t => t !== null);
+
+                processTeams(teams);
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
+        function processTeams(teams) {
+            let sorted = [...teams].sort((a, b) => b.kills - a.kills).slice(0, 5);
+            
+            const list = document.getElementById('fragger-list');
+            if (list.children.length === 0) {
+                for (let i = 0; i < 5; i++) {
+                    const card = document.createElement('div');
+                    card.className = `fragger-card animate-card`;
+                    card.style.animationDelay = `${i * 0.1}s`;
+                    list.appendChild(card);
+                }
+            }
+            
+            sorted.forEach((team, index) => {
+                const card = list.children[index];
+                if (!card) return;
+                
+                let tPath = team.logo;
+                if (!tPath.includes('/')) tPath = 'team_logos/' + tPath;
+                if (!tPath.includes('.')) tPath += '.png';
+
+                const newHTML = `
+                    <div style="width:100%; height:350px; display:flex; align-items:center; justify-content:center; padding: 40px; background: radial-gradient(circle, rgba(255,182,144,0.1) 0%, transparent 60%);">
+                       <img src="${tPath}" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.opacity=0">
+                    </div>
+                    <div class="fragger-info" style="border-top: 2px solid rgba(255,255,255,0.1);">
+                        <span class="text-xl font-black uppercase italic tracking-widest text-center h-7 truncate w-full">${team.name}</span>
+                        <div class="mt-4 flex items-baseline gap-2">
+                            <span class="text-4xl font-black text-secondary">${team.kills}</span>
+                            <span class="text-xs font-bold text-on-surface-variant tracking-widest">TEAM KILLS</span>
+                        </div>
+                    </div>
+                `;
+                
+                if (card.innerHTML !== newHTML) {
+                    card.innerHTML = newHTML;
+                }
+            });
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
                 
-                let fraggers = [];
-                if (data.f1) {
-                    fraggers = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                if (data.f7 && data.f7.startsWith('http')) {
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 5000);
                 } else {
-                    // Placeholder data for preview
-                    fraggers = [
-                        {"name":"TITAN_REX","team":"TITAN","kills":8,"portrait":"1"},
-                        {"name":"EPIC_BOY","team":"EPIC","kills":6,"portrait":"2"},
-                        {"name":"ALPHA_ACE","team":"AUT","kills":5,"portrait":"3"},
-                        {"name":"GLOBAL_X","team":"GS","name":"GLOBAL_X","kills":5,"portrait":"4"},
-                        {"name":"ABN_LORD","team":"ABN","kills":4,"portrait":"5"}
-                    ];
-                }
+                    let fraggers = [];
+                    if (data.f1) {
+                        fraggers = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                    } else {
+                        fraggers = [
+                            {"name":"TEAM TITANS","team":"titan","kills":18,"portrait":""},
+                            {"name":"EPIC","team":"epic","kills":6,"portrait":""},
+                            {"name":"ALPHA","team":"aut","kills":5,"portrait":""},
+                            {"name":"GLOBAL","team":"gs","kills":5,"portrait":""},
+                            {"name":"ABN","team":"abn","kills":4,"portrait":""}
+                        ];
+                    }
 
-                const list = document.getElementById('fragger-list');
-                list.innerHTML = '';
-                
-                fraggers.forEach((player, index) => {
-                    const card = document.createElement('div');
-                    card.className = `fragger-card animate-card`;
-                    card.style.animationDelay = `${index * 0.1}s`;
+                    const list = document.getElementById('fragger-list');
+                    if (list.children.length === 0) {
+                        for (let i = 0; i < 5; i++) {
+                            const card = document.createElement('div');
+                            card.className = `fragger-card animate-card`;
+                            card.style.animationDelay = `${i * 0.1}s`;
+                            list.appendChild(card);
+                        }
+                    }
                     
-                    let pPath = player.portrait;
-                    if (!pPath.includes('/')) pPath = 'images/characters/' + pPath;
-                    if (!pPath.includes('.')) pPath += '.png';
+                    fraggers.forEach((player, index) => {
+                        const card = list.children[index];
+                        if (!card) return;
+                        
+                        let tPath = player.team;
+                        if (!tPath.includes('/')) tPath = 'team_logos/' + tPath;
+                        if (!tPath.includes('.')) tPath += '.png';
 
-                    let tPath = player.team;
-                    if (!tPath.includes('/')) tPath = 'team_logos/' + tPath;
-                    if (!tPath.includes('.')) tPath += '.png';
-
-                    card.innerHTML = `
-                        <img src="${pPath}" class="fragger-portrait" onerror="this.style.opacity=0">
-                        <div class="fragger-info">
-                            <img src="${tPath}" class="h-8 object-contain mb-2" onerror="this.style.opacity=0">
-                            <span class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">${player.team}</span>
-                            <span class="text-xl font-black uppercase italic">${player.name}</span>
-                            <div class="mt-4 flex items-baseline gap-2">
-                                <span class="text-4xl font-black text-secondary">${player.kills}</span>
-                                <span class="text-xs font-bold text-on-surface-variant tracking-widest">KILLS</span>
+                        const newHTML = `
+                            <div style="width:100%; height:350px; display:flex; align-items:center; justify-content:center; padding: 40px; background: radial-gradient(circle, rgba(255,182,144,0.1) 0%, transparent 60%);">
+                               <img src="${tPath}" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.opacity=0">
                             </div>
-                        </div>
-                    `;
-                    list.appendChild(card);
-                });
-                
+                            <div class="fragger-info" style="border-top: 2px solid rgba(255,255,255,0.1);">
+                                <span class="text-xl font-black uppercase italic tracking-widest text-center h-7 truncate w-full">${player.name}</span>
+                                <div class="mt-4 flex items-baseline gap-2">
+                                    <span class="text-4xl font-black text-secondary">${player.kills}</span>
+                                    <span class="text-xs font-bold text-on-surface-variant tracking-widest">TEAM KILLS</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        if (card.innerHTML !== newHTML) {
+                            card.innerHTML = newHTML;
+                        }
+                    });
+                }
             } catch (e) {
                 console.error("Update failed:", e);
             }
@@ -156,8 +236,9 @@
             "dataformat": "json",
             "uicolor": "8",
             "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "MATCH KILL LEADERS" },
-                { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": '[{"name":"TITAN_REX","team":"titan","kills":8,"portrait":"1"},{"name":"EPIC_BOY","team":"epic","kills":6,"portrait":"2"}]' }
+                { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": '[{"name":"TEAM TITANS","team":"titan","kills":18},{"name":"EPIC ESPORTS","team":"epic","kills":6}]' }
             ]
         };
     </script>

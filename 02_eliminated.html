@@ -159,14 +159,10 @@
                     </div>
 
                     <!-- Footer Stats Strip -->
-                    <div class="grid grid-cols-4 gap-1">
+                    <div class="grid grid-cols-3 gap-1">
                         <div class="bg-surface-container py-3 px-4 flex flex-col">
                             <span class="text-on-surface-variant text-[0.6rem] font-bold uppercase tracking-widest">PLACEMENT</span>
                             <span id="f2" class="text-primary font-bold text-xl uppercase">#16</span>
-                        </div>
-                        <div class="bg-surface-container py-3 px-4 flex flex-col">
-                            <span class="text-on-surface-variant text-[0.6rem] font-bold uppercase tracking-widest">DAMAGE</span>
-                            <span id="damage" class="text-on-surface font-bold text-xl uppercase">2,480</span>
                         </div>
                         <div class="bg-surface-container py-3 px-4 flex flex-col">
                             <span class="text-on-surface-variant text-[0.6rem] font-bold uppercase tracking-widest">SURVIVAL</span>
@@ -187,45 +183,189 @@
     </div>
 
     <script>
-        function update(rawData) {
+        let isAutoMode = false;
+        let sheetInterval = null;
+        let previousTeamsState = new Map();
+        let eliminationQueue = [];
+        let isDisplaying = false;
+        let localAutoStartTime = null;
+
+        async function fetchSheet(url) {
             try {
-                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csv = await response.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+
+                if (!localAutoStartTime) localAutoStartTime = Date.now();
+
+                const lines = csv.split('\n').filter(l => l.trim().includes(','));
                 
-                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
-                
-                if (data.f1) {
-                    // Assuming f1 is the logo filename or path
-                    let logoPath = data.f1;
-                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
-                    if (!logoPath.includes('.')) logoPath = logoPath + '.png';
-                    document.getElementById('team-logo').src = logoPath;
+                // Read Match Start Time explicitly from cell J1 (Row 1, Column J which is index 9)
+                if (lines.length > 0) {
+                    const row1 = lines[0].split(',');
+                    if (row1.length > 9) {
+                        const j1Content = row1[9]?.trim() || '';
+                        const match = j1Content.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?/i);
+                        if (match) {
+                            let h = parseInt(match[1]);
+                            const m = parseInt(match[2]);
+                            const s = match[3] ? parseInt(match[3]) : 0;
+                            const ampm = match[4] ? match[4].toUpperCase() : null;
+                            
+                            if (ampm === 'PM' && h < 12) h += 12;
+                            if (ampm === 'AM' && h === 12) h = 0;
+                            
+                            window.matchStartTimeOverride = `${h}:${m}:${s}`;
+                        }
+                    }
                 }
 
-                if (data.f2) {
-                    let rank = data.f2;
-                    if (!String(rank).startsWith('#')) rank = '#' + rank;
-                    document.getElementById('f2').innerText = rank;
-                }
+                if (lines.length < 2) return;
 
-                if (data.f3) document.getElementById('f3').innerText = data.f3;
-                if (data.f4) document.getElementById('f4').innerText = data.f4.toUpperCase();
+                lines.slice(2).forEach(line => {
+                    const cols = line.split(',');
+                    if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return;
 
-                // Bonus stats (using f5, f6 if you want to extend)
-                if (data.f5) document.getElementById('damage').innerText = data.f5;
-                if (data.f6) document.getElementById('survival').innerText = data.f6;
-                
+                    const aliveCount = [cols[4], cols[5], cols[6], cols[7]]
+                        .filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+                    const isAlive = aliveCount > 0;
+                    const name = cols[1].trim();
+
+                    const currentData = {
+                        name: name,
+                        logo: cols[2]?.trim() || '',
+                        rank: cols[9]?.trim() || '',
+                        kills: cols[8]?.trim() || '0',
+                        pts: cols[10]?.trim() || '0',
+                        isAlive: isAlive
+                    };
+
+                    if (previousTeamsState.has(name)) {
+                        const prevState = previousTeamsState.get(name);
+                        if (prevState.isAlive && !isAlive) {
+                            eliminationQueue.push(currentData);
+                            processQueue();
+                        }
+                    }
+                    previousTeamsState.set(name, currentData);
+                });
             } catch (e) {
-                console.error("Update failed:", e);
+                console.error("Auto Sync Error:", e);
             }
         }
 
-        function play() {
+        function calculateSurvival() {
+            let diff = 0;
+            if (window.matchStartTimeOverride) {
+                const now = new Date();
+                const parts = window.matchStartTimeOverride.split(':');
+                if (parts.length >= 2) {
+                    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2] || 0));
+                    diff = Math.floor((now - start) / 1000);
+                }
+            } else if (localAutoStartTime) {
+                diff = Math.floor((Date.now() - localAutoStartTime) / 1000);
+            }
+
+            if (diff >= 0) {
+                const m = Math.floor(diff / 60).toString().padStart(2, '0');
+                const s = (diff % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            }
+            return "00:00";
+        }
+
+        function processQueue() {
+            if (isDisplaying || eliminationQueue.length === 0) return;
+            
+            isDisplaying = true;
+            const team = eliminationQueue.shift();
+            
+            renderElimination({
+                name: team.name, 
+                logo: team.logo, 
+                rank: team.rank, 
+                kills: team.kills,
+                mvp: "---",   
+                survival: calculateSurvival()
+            });
+
             document.getElementById('wrapper').style.opacity = '1';
             const card = document.getElementById('card');
             if (card) {
                 card.classList.remove('animate-slide-in');
                 void card.offsetWidth;
                 card.classList.add('animate-slide-in');
+            }
+
+            setTimeout(() => {
+                document.getElementById('wrapper').style.opacity = '0';
+                setTimeout(() => {
+                    isDisplaying = false;
+                    processQueue();
+                }, 600);
+            }, 6000); // Wait 6 seconds per popup
+        }
+
+        function renderElimination(data) {
+            if (data.name) document.getElementById('f0').innerText = data.name.toUpperCase();
+            
+            if (data.logo) {
+                let logoPath = data.logo;
+                if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                if (!logoPath.includes('.')) logoPath = logoPath + '.png';
+                document.getElementById('team-logo').src = logoPath;
+            }
+
+            let rank = data.rank || 'N/A';
+            if (rank !== 'N/A' && !String(rank).startsWith('#')) rank = '#' + rank;
+            document.getElementById('f2').innerText = rank;
+
+            document.getElementById('f3').innerText = data.kills || '0';
+            document.getElementById('f4').innerText = data.mvp ? data.mvp.toUpperCase() : '---';
+            document.getElementById('survival').innerText = data.survival || '---';
+        }
+
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                
+                if (data.f7 && data.f7.startsWith('http')) {
+                    isAutoMode = true;
+                    // Wrapper hidden until auto-triggered
+                    document.getElementById('wrapper').style.opacity = '0';
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 3500);
+                } else {
+                    isAutoMode = false;
+                    renderElimination({
+                        name: data.f0,
+                        logo: data.f1,
+                        rank: data.f2,
+                        kills: data.f3,
+                        mvp: data.f4,
+                        survival: data.f6
+                    });
+                }
+            } catch (e) {
+                console.error("Update failed:", e);
+            }
+        }
+
+        function play() {
+            if (!isAutoMode) {
+                document.getElementById('wrapper').style.opacity = '1';
+                const card = document.getElementById('card');
+                if (card) {
+                    card.classList.remove('animate-slide-in');
+                    void card.offsetWidth;
+                    card.classList.add('animate-slide-in');
+                }
             }
         }
 
@@ -234,7 +374,7 @@
         }
 
         window.SPXGCTemplateDefinition = {
-            "description": "PUBGM Esports Eliminated Screen (HUD Style)",
+            "description": "PUBGM ESPORT Eliminated Screen - Auto Polling Mode Supported",
             "playserver": "OVERLAY",
             "playchannel": "1",
             "playlayer": "19",
@@ -243,6 +383,7 @@
             "dataformat": "json",
             "uicolor": "2",
             "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Team Name", "value": "TEAM TITANS" },
                 { "field": "f1", "ftype": "textfield", "title": "Logo Asset", "value": "titan" },
                 { "field": "f2", "ftype": "textfield", "title": "Rank", "value": "16" },

@@ -26,42 +26,26 @@
     <style>
         body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
         #wrapper { opacity: 0; transition: opacity 0.5s ease; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .slots-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            width: 1600px;
+        @keyframes fadeInScale {
+            0% { transform: scale(0.95); opacity: 0; filter: blur(10px); }
+            100% { transform: scale(1); opacity: 1; filter: blur(0); }
         }
-        .slot-card {
-            background: rgba(34, 42, 61, 0.85);
-            backdrop-blur: 12px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border-left: 4px solid rgba(255, 255, 255, 0.1);
+        @keyframes slideUpLayer {
+            0% { transform: translateY(40px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
         }
-        .slot-id {
-            background: #ffb690;
-            color: #552100;
-            font-weight: 900;
-            width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            font-style: italic;
+        @keyframes slideUpPlayer {
+            0% { transform: translateY(60px) scale(0.95); opacity: 0; filter: blur(5px); }
+            100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
         }
-        .slot-logo { height: 60px; width: 60px; object-fit: contain; }
-        .slot-name { font-weight: 800; font-size: 20px; color: #dae2fd; text-transform: uppercase; }
-        @keyframes slideInDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slot { animation: slideInDown 0.5s ease-out forwards; opacity: 0; }
+        .animate-fade-in { animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-up { animation: slideUpLayer 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-up-player { animation: slideUpPlayer 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
     </style>
 </head>
 <body class="bg-transparent font-body text-on-surface">
     <div id="wrapper">
-        <div class="mb-10 w-[1600px] border-b-2 border-secondary pb-4 flex items-center justify-between">
+        <div class="mb-[30px] w-[1600px] border-b-2 border-secondary pb-4 flex items-center justify-between z-10 relative">
             <div class="flex items-center gap-4">
                 <span class="material-symbols-outlined text-secondary text-5xl">groups</span>
                 <h1 id="f0" class="text-on-surface font-black text-5xl uppercase italic tracking-tighter">SQUAD LINEUP</h1>
@@ -69,48 +53,237 @@
             <div class="text-secondary font-bold tracking-widest uppercase opacity-60">DAY 02 / MATCH 08</div>
         </div>
 
-        <div id="slots-list" class="slots-grid">
-            <!-- 16 slots will be here -->
+        <div class="relative w-[1600px] h-[780px] overflow-hidden rounded-2xl bg-gradient-to-t from-surface-dim to-transparent border border-white/5 flex items-end justify-center z-0 shadow-2xl">
+            
+            <!-- 4 Players Container -->
+            <div class="absolute bottom-[200px] w-full flex justify-center gap-[40px] items-end h-[550px] z-10 px-10">
+                
+                <!-- P1 -->
+                <div class="player-card relative flex flex-col items-center justify-end h-full animate-slide-up-player" style="animation-delay: 0.1s; width: 340px;">
+                    <img id="p1-img" src="" onerror="this.style.opacity=0" onload="this.style.opacity=1" class="max-h-[500px] h-[500px] object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)] z-10 pb-4" />
+                    <div class="absolute bottom-0 w-[240px] h-[50px] bg-secondary border-l-[6px] border-white/50 text-[#552100] transform skew-x-[-15deg] shadow-xl flex items-center justify-center z-20">
+                        <span id="p1-name" class="transform skew-x-[15deg] font-black uppercase text-xl tracking-widest truncate px-4 text-center w-full">PLAYER 1</span>
+                    </div>
+                </div>
+
+                <!-- P2 -->
+                <div class="player-card relative flex flex-col items-center justify-end h-full animate-slide-up-player" style="animation-delay: 0.2s; width: 340px;">
+                    <img id="p2-img" src="" onerror="this.style.opacity=0" onload="this.style.opacity=1" class="max-h-[500px] h-[500px] object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)] z-10 pb-4" />
+                    <div class="absolute bottom-0 w-[240px] h-[50px] bg-primary border-l-[6px] border-white/50 text-[#0b1326] transform skew-x-[-15deg] shadow-xl flex items-center justify-center z-20">
+                        <span id="p2-name" class="transform skew-x-[15deg] font-black uppercase text-xl tracking-widest truncate px-4 text-center w-full">PLAYER 2</span>
+                    </div>
+                </div>
+
+                <!-- P3 -->
+                <div class="player-card relative flex flex-col items-center justify-end h-full animate-slide-up-player" style="animation-delay: 0.3s; width: 340px;">
+                    <img id="p3-img" src="" onerror="this.style.opacity=0" onload="this.style.opacity=1" class="max-h-[500px] h-[500px] object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)] z-10 pb-4" />
+                    <div class="absolute bottom-0 w-[240px] h-[50px] bg-secondary border-l-[6px] border-white/50 text-[#552100] transform skew-x-[-15deg] shadow-xl flex items-center justify-center z-20">
+                        <span id="p3-name" class="transform skew-x-[15deg] font-black uppercase text-xl tracking-widest truncate px-4 text-center w-full">PLAYER 3</span>
+                    </div>
+                </div>
+
+                <!-- P4 -->
+                <div class="player-card relative flex flex-col items-center justify-end h-full animate-slide-up-player" style="animation-delay: 0.4s; width: 340px;">
+                    <img id="p4-img" src="" onerror="this.style.opacity=0" onload="this.style.opacity=1" class="max-h-[500px] h-[500px] object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)] z-10 pb-4" />
+                    <div class="absolute bottom-0 w-[240px] h-[50px] bg-primary border-l-[6px] border-white/50 text-[#0b1326] transform skew-x-[-15deg] shadow-xl flex items-center justify-center z-20">
+                        <span id="p4-name" class="transform skew-x-[15deg] font-black uppercase text-xl tracking-widest truncate px-4 text-center w-full">PLAYER 4</span>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Lower Third Stats -->
+            <div id="team-display" class="absolute bottom-0 w-full h-[220px] bg-gradient-to-t from-black via-black/80 to-transparent flex items-end justify-between px-16 pb-12 opacity-0 animate-slide-up">
+                
+                <div class="flex items-end gap-10 transform -translate-y-4">
+                    <div class="relative flex items-center justify-center bg-secondary text-[#552100] w-[110px] h-[110px] transform skew-x-[-15deg] shadow-lg shadow-secondary/20 border-l-[6px] border-white/50">
+                        <span id="slot-id" class="text-[55px] font-black italic transform skew-x-[15deg]">1</span>
+                    </div>
+                    <div class="flex flex-col transform tracking-tighter">
+                        <span class="text-secondary font-bold tracking-[8px] text-xl uppercase mb-1 drop-shadow-md">TEAM SPOTLIGHT</span>
+                        <h2 id="team-name" class="text-white font-black text-[70px] uppercase leading-none drop-shadow-2xl">TEAM TITANS</h2>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-center transform -translate-y-4 scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                    <img id="team-logo" src="" class="h-[160px] w-auto object-contain" />
+                </div>
+                
+            </div>
         </div>
     </div>
 
     <script>
+        let currentTeamIndex = 0;
+        let teamsList = [];
+        let cycleInterval = null;
+        let sheetInterval = null;
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                let docIdMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                
+                let csvText = null;
+                let isTeamsTab = false;
+
+                if (docIdMatch) {
+                    let docId = docIdMatch[1];
+                    // Using Google Visualization API to query by Sheet Tab Name directly!
+                    let teamsUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=Teams`;
+                    try {
+                        const res = await fetch(teamsUrl);
+                        const txt = await res.text();
+                        if (!txt.includes('<!DOCTYPE html>') && txt.includes(',')) {
+                            csvText = txt;
+                            isTeamsTab = true;
+                        }
+                    } catch (e) {}
+                }
+
+                if (!csvText) {
+                    if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                    if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+                    
+                    const response = await fetch(cleanUrl);
+                    csvText = await response.text();
+                    if (csvText.includes('<!DOCTYPE html>')) return;
+                }
+
+                const rawLines = csvText.split('\n');
+                if (rawLines.length < 2) return;
+
+                const teams = rawLines.slice(1, 35).map(line => {
+                    const cols = line.split(',').map(s => {
+                        let t = s.trim();
+                        if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
+                        return t;
+                    });
+                    
+                    const teamName = cols[1] || "";
+                    if (!cols[1] || teamName === "" || teamName === "TeamName") return null;
+                    
+                    const slot = parseInt(cols[0]) || 999;
+                    if (slot === 999) return null;
+
+                    let p1 = 'PLAYER 1', p2 = 'PLAYER 2', p3 = 'PLAYER 3', p4 = 'PLAYER 4';
+                    
+                    if (isTeamsTab) {
+                        // Teams sheet mapping (E2..H2 -> indices 4..7)
+                        if (cols[4] && cols[4].trim()) p1 = cols[4].trim();
+                        if (cols[5] && cols[5].trim()) p2 = cols[5].trim();
+                        if (cols[6] && cols[6].trim()) p3 = cols[6].trim();
+                        if (cols[7] && cols[7].trim()) p4 = cols[7].trim();
+                    } else {
+                        // Main sheet fallback (Row indices 33 + slot)
+                        const nameRowIndex = 33 + slot; 
+                        if (nameRowIndex < rawLines.length) {
+                            const nameCols = rawLines[nameRowIndex].split(',').map(s => {
+                                let t = s.trim();
+                                if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
+                                return t;
+                            });
+                            if (nameCols[4] && nameCols[4].trim()) p1 = nameCols[4].trim();
+                            if (nameCols[6] && nameCols[6].trim()) p2 = nameCols[6].trim();
+                            if (nameCols[8] && nameCols[8].trim()) p3 = nameCols[8].trim();
+                            if (nameCols[10] && nameCols[10].trim()) p4 = nameCols[10].trim();
+                        }
+                    }
+
+                    return {
+                        name: teamName,
+                        logo: cols[2] || '',
+                        slot: slot,
+                        p1Name: p1,
+                        p2Name: p2,
+                        p3Name: p3,
+                        p4Name: p4
+                    };
+                }).filter(t => t !== null);
+
+                teamsList = [...teams].sort((a,b) => a.slot - b.slot);
+                if (!cycleInterval && teamsList.length > 0) {
+                    showTeam(teamsList[0]);
+                    cycleInterval = setInterval(nextTeam, 7000); 
+                }
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
+        function nextTeam() {
+            if (teamsList.length === 0) return;
+            currentTeamIndex++;
+            if (currentTeamIndex >= teamsList.length) {
+                currentTeamIndex = 0;
+            }
+            showTeam(teamsList[currentTeamIndex]);
+        }
+
+        function showTeam(team) {
+            const display = document.getElementById('team-display');
+            const players = document.querySelectorAll('.player-card');
+            
+            display.classList.remove('animate-slide-up');
+            players.forEach(p => p.classList.remove('animate-slide-up-player'));
+            
+            void display.offsetWidth; // trigger reflow
+            
+            const slotNum = team.slot || team.id || 1;
+            
+            document.getElementById('slot-id').innerText = slotNum;
+            document.getElementById('team-name').innerText = team.name;
+            
+            let logoPath = team.logo;
+            if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+            if (!logoPath.includes('.')) logoPath += '.png';
+            document.getElementById('team-logo').src = logoPath;
+            
+            document.getElementById('p1-name').innerText = team.p1Name || 'PLAYER 1';
+            document.getElementById('p1-img').style.opacity = 0;
+            document.getElementById('p1-img').src = `teams/${slotNum}/1.png`;
+
+            document.getElementById('p2-name').innerText = team.p2Name || 'PLAYER 2';
+            document.getElementById('p2-img').style.opacity = 0;
+            document.getElementById('p2-img').src = `teams/${slotNum}/2.png`;
+
+            document.getElementById('p3-name').innerText = team.p3Name || 'PLAYER 3';
+            document.getElementById('p3-img').style.opacity = 0;
+            document.getElementById('p3-img').src = `teams/${slotNum}/3.png`;
+
+            document.getElementById('p4-name').innerText = team.p4Name || 'PLAYER 4';
+            document.getElementById('p4-img').style.opacity = 0;
+            document.getElementById('p4-img').src = `teams/${slotNum}/4.png`;
+            
+            display.classList.add('animate-slide-up');
+            players.forEach(p => p.classList.add('animate-slide-up-player'));
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
                 
-                let slots = [];
-                if (data.f1) {
-                    slots = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                if (data.f7 && data.f7.startsWith('http')) {
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 10000); // refresh roster list every 10s
                 } else {
-                    // Static demo slots
-                    const logos = ['titan', 'epic', 'aut', 'gs', 'abn', 'b4', 'epic', 'gs', 'titan', 'aut', 'abn', 'b4', 'titan', 'epic', 'aut', 'gs'];
-                    for(let i=1; i<=16; i++) {
-                        slots.push({ id: i, name: `TEAM ${logos[i-1].toUpperCase()}`, logo: logos[i-1] });
+                    let slots = [];
+                    if (data.f1 && data.f1.length > 5) {
+                        slots = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                    } else {
+                        const logos = ['titan', 'epic', 'aut', 'gs', 'abn'];
+                        for(let i=1; i<=5; i++) {
+                            slots.push({ id: i, name: `TEAM ${logos[i-1].toUpperCase()}`, logo: logos[i-1] });
+                        }
+                    }
+                    teamsList = slots;
+                    if (!cycleInterval && teamsList.length > 0) {
+                        showTeam(teamsList[0]);
+                        cycleInterval = setInterval(nextTeam, 7000); 
                     }
                 }
-
-                const list = document.getElementById('slots-list');
-                list.innerHTML = '';
-                
-                slots.forEach((slot, index) => {
-                    const card = document.createElement('div');
-                    card.className = `slot-card animate-slot`;
-                    card.style.animationDelay = `${index * 0.05}s`;
-                    
-                    let logoPath = slot.logo;
-                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
-                    if (!logoPath.includes('.')) logoPath += '.png';
-
-                    card.innerHTML = `
-                        <div class="slot-id">${slot.id}</div>
-                        <img src="${logoPath}" class="slot-logo" onerror="this.style.opacity=0">
-                        <span class="slot-name">${slot.name}</span>
-                    `;
-                    list.appendChild(card);
-                });
-                
             } catch (e) {
                 console.error("Update failed:", e);
             }
@@ -124,6 +297,7 @@
             "playserver": "OVERLAY", "playchannel": "1", "playlayer": "8", "webplayout": "8",
             "out": "manual", "dataformat": "json", "uicolor": "11",
             "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "SQUAD LINEUP" },
                 { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": "[]" }
             ]

@@ -63,6 +63,11 @@
     .animate-right {
       animation: slideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    ::view-transition-group(*) {
+      animation-duration: 0.6s;
+      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
   </style>
 </head>
 
@@ -121,6 +126,46 @@
 
   <script>
     let sheetInterval = null;
+    let timerInterval = null;
+    let currentSeconds = 0;
+    let timerRunning = false;
+    let lastTimeStr = "";
+
+    function updateTimerDisplay() {
+      if (currentSeconds <= 0) {
+        document.getElementById('f3').innerText = "00:00";
+        return;
+      }
+      const m = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
+      const s = (currentSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('f3').innerText = `${m}:${s}`;
+    }
+
+    function setTimer(timeStr) {
+      if (!timeStr) return;
+      if (timeStr === lastTimeStr) return;
+      
+      const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        lastTimeStr = timeStr;
+        const newSecs = parseInt(match[1]) * 60 + parseInt(match[2]);
+        
+        if (Math.abs(newSecs - currentSeconds) > 3) {
+           currentSeconds = newSecs;
+           timerRunning = true;
+           updateTimerDisplay();
+           
+           if (!timerInterval) {
+             timerInterval = setInterval(() => {
+               if (timerRunning && currentSeconds > 0) {
+                 currentSeconds--;
+                 updateTimerDisplay();
+               }
+             }, 1000);
+           }
+        }
+      }
+    }
 
     async function fetchSheet(url) {
       try {
@@ -160,47 +205,108 @@
 
         document.getElementById('alive-counter').innerText = `ALIVE: ${totalAlive} / ${totalParticipating}`;
         if (rawTime) {
-          const m = rawTime.match(/\d{1,2}:\d{2}/);
-          if (m) document.getElementById('f3').innerText = m[0];
+          setTimer(rawTime);
         }
 
-        renderSeparatedSidebars(allRows);
-      } catch (e) { console.error("Sync Error"); }
+        allRows.sort((a, b) => {
+          const rA = parseInt(a.rank) || 999;
+          const rB = parseInt(b.rank) || 999;
+          if (rA !== rB) return rA - rB;
+          
+          const ptsA = parseInt(a.pts) || 0;
+          const ptsB = parseInt(b.pts) || 0;
+          if (ptsA !== ptsB) return ptsB - ptsA;
+
+          return parseInt(a.slot) - parseInt(b.slot);
+        });
+
+        if (document.startViewTransition) {
+          document.startViewTransition(() => renderSeparatedSidebars(allRows));
+        } else {
+          renderSeparatedSidebars(allRows);
+        }
+      } catch (e) { console.error("Sync Error:", e); }
     }
 
     function renderSeparatedSidebars(rows) {
       const left = document.getElementById('list-left');
       const right = document.getElementById('list-right');
-      left.innerHTML = '';
-      right.innerHTML = '';
+
+      const existingLeft = Array.from(left.children);
+      const existingRight = Array.from(right.children);
+      const nodeMap = new Map();
+      existingLeft.forEach(node => nodeMap.set(node.dataset.id, node));
+      existingRight.forEach(node => nodeMap.set(node.dataset.id, node));
+
+      let leftIndex = 0;
+      let rightIndex = 0;
 
       rows.forEach((row) => {
         const isAlive = row.alive > 0;
         let pips = '';
-        for (let p = 0; p < 4; p++) pips += `<span class="w-1.5 h-3 ${p < row.alive ? 'bg-primary' : (isAlive ? 'bg-primary/10' : 'bg-red-900/40')}"></span>`;
+        for (let p = 0; p < 4; p++) pips += `<span class="w-1.5 h-3 ${p < row.alive ? 'bg-primary' : (isAlive ? 'bg-primary/10' : 'bg-red-900/40')} transition-colors duration-300"></span>`;
 
-        const html = `
-          <div class="px-4 py-2.5 flex items-center justify-between ${isAlive ? 'bg-white/5 border-l-2 border-primary' : 'bg-red-900/10 opacity-70 border-r-2 border-red-800'}">
+        const displayId = (row.rank && row.rank !== '') ? row.rank : row.slot;
+        const rankColor = isAlive ? 'text-primary' : 'text-red-500/60';
+        const ptsColor = isAlive ? 'text-on-surface' : 'text-red-500/80';
+        const nameColor = isAlive ? 'text-on-surface' : 'text-red-100/50';
+
+        const className = `grid grid-cols-[30px_1fr_36px] items-center px-4 py-2 mb-[2px] transition-all duration-500 ${isAlive ? 'bg-white/5 border-l-2 border-primary' : 'bg-red-900/10 border-r-2 border-red-800'}`;
+
+        const innerContent = `
+            <div class="${rankColor} font-black text-xs italic transition-colors duration-300">#${displayId}</div>
             <div class="flex items-center gap-3">
-              <span class="text-[10px] font-black italic ${isAlive ? 'text-primary' : 'text-red-500'}">#${row.rank || row.slot}</span>
-              <div class="flex flex-col">
-                  <span class="text-[11px] font-black tracking-widest truncate w-24 leading-none uppercase">${row.name}</span>
-                  <div class="flex gap-0.5 mt-1">${pips}</div>
+              <img class="w-6 h-6 object-contain transition-opacity duration-300" src="team_logos/${row.logo}.png" onerror="this.style.opacity=${isAlive ? 1 : 0.4}">
+              <div class="flex flex-col gap-0">
+                <span class="text-[11px] font-black uppercase ${nameColor} tracking-tighter leading-none transition-colors duration-300 truncate w-[90px]">${row.name}</span>
+                <div class="flex gap-1 mt-1">${pips}</div>
               </div>
             </div>
-            <span class="text-sm font-black italic text-on-surface">${row.pts}</span>
-          </div>`;
+            <div class="text-right text-sm tabular-nums font-black ${ptsColor} transition-colors duration-300">${row.pts}</div>
+        `;
 
-        if (isAlive) left.innerHTML += html;
-        else right.innerHTML += html;
+        const safeId = (row.name || '').replace(/[^a-zA-Z0-9]/g, '_') + '_' + row.slot;
+        let node = nodeMap.get(safeId);
+
+        if (!node) {
+          node = document.createElement('div');
+          node.dataset.id = safeId;
+          node.style.viewTransitionName = `team_${safeId}`;
+          node.className = className;
+          node.innerHTML = innerContent;
+        } else {
+          const oldPts = node.dataset.pts;
+          if (oldPts && oldPts !== row.pts.toString()) {
+            if (isAlive) {
+              node.classList.add('bg-white/20');
+              setTimeout(() => node.classList.remove('bg-white/20'), 600);
+            }
+          }
+          if (node.innerHTML !== innerContent) node.innerHTML = innerContent;
+          if (node.className !== className) node.className = className;
+          nodeMap.delete(safeId);
+        }
+        node.dataset.pts = row.pts;
+
+        const targetContainer = isAlive ? left : right;
+        const targetIndex = isAlive ? leftIndex : rightIndex;
+
+        if (targetContainer.children[targetIndex] !== node) {
+          targetContainer.insertBefore(node, targetContainer.children[targetIndex]);
+        }
+
+        if (isAlive) leftIndex++;
+        else rightIndex++;
       });
+
+      nodeMap.forEach(node => node.remove());
     }
 
     function update(rawData) {
       const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
       if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
       if (data.f1) document.getElementById('f1').innerText = data.f1.toUpperCase();
-      if (data.f3 && !data.f5) document.getElementById('f3').innerText = data.f3;
+      if (data.f3 && !data.f5) setTimer(data.f3);
 
       if (data.f5 && data.f5.startsWith('http')) {
         if (sheetInterval) clearInterval(sheetInterval);

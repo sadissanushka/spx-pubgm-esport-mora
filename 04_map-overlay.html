@@ -103,6 +103,10 @@
                     <span class="stat-label">NEXT CIRCLE</span>
                     <span id="f4" class="stat-value">01:45</span>
                 </div>
+                <div class="stat-line">
+                    <span class="stat-label">CLOSING IN</span>
+                    <span id="f5" class="stat-value text-secondary">-</span>
+                </div>
             </div>
             <!-- Accents -->
             <div class="flex">
@@ -113,6 +117,79 @@
     </div>
 
     <script>
+        let sheetInterval = null;
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csv = await response.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+                
+                const rawLines = csv.split('\n');
+                if (rawLines.length < 2) return;
+
+                let playersAlive = 0;
+                let teamsAlive = 0;
+
+                rawLines.slice(2, 30).forEach(line => {
+                    const cols = line.split(',');
+                    const teamName = cols[1]?.trim() || "";
+                    if (!cols[1] || teamName === "" || teamName === "TeamName") return;
+                    
+                    const p1 = cols[4]?.trim().toUpperCase() === 'TRUE';
+                    const p2 = cols[5]?.trim().toUpperCase() === 'TRUE';
+                    const p3 = cols[6]?.trim().toUpperCase() === 'TRUE';
+                    const p4 = cols[7]?.trim().toUpperCase() === 'TRUE';
+                    
+                    const aliveCount = (p1?1:0) + (p2?1:0) + (p3?1:0) + (p4?1:0);
+                    if (aliveCount > 0) {
+                        teamsAlive++;
+                        playersAlive += aliveCount;
+                    }
+                });
+
+                const countEl1 = document.getElementById('f1');
+                const countEl2 = document.getElementById('f2');
+                if (playersAlive > 0) countEl1.innerText = (playersAlive < 10 ? '0' : '') + playersAlive;
+                if (teamsAlive > 0) countEl2.innerText = (teamsAlive < 10 ? '0' : '') + teamsAlive;
+
+                // Headers logic (Zone Phase, Times)
+                const headers = rawLines[0].split(',');
+                if (headers.length > 8 && headers[8]) {
+                    const phaseStr = headers[8].trim();
+                    if (phaseStr) document.getElementById('f3').innerText = phaseStr;
+                }
+                if (headers.length > 10 && headers[10]) {
+                    const nextStr = headers[10].trim();
+                    if (nextStr) document.getElementById('f4').innerText = nextStr;
+                }
+                if (headers.length > 11 && headers[11]) {
+                    const closeStr = headers[11].trim();
+                    document.getElementById('f5').innerText = closeStr !== '' ? closeStr : '-';
+                }
+
+                // Row 32 -> Index 31 (Maps)
+                // Row 33 -> Index 32 (Selected Map Index in B33 / Index 1)
+                if (rawLines.length > 32) {
+                    const selectRow = rawLines[32].split(',');
+                    const b33Value = parseInt(selectRow[1]?.trim());
+                    if (!isNaN(b33Value) && b33Value >= 1 && b33Value <= 7) {
+                        const mapsRow = rawLines[31].split(',');
+                        const mapName = mapsRow[b33Value]?.trim();
+                        if (mapName) {
+                             document.getElementById('f0').innerText = mapName.toUpperCase();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
@@ -121,6 +198,13 @@
                 if (data.f2) document.getElementById('f2').innerText = data.f2;
                 if (data.f3) document.getElementById('f3').innerText = data.f3;
                 if (data.f4) document.getElementById('f4').innerText = data.f4;
+                if (data.f5) document.getElementById('f5').innerText = data.f5;
+                
+                if (data.f7 && data.f7.startsWith('http')) {
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 3500);
+                }
             } catch (e) {
                 console.error("Update failed:", e);
             }
@@ -144,11 +228,13 @@
             "dataformat": "json",
             "uicolor": "7",
             "DataFields": [
-                { "field": "f0", "ftype": "textfield", "title": "Map Name", "value": "ERANGEL" },
-                { "field": "f1", "ftype": "textfield", "title": "Players Alive", "value": "64" },
-                { "field": "f2", "ftype": "textfield", "title": "Teams Alive", "value": "16" },
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
+                { "field": "f0", "ftype": "textfield", "title": "Map Name (Manual Overide)", "value": "ERANGEL" },
+                { "field": "f1", "ftype": "textfield", "title": "Players Alive (Manual Override)", "value": "64" },
+                { "field": "f2", "ftype": "textfield", "title": "Teams Alive (Manual Override)", "value": "16" },
                 { "field": "f3", "ftype": "textfield", "title": "Phase", "value": "04" },
-                { "field": "f4", "ftype": "textfield", "title": "Zone Time", "value": "01:45" }
+                { "field": "f4", "ftype": "textfield", "title": "Zone Time", "value": "01:45" },
+                { "field": "f5", "ftype": "textfield", "title": "Closing Time", "value": "-" }
             ]
         };
     </script>

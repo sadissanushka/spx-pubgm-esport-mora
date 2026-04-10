@@ -47,6 +47,11 @@
     .animate-in {
       animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    ::view-transition-group(*) {
+      animation-duration: 0.6s;
+      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
   </style>
 </head>
 
@@ -87,6 +92,46 @@
 
   <script>
     let sheetInterval = null;
+    let timerInterval = null;
+    let currentSeconds = 0;
+    let timerRunning = false;
+    let lastTimeStr = "";
+
+    function updateTimerDisplay() {
+      if (currentSeconds <= 0) {
+        document.getElementById('f3').innerText = "00:00";
+        return;
+      }
+      const m = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
+      const s = (currentSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('f3').innerText = `${m}:${s}`;
+    }
+
+    function setTimer(timeStr) {
+      if (!timeStr) return;
+      if (timeStr === lastTimeStr) return;
+      
+      const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        lastTimeStr = timeStr;
+        const newSecs = parseInt(match[1]) * 60 + parseInt(match[2]);
+        
+        if (Math.abs(newSecs - currentSeconds) > 3) {
+           currentSeconds = newSecs;
+           timerRunning = true;
+           updateTimerDisplay();
+           
+           if (!timerInterval) {
+             timerInterval = setInterval(() => {
+               if (timerRunning && currentSeconds > 0) {
+                 currentSeconds--;
+                 updateTimerDisplay();
+               }
+             }, 1000);
+           }
+        }
+      }
+    }
 
     async function fetchSheet(url) {
       try {
@@ -135,66 +180,109 @@
         document.getElementById('alive-counter').innerText = `ALIVE: ${totalAlive}/${totalParticipating}`;
 
         if (rawTime) {
-          const timeMatch = rawTime.match(/\d{1,2}:\d{2}/);
-          if (timeMatch) document.getElementById('f3').innerText = timeMatch[0];
+          setTimer(rawTime);
         }
 
-        // SEPARATION LOGIC
-        const aliveTeams = allParsedRows.filter(r => r.isAlive);
-        aliveTeams.sort((a, b) => {
-          const rA = parseInt(a.rank) || 999;
-          const rB = parseInt(b.rank) || 999;
-          if (rA !== rB) return rA - rB;
-          return parseInt(a.slot) - parseInt(b.slot);
-        });
+        const runUpdates = () => {
+          // SEPARATION LOGIC
+          const aliveTeams = allParsedRows.filter(r => r.isAlive);
+          aliveTeams.sort((a, b) => {
+            const rA = parseInt(a.rank) || 999;
+            const rB = parseInt(b.rank) || 999;
+            if (rA !== rB) return rA - rB;
+            
+            const ptsA = parseInt(a.pts) || 0;
+            const ptsB = parseInt(b.pts) || 0;
+            if (ptsA !== ptsB) return ptsB - ptsA;
 
-        const deadTeams = allParsedRows.filter(r => !r.isAlive);
-        deadTeams.sort((a, b) => b.pts - a.pts); // Highest score first
+            return parseInt(a.slot) - parseInt(b.slot);
+          });
 
-        // COMBINE: Fill gaps with dead teams
-        let finalRows = [...aliveTeams];
-        if (finalRows.length < 10) {
-          const needed = 10 - finalRows.length;
-          finalRows = finalRows.concat(deadTeams.slice(0, needed));
+          const deadTeams = allParsedRows.filter(r => !r.isAlive);
+          deadTeams.sort((a, b) => b.pts - a.pts); // Highest score first
+
+          // COMBINE: Fill gaps with dead teams
+          let finalRows = [...aliveTeams];
+          if (finalRows.length < 10) {
+            const needed = 10 - finalRows.length;
+            finalRows = finalRows.concat(deadTeams.slice(0, needed));
+          }
+
+          renderRows(finalRows.slice(0, 10));
+        };
+
+        if (document.startViewTransition) {
+          document.startViewTransition(() => runUpdates());
+        } else {
+          runUpdates();
         }
-
-        renderRows(finalRows.slice(0, 10));
-      } catch (e) { console.error("Sync Error"); }
+      } catch (e) { console.error("Sync Error:", e); }
     }
 
     function renderRows(rows) {
       const container = document.getElementById('leaderboard-rows');
-      container.innerHTML = '';
+      const existingNodes = Array.from(container.children);
+      const nodeMap = new Map();
+      existingNodes.forEach(node => nodeMap.set(node.dataset.id, node));
+
       rows.forEach((row, i) => {
         let pips = '';
-        row.players.forEach(alive => pips += `<div class="w-1.5 h-1.5 ${alive ? 'bg-primary' : 'bg-white/10'}"></div>`);
+        row.players.forEach(alive => pips += `<div class="w-1.5 h-1.5 ${alive ? 'bg-primary' : 'bg-white/10'} transition-colors duration-300"></div>`);
         const displayId = (row.rank && row.rank !== '') ? row.rank : row.slot;
 
         // Use Secondary color (Orange) for dead teams
         const borderColor = row.isAlive ? (i == 0 ? 'border-primary' : 'border-primary/30') : 'border-secondary/40';
         const rankColor = row.isAlive ? 'text-primary' : 'text-secondary/60';
         const ptsColor = row.isAlive ? 'text-secondary font-black' : 'text-secondary/50 font-bold';
-
-        container.innerHTML += `
-          <div class="hud-glass grid grid-cols-[40px_1fr_48px] items-center px-4 py-3 border-l-2 ${borderColor} border-b border-white/5">
-            <div class="${rankColor} font-black text-xs italic">#${displayId}</div>
+        
+        const safeId = (row.name || '').replace(/[^a-zA-Z0-9]/g, '_') + '_' + row.slot;
+        let node = nodeMap.get(safeId);
+        
+        const innerContent = `
+            <div class="${rankColor} font-black text-xs italic transition-colors duration-300">#${displayId}</div>
             <div class="flex items-center gap-3">
-              <img class="w-6 h-6 object-contain" src="team_logos/${row.logo}.png" onerror="this.style.opacity=${row.isAlive ? 1 : 0.4}">
+              <img class="w-6 h-6 object-contain transition-opacity duration-300" src="team_logos/${row.logo}.png" onerror="this.style.opacity=${row.isAlive ? 1 : 0.4}">
               <div class="flex flex-col gap-0">
-                <span class="text-[11px] font-black uppercase ${row.isAlive ? 'text-on-surface' : 'text-gray-500'} tracking-tighter leading-none">${row.name}</span>
+                <span class="text-[11px] font-black uppercase ${row.isAlive ? 'text-on-surface' : 'text-gray-500'} tracking-tighter leading-none transition-colors duration-300">${row.name}</span>
                 <div class="flex gap-1 mt-1">${pips}</div>
               </div>
             </div>
-            <div class="text-right text-sm tabular-nums ${ptsColor}">${row.pts}</div>
-          </div>`;
+            <div class="text-right text-sm tabular-nums ${ptsColor} transition-colors duration-300">${row.pts}</div>
+        `;
+
+        const className = `hud-glass grid grid-cols-[40px_1fr_48px] items-center px-4 py-3 border-l-2 ${borderColor} border-b border-white/5 transition-all duration-500`;
+
+        if (!node) {
+          node = document.createElement('div');
+          node.dataset.id = safeId;
+          node.style.viewTransitionName = `team_${safeId}`;
+          node.className = className;
+          node.innerHTML = innerContent;
+        } else {
+          const oldPts = node.dataset.pts;
+          if (oldPts && oldPts !== row.pts.toString()) {
+            node.classList.add('bg-white/10');
+            setTimeout(() => node.classList.remove('bg-white/10'), 600);
+          }
+          if (node.innerHTML !== innerContent) node.innerHTML = innerContent;
+          if (node.className !== className) node.className = className;
+          nodeMap.delete(safeId);
+        }
+        node.dataset.pts = row.pts;
+
+        if (container.children[i] !== node) {
+          container.insertBefore(node, container.children[i]);
+        }
       });
+
+      nodeMap.forEach(node => node.remove());
     }
 
     function update(rawData) {
       const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
       if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
       if (data.f1) document.getElementById('f1').innerText = data.f1.toUpperCase();
-      if (data.f3 && !data.f5) document.getElementById('f3').innerText = data.f3;
+      if (data.f3 && !data.f5) setTimer(data.f3);
 
       if (data.f5 && data.f5.startsWith('http')) {
         if (sheetInterval) clearInterval(sheetInterval);

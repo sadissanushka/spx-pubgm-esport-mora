@@ -111,6 +111,27 @@
         .animate-zoom-in {
             animation: zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        @keyframes shine {
+            0% { transform: translateX(-150%) skewX(-15deg); }
+            50% { transform: translateX(250%) skewX(-15deg); }
+            100% { transform: translateX(250%) skewX(-15deg); }
+        }
+        .shine-element::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 40%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(236,106,6,0.3), transparent);
+            transform: skewX(-15deg); animation: shine 3s infinite; pointer-events: none; z-index: 20;
+        }
+        @keyframes winnerPulse {
+            0% { box-shadow: 0 0 20px rgba(236,106,6,0.2); }
+            50% { box-shadow: 0 0 100px rgba(236,106,6,0.8); }
+            100% { box-shadow: 0 0 20px rgba(236,106,6,0.2); }
+        }
+        .winner-pulse { animation: winnerPulse 2s infinite; }
+        @keyframes fall {
+            0% { transform: translateY(-20vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti { position: absolute; z-index: 0; pointer-events: none; }
     </style>
 </head>
 <body class="bg-transparent font-body text-on-surface">
@@ -149,29 +170,120 @@
     </div>
 
     <script>
+        let sheetInterval = null;
+        let isAutoMode = false;
+        let hasTriggeredWinner = false;
+
+        function createConfetti() {
+            const colors = ['#ec6a06', '#adc6ff', '#ffffff', '#ffb690'];
+            for (let i = 0; i < 150; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.width = Math.random() * 12 + 6 + 'px';
+                conf.style.height = Math.random() * 24 + 12 + 'px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-50px';
+                conf.style.opacity = Math.random() + 0.5;
+                const duration = Math.random() * 3 + 2;
+                const delay = Math.random() * 2;
+                conf.style.animation = `fall ${duration}s linear ${delay}s infinite`;
+                document.body.appendChild(conf);
+            }
+        }
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csv = await response.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+
+                const lines = csv.split('\n').filter(l => l.trim().includes(','));
+                if (lines.length < 2) return;
+
+                const teams = lines.slice(2).map(line => {
+                    const cols = line.split(',');
+                    if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                    const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+                    return {
+                        name: cols[1].trim(),
+                        logo: cols[2]?.trim() || '',
+                        kills: parseInt(cols[8]?.trim()) || 0,
+                        rank: parseInt(cols[9]?.trim()) || 999,
+                        total: parseInt(cols[10]?.trim()) || 0,
+                        isAlive: pips > 0
+                    };
+                }).filter(t => t !== null);
+
+                // Auto detection logic: Only trigger if exactly 1 team standing
+                const alive = teams.filter(t => t.isAlive);
+                if (alive.length === 1 && !hasTriggeredWinner) {
+                    hasTriggeredWinner = true;
+                    showWinner(alive[0]);
+                }
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
+        function showWinner(winner) {
+            document.getElementById('f0').innerText = winner.name.toUpperCase();
+            let path = winner.logo;
+            if (!path.includes('/')) path = 'team_logos/' + path;
+            if (!path.includes('.')) path += '.png';
+            document.getElementById('f1').src = path;
+            document.getElementById('f2').innerText = winner.kills;
+            document.getElementById('f3').innerText = winner.total;
+
+            const card = document.getElementById('card');
+            card.className = "main-winner-card winner-pulse shine-element";
+            void card.offsetWidth;
+            card.classList.add('animate-zoom-in');
+
+            createConfetti();
+            document.getElementById('wrapper').style.opacity = '1';
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
-                if (data.f1) {
-                    let path = data.f1;
-                    if (!path.includes('/')) path = 'team_logos/' + path;
-                    if (!path.includes('.')) path += '.png';
-                    document.getElementById('f1').src = path;
+                
+                if (data.f7 && data.f7.startsWith('http')) {
+                    isAutoMode = true;
+                    document.getElementById('wrapper').style.opacity = '0';
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 3500); // Poll faster 3.5s
+                } else {
+                    isAutoMode = false;
+                    if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                    if (data.f1) {
+                        let path = data.f1;
+                        if (!path.includes('/')) path = 'team_logos/' + path;
+                        if (!path.includes('.')) path += '.png';
+                        document.getElementById('f1').src = path;
+                    }
+                    if (data.f2) document.getElementById('f2').innerText = data.f2;
+                    if (data.f3) document.getElementById('f3').innerText = data.f3;
                 }
-                if (data.f2) document.getElementById('f2').innerText = data.f2;
-                if (data.f3) document.getElementById('f3').innerText = data.f3;
             } catch (e) {
                 console.error("Update failed:", e);
             }
         }
 
         function play() {
-            document.getElementById('wrapper').style.opacity = '1';
-            const card = document.getElementById('card');
-            card.classList.remove('animate-zoom-in');
-            void card.offsetWidth;
-            card.classList.add('animate-zoom-in');
+            if (!isAutoMode) {
+                const card = document.getElementById('card');
+                card.className = "main-winner-card winner-pulse shine-element";
+                void card.offsetWidth;
+                card.classList.add('animate-zoom-in');
+                createConfetti();
+                document.getElementById('wrapper').style.opacity = '1';
+            }
         }
 
         function stop() {
@@ -188,6 +300,7 @@
             "dataformat": "json",
             "uicolor": "5",
             "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Team Name", "value": "TEAM TITANS" },
                 { "field": "f1", "ftype": "textfield", "title": "Logo Asset", "value": "titan" },
                 { "field": "f2", "ftype": "textfield", "title": "Kills", "value": "18" },

@@ -49,17 +49,17 @@
             backdrop-blur: 16px;
             color: #dae2fd;
             font-weight: 700;
-            padding: 15px 0;
+            padding: 10px 0;
             border-left: 4px solid transparent;
         }
         .data-row:nth-child(even) { background: rgba(23, 31, 51, 0.85); }
         .data-row.winner { border-left-color: #ffb690; background: rgba(45, 52, 73, 0.95); }
-        .rank-cell { text-align: center; font-size: 24px; color: #ffb690; }
+        .rank-cell { text-align: center; font-size: 22px; color: #ffb690; }
         .logo-cell { display: flex; justify-content: center; align-items: center; }
-        .logo-cell img { height: 40px; width: 40px; object-fit: contain; }
-        .name-cell { padding-left: 20px; text-transform: uppercase; font-size: 20px; letter-spacing: 1px; }
+        .logo-cell img { height: 30px; width: 40px; object-fit: contain; }
+        .name-cell { padding-left: 20px; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
         .stat-cell { text-align: center; font-size: 20px; }
-        .total-cell { color: #adc6ff; font-weight: 900; font-size: 24px; }
+        .total-cell { color: #adc6ff; font-weight: 900; font-size: 22px; }
     </style>
 </head>
 <body class="bg-transparent font-body">
@@ -89,48 +89,142 @@
     </div>
 
     <script>
+        let sheetInterval = null;
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csv = await response.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+
+                const lines = csv.split('\n').filter(l => l.trim().includes(','));
+                if (lines.length < 2) return;
+
+                const teams = lines.slice(2).map(line => {
+                    const cols = line.split(',');
+                    if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                    return {
+                        name: cols[1].trim(),
+                        logo: cols[2]?.trim() || '',
+                        kills: parseInt(cols[8]?.trim()) || 0,
+                        rank: parseInt(cols[9]?.trim()) || 999,
+                        total: parseInt(cols[10]?.trim()) || 0,
+                        slot: parseInt(cols[0]?.trim()) || 999
+                    };
+                }).filter(t => t !== null);
+
+                processTeams(teams);
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
+        function processTeams(teams) {
+            // Sort by Rank > Points > Slot
+            let sorted = [...teams].sort((a,b) => {
+                if (a.rank !== b.rank) return a.rank - b.rank;
+                if (a.total !== b.total) return b.total - a.total;
+                return a.slot - b.slot;
+            });
+            
+            const body = document.getElementById('table-body');
+            const targetCount = Math.min(16, sorted.length);
+            
+            while (body.children.length < targetCount) {
+                body.appendChild(document.createElement('div'));
+            }
+            while (body.children.length > targetCount) {
+                body.removeChild(body.lastChild);
+            }
+            
+            sorted.slice(0, targetCount).forEach((team, index) => {
+                const row = body.children[index];
+                const newClass = `table-row data-row ${team.rank === 1 ? 'winner' : ''}`;
+                if (row.className !== newClass) row.className = newClass;
+                
+                let logoPath = team.logo;
+                if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                if (!logoPath.includes('.')) logoPath += '.png';
+
+                let placePts = team.total - team.kills;
+                if (placePts < 0) placePts = 0;
+
+                const newHTML = `
+                    <div class="rank-cell">#${team.rank === 999 ? '-' : team.rank}</div>
+                    <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
+                    <div class="name-cell">${team.name}</div>
+                    <div class="stat-cell">${placePts}</div>
+                    <div class="stat-cell">${team.kills}</div>
+                    <div class="stat-cell total-cell">${team.total}</div>
+                `;
+                
+                if (row.innerHTML !== newHTML) {
+                    row.innerHTML = newHTML;
+                }
+            });
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
                 if (data.f2) document.getElementById('f2').innerText = data.f2.toUpperCase();
                 
-                let teams = [];
-                if (data.f1) {
-                    teams = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                if (data.f7 && data.f7.startsWith('http')) {
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 5000);
                 } else {
-                    // Placeholder
-                    teams = [
-                        {"rank":1,"logo":"titan","name":"TEAM TITANS","place":15,"kills":18,"total":33},
-                        {"rank":2,"logo":"epic","name":"EPIC ESPORTS","place":12,"kills":6,"total":18},
-                        {"rank":3,"logo":"aut","name":"ALPHA UT","place":10,"kills":8,"total":18},
-                        {"rank":4,"logo":"gs","name":"GLOBAL STARS","place":8,"kills":7,"total":15},
-                        {"rank":5,"logo":"abn","name":"ABN OFFICIAL","place":6,"kills":5,"total":11}
-                    ];
-                }
+                    let teams = [];
+                    if (data.f1) {
+                        teams = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                    } else {
+                        teams = [
+                            {"rank":1,"logo":"titan","name":"TEAM TITANS","place":15,"kills":18,"total":33},
+                            {"rank":2,"logo":"epic","name":"EPIC ESPORTS","place":12,"kills":6,"total":18},
+                            {"rank":3,"logo":"aut","name":"ALPHA UT","place":10,"kills":8,"total":18},
+                            {"rank":4,"logo":"gs","name":"GLOBAL STARS","place":8,"kills":7,"total":15},
+                            {"rank":5,"logo":"abn","name":"ABN OFFICIAL","place":6,"kills":5,"total":11}
+                        ];
+                    }
 
-                const body = document.getElementById('table-body');
-                body.innerHTML = '';
-                
-                teams.forEach((team, index) => {
-                    const row = document.createElement('div');
-                    row.className = `table-row data-row ${team.rank === 1 ? 'winner' : ''}`;
+                    const body = document.getElementById('table-body');
+                    const targetCount = teams.length;
                     
-                    let logoPath = team.logo;
-                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
-                    if (!logoPath.includes('.')) logoPath += '.png';
+                    while (body.children.length < targetCount) {
+                        body.appendChild(document.createElement('div'));
+                    }
+                    while (body.children.length > targetCount) {
+                        body.removeChild(body.lastChild);
+                    }
+                    
+                    teams.forEach((team, index) => {
+                        const row = body.children[index];
+                        const newClass = `table-row data-row ${team.rank === 1 ? 'winner' : ''}`;
+                        if (row.className !== newClass) row.className = newClass;
+                        
+                        let logoPath = team.logo;
+                        if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                        if (!logoPath.includes('.')) logoPath += '.png';
 
-                    row.innerHTML = `
-                        <div class="rank-cell">#${team.rank}</div>
-                        <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
-                        <div class="name-cell">${team.name}</div>
-                        <div class="stat-cell">${team.place}</div>
-                        <div class="stat-cell">${team.kills}</div>
-                        <div class="stat-cell total-cell">${team.total}</div>
-                    `;
-                    body.appendChild(row);
-                });
-                
+                        const newHTML = `
+                            <div class="rank-cell">#${team.rank}</div>
+                            <div class="logo-cell"><img src="${logoPath}" onerror="this.style.opacity=0"></div>
+                            <div class="name-cell">${team.name}</div>
+                            <div class="stat-cell">${team.place}</div>
+                            <div class="stat-cell">${team.kills}</div>
+                            <div class="stat-cell total-cell">${team.total}</div>
+                        `;
+                        
+                        if (row.innerHTML !== newHTML) {
+                            row.innerHTML = newHTML;
+                        }
+                    });
+                }
             } catch (e) {
                 console.error("Update failed:", e);
             }
@@ -144,6 +238,7 @@
             "playserver": "OVERLAY", "playchannel": "1", "playlayer": "13", "webplayout": "13",
             "out": "manual", "dataformat": "json", "uicolor": "10",
             "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "MATCH RESULT" },
                 { "field": "f2", "ftype": "textfield", "title": "Subheading", "value": "MATCH 08 / DAY 02" },
                 { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": '[{"rank":1,"logo":"titan","name":"TEAM TITANS","place":15,"kills":18,"total":33}]' }

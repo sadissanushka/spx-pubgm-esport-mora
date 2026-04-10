@@ -101,10 +101,10 @@
                     <div class="mt-auto border-t border-white/10 pt-6">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">MATCH PROGRESS</span>
-                            <span class="text-xs font-bold text-secondary">75%</span>
+                            <span id="progress-text" class="text-xs font-bold text-secondary">0%</span>
                         </div>
                         <div class="w-full h-1 bg-white/10">
-                            <div class="w-3/4 h-full bg-secondary"></div>
+                            <div id="progress-bar" class="w-0 h-full bg-secondary transition-all duration-1000"></div>
                         </div>
                     </div>
                 </div>
@@ -113,17 +113,105 @@
     </div>
 
     <script>
+        let sheetInterval = null;
+        let progressInterval = null;
+        let matchStartTimeObj = null;
+        const FULL_MATCH_SECONDS = 1920; // Approx 32 mins normal PUBG match duration
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csv = await response.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+
+                const rawLines = csv.split('\n');
+                if (rawLines.length < 1) return;
+
+                const headerCols = rawLines[0].split(',');
+                if (headerCols.length > 9) {
+                     setStartTime(headerCols[9]); // J1 cell
+                }
+
+                if (rawLines.length > 32) {
+                    const selectRow = rawLines[32].split(',');
+                    const b33Value = parseInt(selectRow[1]?.trim());
+                    if (!isNaN(b33Value) && b33Value >= 1 && b33Value <= 7) {
+                        const mapsRow = rawLines[31].split(',');
+                        const mapName = mapsRow[b33Value]?.trim();
+                        if (mapName) {
+                            const nameStr = mapName.toUpperCase();
+                            document.getElementById('f1').innerText = nameStr;
+                            document.getElementById('map-asset').src = `images/maps/${nameStr.toLowerCase()}.jpeg`;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
+        function setStartTime(j1Value) {
+            if (!j1Value || j1Value.trim() === '') return;
+            let timeStr = j1Value.trim();
+            let isPM = timeStr.toUpperCase().includes('PM');
+            let isAM = timeStr.toUpperCase().includes('AM');
+            
+            timeStr = timeStr.replace(/[A-Za-z]/g, '').trim();
+            let parts = timeStr.split(':');
+            let hours = parseInt(parts[0]) || 0;
+            let minutes = parseInt(parts[1]) || 0;
+            let seconds = parseInt(parts[2]) || 0;
+
+            if (isPM && hours < 12) hours += 12;
+            if (isAM && hours === 12) hours = 0;
+
+            let now = new Date();
+            let st = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+            if (st.getTime() > now.getTime() + 60000) {
+                 st.setDate(st.getDate() - 1); 
+            }
+            matchStartTimeObj = st;
+        }
+
+        function updateProgress() {
+            if (!matchStartTimeObj) return;
+            const now = new Date();
+            let elapsedSec = Math.floor((now - matchStartTimeObj) / 1000);
+            if (elapsedSec < 0) elapsedSec = 0;
+            
+            let percent = (elapsedSec / FULL_MATCH_SECONDS) * 100;
+            if (percent > 100) percent = 100;
+            
+            const pctStr = Math.floor(percent) + '%';
+            document.getElementById('progress-text').innerText = pctStr;
+            document.getElementById('progress-bar').style.width = pctStr;
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
-                if (data.f1) {
-                    const mapName = data.f1.toUpperCase();
-                    document.getElementById('f1').innerText = mapName;
-                    // Auto-load map image
-                    let m = mapName.toLowerCase();
-                    document.getElementById('map-asset').src = `images/maps/${m}.jpeg`;
+                
+                if (data.f7 && data.f7.startsWith('http')) {
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    if (progressInterval) clearInterval(progressInterval);
+                    
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 10000);
+                    progressInterval = setInterval(updateProgress, 1000);
+                } else {
+                    if (data.f1) {
+                        const mapName = data.f1.toUpperCase();
+                        document.getElementById('f1').innerText = mapName;
+                        let m = mapName.toLowerCase();
+                        document.getElementById('map-asset').src = `images/maps/${m}.jpeg`;
+                    }
                 }
+                
                 if (data.f2) document.getElementById('f2').innerText = data.f2.toUpperCase();
                 if (data.f3) document.getElementById('f3').innerText = data.f3.toUpperCase();
             } catch (e) {
@@ -149,8 +237,9 @@
             "dataformat": "json",
             "uicolor": "9",
             "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
                 { "field": "f0", "ftype": "textfield", "title": "Heading", "value": "MAP OVERVIEW" },
-                { "field": "f1", "ftype": "textfield", "title": "Map Name", "value": "ERANGEL" },
+                { "field": "f1", "ftype": "textfield", "title": "Map Name (Manual Override)", "value": "ERANGEL" },
                 { "field": "f2", "ftype": "textfield", "title": "Weather", "value": "Clear Sky" },
                 { "field": "f3", "ftype": "textfield", "title": "Special Status", "value": "Active" }
             ]
