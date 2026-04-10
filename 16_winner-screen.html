@@ -7,23 +7,67 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#adc6ff",
-                        "secondary": "#ffb690",
-                        "surface-dim": "#0b1326",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#222a3d",
                         "surface-container": "#171f33",
-                        "on-surface": "#dae2fd",
-                        "secondary-container": "#ec6a06",
+                        "outline": "#8c909f",
+                        "secondary": "#ffb690",
+                        "on-tertiary-fixed": "#191c1e",
                         "on-secondary-container": "#4a1c00",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-dim": "#0b1326",
+                        "on-error": "#690005",
+                        "on-background": "#dae2fd",
+                        "secondary-fixed-dim": "#ffb690",
+                        "on-secondary": "#552100",
+                        "tertiary": "#c4c7c9",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#ec6a06",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary": "#2d3133",
+                        "on-primary-container": "#00285d",
+                        "inverse-surface": "#dae2fd",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#060e20",
+                        "on-secondary-fixed-variant": "#783200",
+                        "surface-tint": "#adc6ff",
+                        "on-primary-fixed-variant": "#004395",
+                        "inverse-on-surface": "#283044",
+                        "on-primary": "#002e6a",
+                        "surface": "#0b1326",
+                        "outline-variant": "#424754",
+                        "surface-variant": "#2d3449",
+                        "tertiary-container": "#8e9193",
+                        "surface-container-low": "#131b2e",
+                        "primary-container": "#4d8eff",
+                        "inverse-primary": "#005ac2",
+                        "surface-bright": "#31394d",
+                        "on-primary-fixed": "#001a42",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "secondary-fixed": "#ffdbca",
+                        "primary": "#adc6ff",
+                        "on-secondary-fixed": "#341100",
+                        "background": "#0b1326",
+                        "on-surface": "#dae2fd",
+                        "on-surface-variant": "#c2c6d6",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-container": "#272a2c"
                     },
                     fontFamily: {
                         "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
                     },
+                    borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
                 },
             },
         }
@@ -199,32 +243,36 @@
                 if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
 
                 const response = await fetch(cleanUrl);
-                const csv = await response.text();
-                if (csv.includes('<!DOCTYPE html>')) return;
+                const csvText = await response.text();
+                if (csvText.includes('<!DOCTYPE html>')) return;
 
-                const lines = csv.split('\n').filter(l => l.trim().includes(','));
-                if (lines.length < 2) return;
+                Papa.parse(csvText, {
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const lines = results.data;
+                        if (lines.length < 2) return;
 
-                const teams = lines.slice(2).map(line => {
-                    const cols = line.split(',');
-                    if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
-                    const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
-                    return {
-                        name: cols[1].trim(),
-                        logo: cols[2]?.trim() || '',
-                        kills: parseInt(cols[8]?.trim()) || 0,
-                        rank: parseInt(cols[9]?.trim()) || 999,
-                        total: parseInt(cols[10]?.trim()) || 0,
-                        isAlive: pips > 0
-                    };
-                }).filter(t => t !== null);
+                        const teams = lines.slice(2, 27).map(cols => {
+                            if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                            const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+                            return {
+                                name: cols[1].trim(),
+                                logo: cols[2]?.trim() || '',
+                                kills: parseInt(cols[8]?.trim()) || 0,
+                                rank: parseInt(cols[9]?.trim()) || 999,
+                                total: parseInt(cols[10]?.trim()) || 0,
+                                isAlive: pips > 0
+                            };
+                        }).filter(t => t !== null);
 
-                // Auto detection logic: Only trigger if exactly 1 team standing
-                const alive = teams.filter(t => t.isAlive);
-                if (alive.length === 1 && !hasTriggeredWinner) {
-                    hasTriggeredWinner = true;
-                    showWinner(alive[0]);
-                }
+                        // Auto detection logic: Only trigger if exactly 1 team standing
+                        const alive = teams.filter(t => t.isAlive);
+                        if (alive.length === 1 && !hasTriggeredWinner) {
+                            hasTriggeredWinner = true;
+                            showWinner(alive[0]);
+                        }
+                    }
+                });
             } catch (e) {
                 console.error("Auto Sync Error:", e);
             }

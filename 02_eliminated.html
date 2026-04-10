@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -197,61 +198,64 @@
                 if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
 
                 const response = await fetch(cleanUrl);
-                const csv = await response.text();
-                if (csv.includes('<!DOCTYPE html>')) return;
+                const csvText = await response.text();
+                if (csvText.includes('<!DOCTYPE html>')) return;
 
-                if (!localAutoStartTime) localAutoStartTime = Date.now();
+                Papa.parse(csvText, {
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const lines = results.data;
+                        if (!localAutoStartTime) localAutoStartTime = Date.now();
 
-                const lines = csv.split('\n').filter(l => l.trim().includes(','));
-                
-                // Read Match Start Time explicitly from cell J1 (Row 1, Column J which is index 9)
-                if (lines.length > 0) {
-                    const row1 = lines[0].split(',');
-                    if (row1.length > 9) {
-                        const j1Content = row1[9]?.trim() || '';
-                        const match = j1Content.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?/i);
-                        if (match) {
-                            let h = parseInt(match[1]);
-                            const m = parseInt(match[2]);
-                            const s = match[3] ? parseInt(match[3]) : 0;
-                            const ampm = match[4] ? match[4].toUpperCase() : null;
-                            
-                            if (ampm === 'PM' && h < 12) h += 12;
-                            if (ampm === 'AM' && h === 12) h = 0;
-                            
-                            window.matchStartTimeOverride = `${h}:${m}:${s}`;
+                        // Read Match Start Time explicitly from cell J1 (Row 1, Column J which is index 9)
+                        if (lines.length > 0) {
+                            const row1 = lines[0];
+                            if (row1.length > 9) {
+                                const j1Content = row1[9]?.trim() || '';
+                                const match = j1Content.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?/i);
+                                if (match) {
+                                    let h = parseInt(match[1]);
+                                    const m = parseInt(match[2]);
+                                    const s = match[3] ? parseInt(match[3]) : 0;
+                                    const ampm = match[4] ? match[4].toUpperCase() : null;
+                                    
+                                    if (ampm === 'PM' && h < 12) h += 12;
+                                    if (ampm === 'AM' && h === 12) h = 0;
+                                    
+                                    window.matchStartTimeOverride = `${h}:${m}:${s}`;
+                                }
+                            }
                         }
+
+                        if (lines.length < 3) return;
+
+                        lines.slice(2, 27).forEach(cols => {
+                            if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return;
+
+                            const aliveCount = [cols[4], cols[5], cols[6], cols[7]]
+                                .filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+                            const isAlive = aliveCount > 0;
+                            const name = cols[1].trim();
+
+                            const currentData = {
+                                name: name,
+                                logo: cols[2]?.trim() || '',
+                                rank: cols[9]?.trim() || '',
+                                kills: cols[8]?.trim() || '0',
+                                pts: cols[10]?.trim() || '0',
+                                isAlive: isAlive
+                            };
+
+                            if (previousTeamsState.has(name)) {
+                                const prevState = previousTeamsState.get(name);
+                                if (prevState.isAlive && !isAlive) {
+                                    eliminationQueue.push(currentData);
+                                    processQueue();
+                                }
+                            }
+                            previousTeamsState.set(name, currentData);
+                        });
                     }
-                }
-
-                if (lines.length < 2) return;
-
-                lines.slice(2).forEach(line => {
-                    const cols = line.split(',');
-                    if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return;
-
-                    const aliveCount = [cols[4], cols[5], cols[6], cols[7]]
-                        .filter(c => c?.trim().toUpperCase() === 'TRUE').length;
-                    const isAlive = aliveCount > 0;
-                    const name = cols[1].trim();
-
-                    const currentData = {
-                        name: name,
-                        logo: cols[2]?.trim() || '',
-                        rank: cols[9]?.trim() || '',
-                        kills: cols[8]?.trim() || '0',
-                        pts: cols[10]?.trim() || '0',
-                        isAlive: isAlive
-                    };
-
-                    if (previousTeamsState.has(name)) {
-                        const prevState = previousTeamsState.get(name);
-                        if (prevState.isAlive && !isAlive) {
-                            eliminationQueue.push(currentData);
-                            processQueue();
-                        }
-                    }
-                    previousTeamsState.set(name, currentData);
                 });
             } catch (e) {
                 console.error("Auto Sync Error:", e);

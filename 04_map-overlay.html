@@ -7,20 +7,69 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#adc6ff",
-                        "secondary": "#ffb690",
-                        "surface-dim": "#0b1326",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#222a3d",
                         "surface-container": "#171f33",
+                        "outline": "#8c909f",
+                        "secondary": "#ffb690",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-secondary-container": "#4a1c00",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-dim": "#0b1326",
+                        "on-error": "#690005",
+                        "on-background": "#dae2fd",
+                        "secondary-fixed-dim": "#ffb690",
+                        "on-secondary": "#552100",
+                        "tertiary": "#c4c7c9",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#ec6a06",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary": "#2d3133",
+                        "on-primary-container": "#00285d",
+                        "inverse-surface": "#dae2fd",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#060e20",
+                        "on-secondary-fixed-variant": "#783200",
+                        "surface-tint": "#adc6ff",
+                        "on-primary-fixed-variant": "#004395",
+                        "inverse-on-surface": "#283044",
+                        "on-primary": "#002e6a",
+                        "surface": "#0b1326",
+                        "outline-variant": "#424754",
+                        "surface-variant": "#2d3449",
+                        "tertiary-container": "#8e9193",
+                        "surface-container-low": "#131b2e",
+                        "primary-container": "#4d8eff",
+                        "inverse-primary": "#005ac2",
+                        "surface-bright": "#31394d",
+                        "on-primary-fixed": "#001a42",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "secondary-fixed": "#ffdbca",
+                        "primary": "#adc6ff",
+                        "on-secondary-fixed": "#341100",
+                        "background": "#0b1326",
                         "on-surface": "#dae2fd",
-                    }
-                }
-            }
+                        "on-surface-variant": "#c2c6d6",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-container": "#272a2c"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
+                },
+            },
         }
     </script>
     <style>
@@ -126,65 +175,69 @@
                 if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
 
                 const response = await fetch(cleanUrl);
-                const csv = await response.text();
-                if (csv.includes('<!DOCTYPE html>')) return;
+                const csvText = await response.text();
+                if (csvText.includes('<!DOCTYPE html>')) return;
                 
-                const rawLines = csv.split('\n');
-                if (rawLines.length < 2) return;
+                Papa.parse(csvText, {
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const rawLines = results.data;
+                        if (rawLines.length < 2) return;
 
-                let playersAlive = 0;
-                let teamsAlive = 0;
+                        let playersAlive = 0;
+                        let teamsAlive = 0;
 
-                rawLines.slice(2, 30).forEach(line => {
-                    const cols = line.split(',');
-                    const teamName = cols[1]?.trim() || "";
-                    if (!cols[1] || teamName === "" || teamName === "TeamName") return;
-                    
-                    const p1 = cols[4]?.trim().toUpperCase() === 'TRUE';
-                    const p2 = cols[5]?.trim().toUpperCase() === 'TRUE';
-                    const p3 = cols[6]?.trim().toUpperCase() === 'TRUE';
-                    const p4 = cols[7]?.trim().toUpperCase() === 'TRUE';
-                    
-                    const aliveCount = (p1?1:0) + (p2?1:0) + (p3?1:0) + (p4?1:0);
-                    if (aliveCount > 0) {
-                        teamsAlive++;
-                        playersAlive += aliveCount;
-                    }
-                });
+                        rawLines.slice(2, 30).forEach(cols => {
+                            const teamName = cols[1]?.trim() || "";
+                            if (!cols[1] || teamName === "" || teamName === "TeamName") return;
+                            
+                            const p1 = cols[4]?.trim().toUpperCase() === 'TRUE';
+                            const p2 = cols[5]?.trim().toUpperCase() === 'TRUE';
+                            const p3 = cols[6]?.trim().toUpperCase() === 'TRUE';
+                            const p4 = cols[7]?.trim().toUpperCase() === 'TRUE';
+                            
+                            const aliveCount = (p1?1:0) + (p2?1:0) + (p3?1:0) + (p4?1:0);
+                            if (aliveCount > 0) {
+                                teamsAlive++;
+                                playersAlive += aliveCount;
+                            }
+                        });
 
-                const countEl1 = document.getElementById('f1');
-                const countEl2 = document.getElementById('f2');
-                if (playersAlive > 0) countEl1.innerText = (playersAlive < 10 ? '0' : '') + playersAlive;
-                if (teamsAlive > 0) countEl2.innerText = (teamsAlive < 10 ? '0' : '') + teamsAlive;
+                        const countEl1 = document.getElementById('f1');
+                        const countEl2 = document.getElementById('f2');
+                        if (playersAlive > 0) countEl1.innerText = (playersAlive < 10 ? '0' : '') + playersAlive;
+                        if (teamsAlive > 0) countEl2.innerText = (teamsAlive < 10 ? '0' : '') + teamsAlive;
 
-                // Headers logic (Zone Phase, Times)
-                const headers = rawLines[0].split(',');
-                if (headers.length > 8 && headers[8]) {
-                    const phaseStr = headers[8].trim();
-                    if (phaseStr) document.getElementById('f3').innerText = phaseStr;
-                }
-                if (headers.length > 10 && headers[10]) {
-                    const nextStr = headers[10].trim();
-                    if (nextStr) document.getElementById('f4').innerText = nextStr;
-                }
-                if (headers.length > 11 && headers[11]) {
-                    const closeStr = headers[11].trim();
-                    document.getElementById('f5').innerText = closeStr !== '' ? closeStr : '-';
-                }
+                        // Headers logic (Zone Phase, Times)
+                        const headers = rawLines[0];
+                        if (headers && headers.length > 8 && headers[8]) {
+                            const phaseStr = headers[8].trim();
+                            if (phaseStr) document.getElementById('f3').innerText = phaseStr;
+                        }
+                        if (headers && headers.length > 10 && headers[10]) {
+                            const nextStr = headers[10].trim();
+                            if (nextStr) document.getElementById('f4').innerText = nextStr;
+                        }
+                        if (headers && headers.length > 11 && headers[11]) {
+                            const closeStr = headers[11].trim();
+                            document.getElementById('f5').innerText = closeStr !== '' ? closeStr : '-';
+                        }
 
-                // Row 32 -> Index 31 (Maps)
-                // Row 33 -> Index 32 (Selected Map Index in B33 / Index 1)
-                if (rawLines.length > 32) {
-                    const selectRow = rawLines[32].split(',');
-                    const b33Value = parseInt(selectRow[1]?.trim());
-                    if (!isNaN(b33Value) && b33Value >= 1 && b33Value <= 7) {
-                        const mapsRow = rawLines[31].split(',');
-                        const mapName = mapsRow[b33Value]?.trim();
-                        if (mapName) {
-                             document.getElementById('f0').innerText = mapName.toUpperCase();
+                        // Row 32 -> Index 31 (Maps)
+                        // Row 33 -> Index 32 (Selected Map Index in B33 / Index 1)
+                        if (rawLines.length > 32) {
+                            const selectRow = rawLines[32];
+                            const b33Value = parseInt(selectRow[1]?.trim());
+                            if (!isNaN(b33Value) && b33Value >= 1 && b33Value <= 7) {
+                                const mapsRow = rawLines[31];
+                                const mapName = mapsRow[b33Value]?.trim();
+                                if (mapName) {
+                                     document.getElementById('f0').innerText = mapName.toUpperCase();
+                                }
+                            }
                         }
                     }
-                }
+                });
             } catch (e) {
                 console.error("Auto Sync Error:", e);
             }
