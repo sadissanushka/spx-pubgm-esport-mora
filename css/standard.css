@@ -12,7 +12,7 @@
     /* If shards should be shown and animated set to "block", otherwise set to "none". */
     --show-shards: block;
 
-    /* 01_live-ticker.html */
+    /* 14_utility-ticker.html */
     --liver-ticker-ranking-title-color: black;
     --live-ticker-ranking-background-color: #3d69b5;
     --live-ticker-ranking-header-color: white;
@@ -27,7 +27,7 @@
     --live-ticker-dead-background-color: #000;
     --live-ticker-ranking-dead-team-background-color: #000;
 
-    /* 02_elimated.html */
+    /* 07_hud-elim-tracker.html */
     --elimated-border-color: rgb(9, 125, 202);
     --elimated-header-color: rgb(0, 0, 0);
     --elimated-header-font-family: "UI-Light", Arial, Helvetica, sans-serif;
@@ -41,18 +41,18 @@
     --elimated-kill-text-shadow: 0 0 10px rgba(8, 37, 71, 0.2);
     --elimated-kill-background-color: rgba(197, 219, 236, 0.855);
 
-    /* 03_player-stats.html */
+    /* 09_player-spotlight.html */
     --player-stats-stats-container-background-color: rgb(0, 0, 0, 0.3);
     --player-state-stats-color: white;
 
-    /* 05_map-overlay.html */
+    /* 04_map-overview.html */
     --map-overlay-background-image: url("images/background_overview.png");
     --map-overlay-info-background-image: url("images/info_background.png");
     --map-overlay-list-background-image: url("images/list_background.png");
     --map-overlay-list-image-background-color: rgb(0, 0, 0, 0.3);
     --map-overlay-list-color: black;
 
-    /* 10_winner-screen.html */
+    /* 10_winner-winner.html */
     --map-overview-winner-team-background-image: url("images/key_poster.png");
     --map-overview-marquess-color: white;
     --map-overview-marquees-border-color: white;
@@ -64,7 +64,7 @@
     --map-overview-winner-frame-stats-smaller-color: white;
     --map-overview-winner-frame-divider-color: white;
 
-    /* 11_match-ranking.html */
+    /* 06_hud-ranking.html */
     --match-ranking-slogan-color: white;
     --match-ranking-image-frame-background-img: url("images/key_poster.png");
     --match-ranking-winner-frame-border-color: white;
@@ -82,7 +82,7 @@
     --match-ranking-braket-background-color: rgb(34, 50, 78);
     --match-ranking-braket-color: white;
 
-    /* 12_match-graph.html */
+    /* 08_hud-sidebars.html */
     --match-graph-slogan-color: white;
     --match-graph-description-color: white;
     --match-graph-elim-graph-background-color: #427dea;
@@ -93,7 +93,7 @@
     --match-graph-team-logo-background-color: #132656;
     --match-graph-graph-number-color: black;
 
-    /* 13_top-elims.html */
+    /* 12_result-top-elims.html */
     --top-elims-title-color: white;
     --top-elims-elims-border-color: white;
     --top-elims-elims-background-color: #546d9b;
@@ -104,7 +104,7 @@
     --top-elims-elims-player-background-color: #2b3b5a;
     --top-elims-elims-frame-background-image: url("images/elims_frame.png");
 
-    /* 14_top-elims-overall.html */
+    /* 12_result-top-elims.html */
     --top-elims-overall-title-color: white;
     --top-elims-overall-elims-border-color: white;
     --top-elims-overall-elims-background-color: #546d9b;
@@ -115,7 +115,7 @@
     --top-elims-overall-elims-player-background-color: #2b3b5a;
     --top-elims-overall-elims-frame-background-image: url("images/elims_frame.png");
 
-    /* 15_overall-standings.html */
+    /* 13_result-standings.html */
     --overall-standings-title-wrapper-color: white;
     --overall-standings-braket-header-background-color: rgb(34, 50, 78);
     --overall-standings-braket-header-shadow-color: rgb(61, 88, 139);
@@ -125,7 +125,7 @@
     --overall-standings-braket-color: white;
     --overall-standings-braket-border-color: white;
 
-    /* 20_table-result.html */
+    /* 11_result-match-table.html */
     --table-event-slogan-color: black;
     --table-event-background-image: url("images/event_slogan_background.png");
     --table-inner-wrapper-background-image: url("images/inner_background.png");
@@ -136,7 +136,7 @@
     --table-braket-color: white;
     --table-braket-background-image: url("images/braket_background.png");
 
-    /* 21_map-overview.html */
+    /* 04_map-overview.html */
     --map-overview-match-done-background-color: black;
     --map-overview-match-frame-background-image: url("images/match_frame.png");
     --map-overview-match-team-name-color: white;
@@ -145,14 +145,14 @@
     --map-overview-match-map-name-color: white;
     --map-overview-match-map-background-color: #556c9b;
 
-    /* 25_points.html */
+    /* 06_hud-ranking.html */
     --points-item-border: 2px solid black;
     --points-item-background-color: white;
     --points-item-points-color: black;
     --points-item-place-color: white;
     --points-item-place-background-color: black;
 
-    /* 26_slots.html */
+    /* 03_pregame-lineups.html */
     --slots-team-name-color: white;
     --slots-logo-border: 2px solid white;
 }
