@@ -3,155 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPX - Transition Overlay</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+    <title>SPX - PUBGM Stinger Transition</title>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; width: 1920px; height: 1080px; background: transparent; font-family: 'Inter', sans-serif; }
-        #wrapper { opacity: 0; transition: opacity 0.2s; width: 100%; height: 100%; position: relative; }
-        
-        .shard-container {
-            position: absolute;
-            top: 0; left: -250%;
-            width: 250%; height: 100%;
-            display: flex;
-            transform: skewX(-15deg);
-            z-index: 10;
-        }
-        
-        .shard {
-            height: 100%;
-            flex-grow: 1;
-            background: #0b1326;
-            border-right: 8px solid #ec6a06;
-            box-shadow: 40px 0 100px rgba(0,0,0,0.8);
-            position: relative;
+        /* ─── Base ─────────────────────────────────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: transparent;
             overflow: hidden;
-        }
-        
-        /* Add some detail to shards */
-        .shard::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(45deg, transparent 0%, rgba(236,106,6,0.05) 50%, transparent 100%);
-            animation: lightSweep 2s infinite;
-        }
-        
-        .shard:nth-child(odd) { background: #171f33; }
-        .shard:nth-child(3) { background: #ec6a06; flex-grow: 0.15; border-right: none; }
-        .shard:nth-child(3)::after { display: none; }
-        
-        .center-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 140px;
-            font-weight: 900;
-            font-style: italic;
-            text-transform: uppercase;
-            letter-spacing: -8px;
-            z-index: 20;
-            opacity: 0;
-            text-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            white-space: nowrap;
-        }
-        
-        /* Animations */
-        @keyframes sweepIn {
-            0% { transform: skewX(-15deg) translateX(0%); }
-            100% { transform: skewX(-15deg) translateX(200%); }
-        }
-        
-        @keyframes textGlitch {
-            0% { opacity: 0; transform: translate(-50%, -40%) skewX(-5deg) scale(1.2); filter: blur(20px); }
-            40% { opacity: 0; }
-            48% { opacity: 1; transform: translate(-50%, -52%) skewX(5deg) scale(1.05); filter: blur(0px); }
-            50% { opacity: 1; transform: translate(-50%, -50%) skewX(0deg) scale(1); }
-            60% { opacity: 1; transform: translate(-50%, -50%) skewX(0deg) scale(1); }
-            62% { opacity: 1; transform: translate(-50%, -48%) skewX(-5deg) scale(1.05); }
-            70% { opacity: 0; transform: translate(-50%, -60%) skewX(5deg) scale(0.9); filter: blur(20px); }
-            100% { opacity: 0; }
+            width: 1920px;
+            height: 1080px;
+            font-family: 'Arial Black', sans-serif;
         }
 
-        @keyframes lightSweep {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        /* ─── Wrapper – hidden by default ──────────────────────────── */
+        #wrapper {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            /* visibility toggled by play() / stop() */
+            display: none;
         }
-        
-        .animate-sweep { animation: sweepIn 1.3s cubic-bezier(0.86, 0, 0.07, 1) forwards; }
-        .animate-text { animation: textGlitch 1.3s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+
+        /* ═══════════════════════════════════════════════════════════ *
+         *  PANEL WIPE LAYERS                                          *
+         *  Three staggered panels sweep left-to-right then reverse    *
+         * ═══════════════════════════════════════════════════════════ */
+
+        .panel {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 110%;          /* slightly wider than screen to hide edge */
+            transform: translateX(-110%);  /* start off-screen left */
+        }
+
+        /* Panel 1 – deep navy / brand primary */
+        .panel-1 {
+            background: linear-gradient(135deg, #0b1326 0%, #1a2d5a 100%);
+            left: -5%;
+            clip-path: polygon(0 0, 96% 0, 100% 100%, 0 100%);
+            z-index: 30;
+        }
+
+        /* Panel 2 – PUBGM orange accent */
+        .panel-2 {
+            background: linear-gradient(135deg, #ec6a06 0%, #ff8c00 60%, #ffc200 100%);
+            left: -5%;
+            clip-path: polygon(0 0, 94% 0, 98% 100%, 0 100%);
+            z-index: 20;
+        }
+
+        /* Panel 3 – bright highlight / glare */
+        .panel-3 {
+            background: linear-gradient(135deg, #ffffff 0%, #dae2ff 100%);
+            left: -5%;
+            clip-path: polygon(0 0, 90% 0, 94% 100%, 0 100%);
+            z-index: 10;
+            opacity: 0.12;
+        }
+
+        /* ─── Logo stamp shown at mid-transition ─────────────────── */
+        #mid-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 40;
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #mid-logo .brand-bar {
+            width: 6px;
+            height: 60px;
+            background: #ec6a06;
+            border-radius: 3px;
+        }
+
+        #mid-logo .brand-text {
+            font-size: 52px;
+            font-weight: 900;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 0 40px rgba(236,106,6,0.8), 0 4px 20px rgba(0,0,0,0.8);
+            white-space: nowrap;
+        }
+
+        #mid-logo .brand-sub {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #ec6a06;
+            text-shadow: 0 0 20px rgba(236,106,6,0.6);
+            white-space: nowrap;
+        }
+
+        /* ─── Scanline overlay on top during wipe ─────────────────── */
+        #scanlines {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 3px,
+                rgba(0,0,0,0.06) 3px,
+                rgba(0,0,0,0.06) 4px
+            );
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* ─── Glitch line ──────────────────────────────────────────── */
+        #glitch-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ec6a06, #ffffff, #ec6a06, transparent);
+            z-index: 60;
+            opacity: 0;
+            box-shadow: 0 0 12px #ec6a06;
+        }
     </style>
 </head>
 <body>
     <div id="wrapper">
-        <div id="shards" class="shard-container">
-            <div class="shard"></div>
-            <div class="shard"></div>
-            <div class="shard"></div>
-            <div class="shard"></div>
-            <div class="shard"></div>
+        <div class="panel panel-3" id="p3"></div>
+        <div class="panel panel-2" id="p2"></div>
+        <div class="panel panel-1" id="p1"></div>
+
+        <div id="mid-logo">
+            <div class="brand-bar"></div>
+            <div class="brand-text" id="brand-label">TRANSIÇÃO</div>
+            <div class="brand-sub" id="brand-sub">PUBG MOBILE ESPORTS</div>
         </div>
-        <div id="title" class="center-text">PUBG MOBILE</div>
+
+        <div id="scanlines"></div>
+        <div id="glitch-line"></div>
     </div>
 
     <script>
-        function play() {
-            const wrapper = document.getElementById('wrapper');
-            const shards = document.getElementById('shards');
-            const title = document.getElementById('title');
-            
-            // Reset wrapper
-            wrapper.style.opacity = '1';
-            
-            // Force reset of animations
-            shards.classList.remove('animate-sweep');
-            title.classList.remove('animate-text');
-            void shards.offsetWidth; // Force reflow
-            
-            // Double-rAF: guarantees the browser commits the class removal
-            // in one paint before re-adding in the next, preventing silent skips
-            // on rapid/repeated play() calls.
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    shards.classList.add('animate-sweep');
-                    title.classList.add('animate-text');
-                });
-            });
-            
-            // Auto hide: 1300ms (anim) + 100ms buffer + 200ms CSS fade = safe
-            setTimeout(() => {
-                wrapper.style.opacity = '0';
-            }, 1600);
-        }
+        /* =========================================================
+         *  SPX-GC STINGER TRANSITION  –  12_transition.html
+         *  Behaviour:
+         *    play()  → starts auto-looping wipe cycle (no human needed)
+         *    stop()  → completes current cycle then hides
+         *    update()→ change label text / sub text / speed / colour
+         * ========================================================= */
 
-        // Allow manual testing in browser
-        window.addEventListener('mousedown', () => {
-            if (window.self === window.top) play();
-        });
+        const wrapper   = document.getElementById('wrapper');
+        const p1        = document.getElementById('p1');
+        const p2        = document.getElementById('p2');
+        const p3        = document.getElementById('p3');
+        const midLogo   = document.getElementById('mid-logo');
+        const scanlines = document.getElementById('scanlines');
+        const glitch    = document.getElementById('glitch-line');
+        const brandLbl  = document.getElementById('brand-label');
+        const brandSub  = document.getElementById('brand-sub');
 
-        function stop() {
-            document.getElementById('wrapper').style.opacity = '0';
-        }
-
-        // SPX GC Integration
-        window.SPXGCTemplateDefinition = {
-            "description": "Professional Production Stinger",
-            "playserver": "OVERLAY",
-            "playchannel": "1",
-            "playlayer": "50",
-            "webplayout": "50",
-            "out": "manual",
-            "uicolor": "5",
-            "DataFields": [
-                { "field": "f0", "ftype": "textfield", "title": "Center Text", "value": "PUBG MOBILE" }
-            ]
+        // ── Configurable via update() ─────────────────────────────
+        let cfg = {
+            cycleDuration : 1600,   // ms for one full in+out wipe
+            loopPauseMs   : 2400,   // pause (transparent screen) between wipes
+            label         : 'TRANSIÇÃO',
+            sub           : 'PUBG MOBILE ESPORTS',
+            accentColor   : '#ec6a06'
         };
 
-        function update(rawData) {
-            const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-            if (data.f0) document.getElementById('title').innerText = data.f0.toUpperCase();
+        let looping   = false;
+        let stopAfter = false;   // set true by stop() — finishes current cycle first
+        let loopTimer = null;
+
+        // ── Raw animation helper (no cls-list gymnastics) ───────────
+        function anime(el, keyframes, options) {
+            return el.animate(keyframes, { fill: 'both', ...options });
         }
+
+        // ── Single wipe-in → hold → wipe-out cycle ──────────────────
+        function runCycle() {
+            return new Promise(resolve => {
+                const half = cfg.cycleDuration / 2;
+                const ease = 'cubic-bezier(0.76, 0, 0.24, 1)';
+
+                /* — WIPE IN (all panels sweep right) — */
+                const p3In = anime(p3, [
+                    { transform: 'translateX(-110%)' },
+                    { transform: 'translateX(0%)' }
+                ], { duration: half, delay: 0, easing: ease });
+
+                const p2In = anime(p2, [
+                    { transform: 'translateX(-110%)' },
+                    { transform: 'translateX(0%)' }
+                ], { duration: half, delay: 40, easing: ease });
+
+                const p1In = anime(p1, [
+                    { transform: 'translateX(-110%)' },
+                    { transform: 'translateX(0%)' }
+                ], { duration: half, delay: 80, easing: ease });
+
+                /* — Glitch line races across — */
+                anime(glitch, [
+                    { width: '0%', opacity: 1 },
+                    { width: '100%', opacity: 1 },
+                    { width: '100%', opacity: 0 }
+                ], { duration: half * 0.9, delay: 60, easing: 'ease-out' });
+
+                /* — Scanlines fade in — */
+                anime(scanlines, [
+                    { opacity: 0 }, { opacity: 1 }
+                ], { duration: half * 0.5, delay: half * 0.4, easing: 'ease' });
+
+                /* — Logo pops at mid-point — */
+                setTimeout(() => {
+                    anime(midLogo, [
+                        { transform: 'translate(-50%,-50%) scale(0.6)', opacity: 0 },
+                        { transform: 'translate(-50%,-50%) scale(1.05)', opacity: 1 },
+                        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }
+                    ], { duration: 320, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+                }, half - 80);
+
+                // When wipe-in is done, hold for loopPauseMs then wipe out
+                p1In.onfinish = () => {
+                    setTimeout(() => {
+                        /* — WIPE OUT (panels sweep right off screen) — */
+                        anime(p1, [
+                            { transform: 'translateX(0%)' },
+                            { transform: 'translateX(110%)' }
+                        ], { duration: half, delay: 0, easing: ease });
+
+                        anime(p2, [
+                            { transform: 'translateX(0%)' },
+                            { transform: 'translateX(110%)' }
+                        ], { duration: half, delay: 40, easing: ease });
+
+                        const p3Out = anime(p3, [
+                            { transform: 'translateX(0%)' },
+                            { transform: 'translateX(110%)' }
+                        ], { duration: half, delay: 80, easing: ease });
+
+                        /* — Logo fades out — */
+                        anime(midLogo, [
+                            { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+                            { transform: 'translate(-50%,-50%) scale(0.8)', opacity: 0 }
+                        ], { duration: half * 0.6, easing: 'ease-in' });
+
+                        /* — Scanlines fade out — */
+                        anime(scanlines, [
+                            { opacity: 1 }, { opacity: 0 }
+                        ], { duration: half * 0.5, delay: half * 0.5, easing: 'ease' });
+
+                        p3Out.onfinish = () => resolve();
+
+                    }, cfg.loopPauseMs);
+                };
+            });
+        }
+
+        // ── Loop engine ─────────────────────────────────────────────
+        async function loopEngine() {
+            while (looping) {
+                await runCycle();
+                if (stopAfter) {
+                    looping   = false;
+                    stopAfter = false;
+                    wrapper.style.display = 'none';
+                    break;
+                }
+                // Brief pause between loop iterations (half the hold time)
+                await sleep(cfg.loopPauseMs / 2);
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        // ── Apply current config to DOM ──────────────────────────────
+        function applyConfig() {
+            brandLbl.textContent = cfg.label;
+            brandSub.textContent = cfg.sub;
+            // Recolour p2 panel accent
+            p2.style.background = `linear-gradient(135deg, ${cfg.accentColor} 0%, #ff8c00 60%, #ffc200 100%)`;
+        }
+
+        /* =============================================================
+         *  SPX-GC API
+         * ============================================================= */
+
+        function update(rawData) {
+            try {
+                const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                // f0 = label text
+                if (data.f0 !== undefined) cfg.label = data.f0.toUpperCase();
+                // f1 = sub-title text
+                if (data.f1 !== undefined) cfg.sub   = data.f1.toUpperCase();
+                // f2 = cycle duration ms  (e.g. "1600")
+                if (data.f2 !== undefined && !isNaN(parseInt(data.f2))) cfg.cycleDuration = Math.max(400, parseInt(data.f2));
+                // f3 = pause between loops ms (e.g. "2400")
+                if (data.f3 !== undefined && !isNaN(parseInt(data.f3))) cfg.loopPauseMs   = Math.max(200, parseInt(data.f3));
+                // f4 = accent colour hex (e.g. "#ec6a06")
+                if (data.f4 !== undefined && data.f4.trim()) cfg.accentColor = data.f4.trim();
+
+                applyConfig();
+            } catch(e) {
+                console.error('update() error:', e);
+            }
+        }
+
+        function play() {
+            applyConfig();
+            wrapper.style.display = 'block';
+            if (!looping) {
+                looping   = true;
+                stopAfter = false;
+                loopEngine();
+            }
+        }
+
+        function stop() {
+            // Graceful: completes the current wipe cycle before hiding
+            stopAfter = true;
+            // If not currently running (e.g. called before play), hide immediately
+            if (!looping) {
+                wrapper.style.display = 'none';
+            }
+        }
+
+        /* =============================================================
+         *  SPX-GC Template Definition
+         * ============================================================= */
+        window.SPXGCTemplateDefinition = {
+            "description"  : "PUBGM Stinger Wipe Transition (auto-loop)",
+            "playserver"   : "OVERLAY",
+            "playchannel"  : "1",
+            "playlayer"    : "20",
+            "webplayout"   : "20",
+            "out"          : "manual",
+            "dataformat"   : "json",
+            "uicolor"      : "5",
+            "DataFields"   : [
+                {
+                    "field" : "f0",
+                    "ftype" : "textfield",
+                    "title" : "Label (centre text)",
+                    "value" : "TRANSIÇÃO"
+                },
+                {
+                    "field" : "f1",
+                    "ftype" : "textfield",
+                    "title" : "Sub-title",
+                    "value" : "PUBG MOBILE ESPORTS"
+                },
+                {
+                    "field" : "f2",
+                    "ftype" : "textfield",
+                    "title" : "Wipe Duration (ms)",
+                    "value" : "1600"
+                },
+                {
+                    "field" : "f3",
+                    "ftype" : "textfield",
+                    "title" : "Pause Between Loops (ms)",
+                    "value" : "2400"
+                },
+                {
+                    "field" : "f4",
+                    "ftype" : "textfield",
+                    "title" : "Accent Colour (hex)",
+                    "value" : "#ec6a06"
+                }
+            ]
+        };
     </script>
 </body>
 </html>
