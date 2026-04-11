@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPX - Results Background Video</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #050814;
+            width: 1920px;
+            height: 1080px;
+        }
+
+        #wrapper {
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease;
+            position: relative;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .overlay-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(5, 8, 20, 0.4) 100%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <video id="bg-video" loop muted playsinline>
+            <source id="video-source" src="background/1back.mp4" type="video/mp4">
+        </video>
+        <div class="overlay-gradient"></div>
+    </div>
+
+    <script>
+        const wrapper = document.getElementById('wrapper');
+        const video = document.getElementById('bg-video');
+        const source = document.getElementById('video-source');
+
+        function update(rawData) {
+            try {
+                const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f0) {
+                    const newFile = data.f0.trim();
+                    const currentFile = source.getAttribute('src');
+                    if (newFile && !currentFile.includes(newFile)) {
+                        source.setAttribute('src', `background/${newFile}`);
+                        video.load();
+                        if (wrapper.style.opacity === '1') video.play();
+                    }
+                }
+            } catch (e) {
+                console.error("Update error:", e);
+            }
+        }
+
+        function play() {
+            wrapper.style.opacity = '1';
+            video.play();
+        }
+
+        function stop() {
+            wrapper.style.opacity = '0';
+            setTimeout(() => {
+                video.pause();
+            }, 1000);
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "Animated Video Background for Results",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "1",
+            "webplayout": "1",
+            "out": "manual",
+            "dataformat": "json",
+            "uicolor": "2",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Video File (e.g. 1back.mp4)", "value": "1back.mp4" }
+            ]
+        };
+    </script>
+</body>
+</html>

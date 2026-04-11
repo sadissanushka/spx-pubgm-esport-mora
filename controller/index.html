@@ -320,21 +320,22 @@
             "standings": { path: "08_overall-standings.html", layer: 12, name: "Overall Standings" },
             "topelims": { path: "09_top-elims.html", layer: 14, name: "Frag Leaders" },
             "tableresult": { path: "10_table-result.html", layer: 15, name: "Match Table" },
+            "bg": { path: "13_background.html", layer: 1, name: "Video Background" },
             "ticker": { path: "00_broadcast.html", layer: 10, name: "Live Ticker" },
             "eliminated": { path: "02_eliminated.html", layer: 19, name: "Elim Poller" },
             "transition": { path: "12_transition.html", layer: 50, name: "Stinger" }
         };
 
         const scenes = [
-            { id: 0, name: "PRE-GAME", desc: "Show squad rosters and lineups", play: ["slots"], clearOthers: true },
+            { id: 0, name: "PRE-GAME", desc: "Show squad rosters and lineups", play: ["bg", "slots"], bgVideo: "2back.mp4", clearOthers: true },
             { id: 1, name: "MAP OVERVIEW", desc: "Fullscreen Tactical Map (Jump/Flight Path)", play: ["map"], clearOthers: true },
             { id: 2, name: "MATCH START", desc: "Live gameplay HUD + Ranking + Polling", play: ["leaderboard", "ranking", "eliminated"], clearOthers: true },
             { id: 3, name: "TACTICAL VIEW", desc: "Show Sidebars (HUD hidden)", play: ["sidebar"], stopLayers: [5, 7] },
             { id: 4, name: "SPOTLIGHT", desc: "Highlight individual player stats", play: ["stats"], stopLayers: [11] },
             { id: 5, name: "MATCH END", desc: "Winner Winner Chicken Dinner!", play: ["winner"], clearOthers: true },
-            { id: 6, name: "RESULTS 1/3", desc: "Complete Match Results Table", play: ["tableresult"], clearOthers: true },
-            { id: 7, name: "RESULTS 2/3", desc: "Top Individual Eliminators", play: ["topelims"], stopLayers: [15] },
-            { id: 8, name: "RESULTS 3/3", desc: "Tournament Overall Standings", play: ["standings"], stopLayers: [14] }
+            { id: 6, name: "RESULTS 1/3", desc: "Complete Match Results Table", play: ["bg", "tableresult"], bgVideo: "1back.mp4", clearOthers: true },
+            { id: 7, name: "RESULTS 2/3", desc: "Top Individual Eliminators", play: ["bg", "topelims"], bgVideo: "1back.mp4", stopLayers: [15] },
+            { id: 8, name: "RESULTS 3/3", desc: "Tournament Overall Standings", play: ["bg", "standings"], bgVideo: "1back.mp4", stopLayers: [14] }
         ];
 
         window.onload = () => {
@@ -450,9 +451,17 @@
 
             // 1. CLEANSING LOGIC: Stop existing animations correctly
             if(scene.clearOthers) {
-                // Hard reset of all live templates (except ticker and eliminated poller)
+                // Hard reset of all live templates (except ticker, eliminated poller, and persisting background)
                 for(let key of liveTemplates) {
-                    if(key !== "ticker" && key !== "eliminated") await triggerManual(key, 'stop', true);
+                    // Check if current 'bg' should persist (must be in target scene and have SAME video file)
+                    let shouldPersistBg = false;
+                    if (key === "bg" && scene.play.includes("bg")) {
+                        const prevScene = scenes.find(s => s.play.includes("bg") && s.id < id); // Find last used bg scene
+                        if (prevScene && prevScene.bgVideo === scene.bgVideo) shouldPersistBg = true;
+                    }
+
+                    const isWhitelisted = (key === "ticker" || key === "eliminated" || shouldPersistBg);
+                    if(!isWhitelisted) await triggerManual(key, 'stop', true);
                 }
             }
             
@@ -468,6 +477,11 @@
 
             // 2. PLAY LOGIC
             for(let key of scene.play) {
+                // Optimization: Don't reload the background if it's already playing AND it's the same video
+                if (key === "bg" && liveTemplates.has("bg")) {
+                    const prevScene = scenes.find(s => s.play.includes("bg") && s.id < id);
+                    if (prevScene && prevScene.bgVideo === scene.bgVideo) continue;
+                }
                 await triggerManual(key, 'play', true);
             }
 
@@ -566,7 +580,12 @@
                 fields.push({ field: "f10", value: targetPlayerIndex });
             }
 
-            if(key === "ticker") fields.push({ field: "f0", value: document.getElementById('ticker-input').value });
+            if(key === "bg") {
+                const currentSceneObj = scenes[currentState];
+                if (currentSceneObj && currentSceneObj.bgVideo) {
+                    fields.push({ field: "f0", value: currentSceneObj.bgVideo });
+                }
+            }
             if(key === "transition") fields.push({ field: "f0", value: "PUBG MOBILE" }); // Default or could be dynamic
 
             // State Tracking

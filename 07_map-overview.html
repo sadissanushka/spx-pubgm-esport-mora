@@ -1364,11 +1364,19 @@
         /* ── Map list ── */
         function buildMapList(mapConfig, currentIndex) {
             const inner = el('map-list-inner');
+            if (!inner) return;
             inner.innerHTML = '';
             mapConfig.forEach(m => {
                 const isActive = m.id === currentIndex;
                 const div = document.createElement('div');
                 div.className = 'ml-item' + (isActive ? ' active' : '');
+                
+                // If the main intro animation has finished, make items visible immediately
+                if (!animationPlaying) {
+                    div.style.opacity = '1';
+                    div.style.transform = 'translateX(0)';
+                }
+
                 const rightHTML = isActive
                     ? `<div class="ml-live-dot"></div>`
                     : m.time
