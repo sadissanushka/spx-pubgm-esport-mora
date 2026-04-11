@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PUBG Mobile Master Controller v2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" />
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -28,104 +30,206 @@
         }
     </script>
     <style>
-        body { background-color: #060e20; color: #dae2fd; font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(23, 31, 51, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .scene-btn { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .scene-active { border-color: #ec6a06 !important; box-shadow: inset 0 0 20px rgba(236,106,6,0.1); }
-        .btn-glow { box-shadow: 0 0 15px rgba(236,106,6,0.2); }
-        .btn-glow:hover { box-shadow: 0 0 25px rgba(236,106,6,0.4); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 10px; }
-        #toast { transition: transform 0.3s, opacity 0.3s; }
-        .live-indicator { 
-            animation: pulse-live 2s infinite; 
+        body {
+            background-color: #060e20;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(23, 31, 51, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .scene-btn {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .scene-active {
+            border-color: #ec6a06 !important;
+            box-shadow: inset 0 0 20px rgba(236, 106, 6, 0.1);
+        }
+
+        .btn-glow {
+            box-shadow: 0 0 15px rgba(236, 106, 6, 0.2);
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 25px rgba(236, 106, 6, 0.4);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #2d3449;
+            border-radius: 10px;
+        }
+
+        #toast {
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        .live-indicator {
+            animation: pulse-live 2s infinite;
             background-color: #ef4444 !important;
             color: white !important;
         }
+
         @keyframes pulse-live {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
         }
-        .btn-live-border { border-color: #ef4444 !important; border-width: 2px !important; }
+
+        .btn-live-border {
+            border-color: #ef4444 !important;
+            border-width: 2px !important;
+        }
 
         /* ── STINGER FLASH OVERLAY ── */
         #stinger-flash {
             pointer-events: none;
-            position: fixed; inset: 0; z-index: 9999;
-            background: linear-gradient(135deg, rgba(236,106,6,0.18) 0%, rgba(11,19,38,0.22) 100%);
-            opacity: 0; transition: opacity 0.25s ease;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: linear-gradient(135deg, rgba(236, 106, 6, 0.18) 0%, rgba(11, 19, 38, 0.22) 100%);
+            opacity: 0;
+            transition: opacity 0.25s ease;
         }
-        #stinger-flash.active { opacity: 1; }
+
+        #stinger-flash.active {
+            opacity: 1;
+        }
+
         /* Stinger toast variant */
         #stinger-toast {
-            position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-60px);
-            background: #ec6a06; color: #0b1326;
-            padding: 6px 20px; border-radius: 999px;
-            font-size: 11px; font-weight: 900; letter-spacing: 0.25em;
-            text-transform: uppercase; z-index: 10000;
-            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.3s;
-            opacity: 0; white-space: nowrap;
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-60px);
+            background: #ec6a06;
+            color: #0b1326;
+            padding: 6px 20px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            z-index: 10000;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+            opacity: 0;
+            white-space: nowrap;
         }
-        #stinger-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        #stinger-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
 
         /* ── MOBILE SCENE STRIP ── */
         /* On small screens the LEFT panel becomes a sticky bottom bar */
         #scene-sidebar {
-            display: none; /* hidden on desktop, shown as strip on mobile */
+            display: none;
+            /* hidden on desktop, shown as strip on mobile */
         }
+
         #scene-strip {
             display: none;
         }
+
         @media (max-width: 1023px) {
-            #scene-sidebar { display: none !important; }
-            #scene-strip  { display: flex; }
+            #scene-sidebar {
+                display: none !important;
+            }
+
+            #scene-strip {
+                display: flex;
+            }
+
             /* extra bottom padding so content isn't hidden behind strip */
-            body { padding-bottom: 90px; }
+            body {
+                padding-bottom: 90px;
+            }
         }
+
         @media (min-width: 1024px) {
-            #scene-sidebar { display: block !important; }
-            #scene-strip  { display: none !important; }
+            #scene-sidebar {
+                display: block !important;
+            }
+
+            #scene-strip {
+                display: none !important;
+            }
         }
 
         /* ── MOBILE MANUAL LIST HEIGHT ── */
         @media (max-width: 1023px) {
-            #manual-list { height: auto !important; max-height: 60vh; }
+            #manual-list {
+                height: auto !important;
+                max-height: 60vh;
+            }
         }
 
         /* Hide divider on strip */
-        .strip-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
+        .strip-divider {
+            width: 1px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
     </style>
 </head>
+
 <body class="min-h-screen p-4 md:p-8 custom-scroll">
     <div class="max-w-[1400px] mx-auto">
-        
+
         <!-- TOP NAVIGATION & STATUS -->
         <header class="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-6 md:mb-8 gap-4 lg:gap-8">
             <!-- Title row: title + connection dot inline on mobile -->
             <div class="flex items-start justify-between lg:block flex-shrink-0">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-black italic tracking-tighter text-primary leading-none">MASTER CONTROLLER</h1>
+                    <h1 class="text-3xl md:text-4xl font-black italic tracking-tighter text-primary leading-none">MASTER
+                        CONTROLLER</h1>
                     <p class="text-xs font-black tracking-[0.4em] text-gray-500 mt-1">PUBGM BROADCAST OPERATIONS</p>
                 </div>
                 <!-- Connection dot visible only on mobile (top-right) -->
-                <span id="connection-status" class="lg:hidden w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] mt-1 flex-shrink-0"></span>
+                <span id="connection-status"
+                    class="lg:hidden w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] mt-1 flex-shrink-0"></span>
             </div>
 
             <!-- SMART FLOW PANEL -->
-            <div class="glass-card flex-grow rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6 border-l-4 border-primary">
+            <div
+                class="glass-card flex-grow rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6 border-l-4 border-primary">
                 <div class="flex-shrink-0">
-                    <span class="text-[10px] font-black uppercase text-gray-500 block mb-0.5">CURRENT BROADCAST STATE</span>
-                    <div id="status-display" class="text-xl md:text-2xl font-black text-white italic">WAITING TO START</div>
+                    <span class="text-[10px] font-black uppercase text-gray-500 block mb-0.5">CURRENT BROADCAST
+                        STATE</span>
+                    <div id="status-display" class="text-xl md:text-2xl font-black text-white italic">WAITING TO START
+                    </div>
                 </div>
                 <div class="hidden sm:block h-10 border-l border-white/10"></div>
-                
+
                 <div class="flex flex-grow gap-2">
-                    <button id="master-back-btn" onclick="prevScene()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black px-4 py-3 rounded-md text-base italic tracking-tighter transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <button id="master-back-btn" onclick="prevScene()"
+                        class="bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black px-4 py-3 rounded-md text-base italic tracking-tighter transition-all active:scale-95 flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined">first_page</span>
                     </button>
-                    <button id="master-flow-btn" onclick="nextScene()" class="flex-grow bg-primary text-surface font-black px-6 md:px-12 py-3 rounded-md text-base md:text-xl italic tracking-tighter shadow-lg btn-glow flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                    <button id="master-flow-btn" onclick="nextScene()"
+                        class="flex-grow bg-primary text-surface font-black px-6 md:px-12 py-3 rounded-md text-base md:text-xl italic tracking-tighter shadow-lg btn-glow flex items-center justify-center gap-2 active:scale-95 transition-transform">
                         <span class="material-symbols-outlined">play_arrow</span>
                         PROCEED TO <span id="next-scene-label">PRE-GAME</span>
                     </button>
@@ -140,32 +244,45 @@
                     <span class="hidden lg:inline w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
-                    <input type="text" id="sheet-url" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-secondary outline-none focus:border-primary" placeholder="Paste Sheet CSV URL..." onchange="saveSettings()">
-                    <input type="text" id="server-url" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-gray-500 outline-none focus:border-primary" value="http://localhost:5656" onchange="saveSettings()">
+                    <input type="text" id="sheet-url"
+                        class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-secondary outline-none focus:border-primary"
+                        placeholder="Paste Sheet CSV URL..." onchange="saveSettings()">
+                    <input type="text" id="server-url"
+                        class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-gray-500 outline-none focus:border-primary"
+                        value="http://localhost:5656" onchange="saveSettings()">
                 </div>
                 <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
-                    <input type="checkbox" id="use-transitions" class="w-3 h-3 accent-primary rounded bg-black/40" checked onchange="saveSettings()">
-                    <label for="use-transitions" class="text-[9px] font-black uppercase text-gray-500 cursor-pointer hover:text-gray-300">Enable Production Stingers</label>
+                    <input type="checkbox" id="use-transitions" class="w-3 h-3 accent-primary rounded bg-black/40"
+                        checked onchange="saveSettings()">
+                    <label for="use-transitions"
+                        class="text-[9px] font-black uppercase text-gray-500 cursor-pointer hover:text-gray-300">Enable
+                        Production Stingers</label>
                 </div>
             </div>
         </header>
 
         <main class="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8">
-            
+
             <!-- LEFT PANEL: SCENE SELECTOR — desktop sidebar (hidden on mobile, see strip below) -->
             <div id="scene-sidebar" class="lg:col-span-3 space-y-4">
                 <h3 class="text-xs font-black text-gray-400 tracking-widest uppercase mb-4">BROADCAST SCENES</h3>
-                
-                <button id="scene-btn-0" onclick="jumpToScene(0)" class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
-                    <div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">01</div>
+
+                <button id="scene-btn-0" onclick="jumpToScene(0)"
+                    class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
+                    <div
+                        class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">
+                        01</div>
                     <div>
                         <div class="font-black text-sm text-white">PRE-GAME</div>
                         <div class="text-[10px] text-gray-500 uppercase italic">Lineups (11)</div>
                     </div>
                 </button>
 
-                <button id="scene-btn-1" onclick="jumpToScene(1)" class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
-                    <div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">02</div>
+                <button id="scene-btn-1" onclick="jumpToScene(1)"
+                    class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
+                    <div
+                        class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">
+                        02</div>
                     <div>
                         <div class="font-black text-sm text-white uppercase">MATCH START</div>
                         <div class="text-[10px] text-gray-500 uppercase italic">HUD + Ranking</div>
@@ -173,11 +290,13 @@
                 </button>
 
                 <div class="pt-2 flex gap-2">
-                    <button id="scene-btn-2" onclick="jumpToScene(2)" class="scene-btn flex-1 glass-card p-3 rounded-lg text-center border-b-4 border-white/5 hover:border-white/20">
+                    <button id="scene-btn-2" onclick="jumpToScene(2)"
+                        class="scene-btn flex-1 glass-card p-3 rounded-lg text-center border-b-4 border-white/5 hover:border-white/20">
                         <div class="font-black text-xs text-white uppercase tracking-tighter">TACTICAL</div>
                         <div class="text-[9px] text-gray-500 uppercase">Sidebars (03)</div>
                     </button>
-                    <button id="scene-btn-3" onclick="jumpToScene(3)" class="scene-btn flex-1 glass-card p-3 rounded-lg text-center border-b-4 border-white/5 hover:border-white/20">
+                    <button id="scene-btn-3" onclick="jumpToScene(3)"
+                        class="scene-btn flex-1 glass-card p-3 rounded-lg text-center border-b-4 border-white/5 hover:border-white/20">
                         <div class="font-black text-xs text-white uppercase tracking-tighter">MAP</div>
                         <div class="text-[9px] text-gray-500 uppercase">Overview (07)</div>
                     </button>
@@ -185,24 +304,33 @@
 
                 <div class="h-[1px] bg-white/5 my-4"></div>
 
-                <button id="scene-btn-4" onclick="jumpToScene(4)" class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
-                    <div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">03</div>
+                <button id="scene-btn-4" onclick="jumpToScene(4)"
+                    class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
+                    <div
+                        class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">
+                        03</div>
                     <div>
                         <div class="font-black text-sm text-white uppercase italic">SPOTLIGHT</div>
                         <div class="text-[10px] text-gray-500 uppercase italic">Player Stats (04)</div>
                     </div>
                 </button>
 
-                <button id="scene-btn-5" onclick="jumpToScene(5)" class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
-                    <div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">04</div>
+                <button id="scene-btn-5" onclick="jumpToScene(5)"
+                    class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
+                    <div
+                        class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">
+                        04</div>
                     <div>
                         <div class="font-black text-sm text-white uppercase italic">WINNER</div>
                         <div class="text-[10px] text-gray-500 uppercase italic">WWCD (05)</div>
                     </div>
                 </button>
 
-                <button id="scene-btn-6" onclick="jumpToScene(6)" class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
-                    <div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">05</div>
+                <button id="scene-btn-6" onclick="jumpToScene(6)"
+                    class="scene-btn w-full glass-card p-4 rounded-lg flex items-center gap-4 border-l-4 border-white/5 hover:border-white/20 text-left">
+                    <div
+                        class="w-10 h-10 rounded bg-white/5 flex items-center justify-center font-black text-xl text-gray-500 flex-shrink-0">
+                        05</div>
                     <div>
                         <div class="font-black text-sm text-white uppercase italic">POST-MATCH</div>
                         <div class="text-[10px] text-gray-500 uppercase italic">Results (08-10)</div>
@@ -212,20 +340,26 @@
 
             <!-- CENTER PANEL: LIVE CONTROLS -->
             <div class="lg:col-span-6 space-y-6 lg:space-y-8">
-                
+
                 <!-- CURRENT SCENE PREVIEW / QUICK ACTIONS -->
                 <div class="glass-card rounded-2xl p-5 md:p-8 relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-4 opacity-5">
                         <span class="material-symbols-outlined text-9xl">settings_input_composite</span>
                     </div>
-                    
+
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-2 gap-2">
-                            <h3 id="panel-title" class="text-2xl md:text-4xl font-black italic tracking-tighter text-white uppercase">MAIN PRODUCTION</h3>
-                            <div id="live-badge" class="hidden px-3 py-1 bg-live text-white text-[10px] font-black rounded-full italic tracking-[0.2em] animate-pulse flex-shrink-0">LIVE ON STREAM</div>
+                            <h3 id="panel-title"
+                                class="text-2xl md:text-4xl font-black italic tracking-tighter text-white uppercase">
+                                MAIN PRODUCTION</h3>
+                            <div id="live-badge"
+                                class="hidden px-3 py-1 bg-live text-white text-[10px] font-black rounded-full italic tracking-[0.2em] animate-pulse flex-shrink-0">
+                                LIVE ON STREAM</div>
                         </div>
-                        <p id="panel-desc" class="text-xs md:text-sm text-gray-400 mb-6 md:mb-8 uppercase tracking-widest">Select a scene to reveal granular controls</p>
-                        
+                        <p id="panel-desc"
+                            class="text-xs md:text-sm text-gray-400 mb-6 md:mb-8 uppercase tracking-widest">Select a
+                            scene to reveal granular controls</p>
+
                         <div id="dynamic-controls" class="grid grid-cols-2 gap-3 md:gap-4">
                             <!-- Injected Controls -->
                         </div>
@@ -237,26 +371,35 @@
                     <!-- TICKER CONTROL -->
                     <div id="ticker-card" class="glass-card rounded-xl p-4 md:p-6 border-t-2 border-accent-blue">
                         <div class="flex justify-between items-center mb-3 md:mb-4">
-                            <h4 class="text-xs font-black text-accent-blue tracking-widest uppercase">Live Ticker (10)</h4>
+                            <h4 class="text-xs font-black text-accent-blue tracking-widest uppercase">Live Ticker (10)
+                            </h4>
                             <div id="ticker-live" class="hidden w-2 h-2 rounded-full bg-live animate-pulse"></div>
                         </div>
-                        <textarea id="ticker-input" class="w-full bg-black/40 border border-white/5 rounded p-3 text-sm text-white mb-3 md:mb-4 h-20 outline-none focus:border-accent-blue" placeholder="Latest news from the battleground..."></textarea>
+                        <textarea id="ticker-input"
+                            class="w-full bg-black/40 border border-white/5 rounded p-3 text-sm text-white mb-3 md:mb-4 h-20 outline-none focus:border-accent-blue"
+                            placeholder="Latest news from the battleground..."></textarea>
                         <div class="flex gap-2">
-                            <button id="btn-ticker-play" onclick="triggerTicker('play')" class="flex-1 bg-accent-blue text-white font-black py-2.5 rounded text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                            <button id="btn-ticker-play" onclick="triggerTicker('play')"
+                                class="flex-1 bg-accent-blue text-white font-black py-2.5 rounded text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform">
                                 <span class="material-symbols-outlined text-sm">campaign</span> START
                             </button>
-                            <button id="btn-ticker-stop" onclick="triggerTicker('stop')" class="flex-1 bg-white/5 text-gray-400 font-bold py-2.5 rounded text-xs uppercase border border-white/5">STOP</button>
+                            <button id="btn-ticker-stop" onclick="triggerTicker('stop')"
+                                class="flex-1 bg-white/5 text-gray-400 font-bold py-2.5 rounded text-xs uppercase border border-white/5">STOP</button>
                         </div>
                     </div>
-                    
+
                     <!-- PANIC PANEL -->
                     <div class="glass-card rounded-xl p-4 md:p-6 border-t-2 border-red-800">
-                        <h4 class="text-xs font-black text-red-600 tracking-widest uppercase mb-3 md:mb-4">Safety Controls</h4>
+                        <h4 class="text-xs font-black text-red-600 tracking-widest uppercase mb-3 md:mb-4">Safety
+                            Controls</h4>
                         <div class="space-y-3">
-                            <button onclick="panicClear()" class="w-full bg-red-900/40 hover:bg-red-800 text-red-100 font-black py-4 rounded text-sm flex items-center justify-center gap-2 border border-red-800 transition-colors active:scale-95">
+                            <button onclick="panicClear()"
+                                class="w-full bg-red-900/40 hover:bg-red-800 text-red-100 font-black py-4 rounded text-sm flex items-center justify-center gap-2 border border-red-800 transition-colors active:scale-95">
                                 <span class="material-symbols-outlined">report</span> CLEAR ALL LAYERS
                             </button>
-                            <button onclick="resetFlow()" class="w-full bg-white/5 text-gray-500 font-bold py-2 rounded text-[10px] uppercase">RESET BROADCAST STATE</button>
+                            <button onclick="resetFlow()"
+                                class="w-full bg-white/5 text-gray-500 font-bold py-2 rounded text-[10px] uppercase">RESET
+                                BROADCAST STATE</button>
                         </div>
                     </div>
                 </div>
@@ -264,61 +407,79 @@
 
             <!-- RIGHT PANEL: MANUAL OVERRIDES -->
             <div class="lg:col-span-3 glass-card rounded-xl p-4 md:p-6 flex flex-col">
-                <h3 class="text-xs font-black text-gray-400 tracking-widest uppercase mb-4 md:mb-6 flex items-center justify-between">
+                <h3
+                    class="text-xs font-black text-gray-400 tracking-widest uppercase mb-4 md:mb-6 flex items-center justify-between">
                     INDEPENDENT LAYERS <span class="material-symbols-outlined text-sm">tune</span>
                 </h3>
-                
+
                 <div id="manual-list" class="space-y-3 flex-grow overflow-y-auto pr-2 custom-scroll h-[600px]">
                     <!-- Manual buttons injected here -->
                 </div>
 
                 <div class="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/5">
-                    <p class="text-[10px] text-gray-600 font-bold text-center italic">Tip: Use Direct Playout (Method 1) to ignore SPX Rundowns.</p>
+                    <p class="text-[10px] text-gray-600 font-bold text-center italic">Tip: Use Direct Playout (Method 1)
+                        to ignore SPX Rundowns.</p>
                 </div>
             </div>
         </main>
 
         <!-- MOBILE SCENE STRIP — sticky bottom bar, visible only on < lg -->
-        <nav id="scene-strip" class="fixed bottom-0 left-0 right-0 z-40 bg-[#060e20]/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 overflow-x-auto custom-scroll" style="-webkit-overflow-scrolling:touch;">
+        <nav id="scene-strip"
+            class="fixed bottom-0 left-0 right-0 z-40 bg-[#060e20]/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 overflow-x-auto custom-scroll"
+            style="-webkit-overflow-scrolling:touch;">
             <div class="flex items-center gap-2 w-max mx-auto">
                 <!-- Strip buttons mirror scene-btn-N IDs with suffix -s for strip -->
-                <button id="scene-btn-s-0" onclick="jumpToScene(0)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[72px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-0" onclick="jumpToScene(0)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[72px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">01</span>
-                    <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">PRE-GAME</span>
+                    <span
+                        class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">PRE-GAME</span>
                 </button>
                 <div class="strip-divider"></div>
-                <button id="scene-btn-s-1" onclick="jumpToScene(1)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[80px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-1" onclick="jumpToScene(1)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[80px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">02</span>
-                    <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">MATCH</span>
+                    <span
+                        class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">MATCH</span>
                 </button>
-                <button id="scene-btn-s-2" onclick="jumpToScene(2)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[72px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-2" onclick="jumpToScene(2)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[72px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">03</span>
-                    <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">TACTICAL</span>
+                    <span
+                        class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">TACTICAL</span>
                 </button>
-                <button id="scene-btn-s-3" onclick="jumpToScene(3)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[64px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-3" onclick="jumpToScene(3)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[64px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">04</span>
                     <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">MAP</span>
                 </button>
                 <div class="strip-divider"></div>
-                <button id="scene-btn-s-4" onclick="jumpToScene(4)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[80px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-4" onclick="jumpToScene(4)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[80px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">05</span>
-                    <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">SPOTLIGHT</span>
+                    <span
+                        class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">SPOTLIGHT</span>
                 </button>
-                <button id="scene-btn-s-5" onclick="jumpToScene(5)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[72px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-5" onclick="jumpToScene(5)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[72px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">06</span>
-                    <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">WINNER</span>
+                    <span
+                        class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">WINNER</span>
                 </button>
                 <div class="strip-divider"></div>
-                <button id="scene-btn-s-6" onclick="jumpToScene(6)" class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[88px] active:scale-95 transition-transform">
+                <button id="scene-btn-s-6" onclick="jumpToScene(6)"
+                    class="scene-btn glass-card flex flex-col items-center justify-center px-4 py-2 rounded-xl border-b-2 border-white/5 min-w-[88px] active:scale-95 transition-transform">
                     <span class="text-[9px] font-black text-gray-500">07</span>
-                    <span class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">POST-MATCH</span>
+                    <span
+                        class="text-[11px] font-black text-white uppercase tracking-tighter leading-tight">POST-MATCH</span>
                 </button>
             </div>
         </nav>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-white text-surface px-8 py-3 rounded-full font-black italic text-sm shadow-2xl z-50 pointer-events-none">
+    <div id="toast"
+        class="fixed bottom-8 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-white text-surface px-8 py-3 rounded-full font-black italic text-sm shadow-2xl z-50 pointer-events-none">
         COMMAND SENT
     </div>
 
@@ -328,11 +489,11 @@
 
     <script>
         // CONFIG & DATA
-        let currentState = -1; 
+        let currentState = -1;
         const liveTemplates = new Set(); // Tracks what is currently "LIVE"
         let targetSlot = "1";
         let targetPlayerIndex = "1";
-        
+
         const templates = {
             "slots": { path: "11_slots.html", layer: 8, name: "Squad Roster" },
             "leaderboard": { path: "01_Standalone Broadcast Leaderboard.html", layer: 5, name: "Match HUD" },
@@ -366,11 +527,11 @@
             const savedUrl = localStorage.getItem("pubg_sheet_url");
             const savedServer = localStorage.getItem("pubg_server_url") || "http://localhost:5656";
             const savedTransition = localStorage.getItem("pubg_use_transitions") !== "false";
-            
-            if(savedUrl) document.getElementById('sheet-url').value = savedUrl;
+
+            if (savedUrl) document.getElementById('sheet-url').value = savedUrl;
             document.getElementById('server-url').value = savedServer;
             document.getElementById('use-transitions').checked = savedTransition;
-            
+
             initManualList();
             updateMasterFlowLabel();
 
@@ -389,7 +550,7 @@
                         await triggerManual('transition', 'stop', true);
                         liveTemplates.delete('transition');
                         console.log('[Stinger] Pre-warm complete – transition template cached.');
-                    } catch(e) {
+                    } catch (e) {
                         console.warn('[Stinger] Pre-warm skipped (SPX-GC not ready yet):', e.message);
                     }
                 }, 3000); // 3 second delay – gives SPX-GC time to fully start up
@@ -408,7 +569,7 @@
             const label = document.getElementById('next-scene-label');
             const status = document.getElementById('status-display');
 
-            if(currentState === -1) {
+            if (currentState === -1) {
                 label.innerText = "PRE-GAME";
                 status.innerText = "WAITING TO START";
             } else if (currentState < scenes.length - 1) {
@@ -421,14 +582,14 @@
 
             // Highlight both desktop sidebar buttons AND mobile strip buttons
             document.querySelectorAll('#scene-sidebar .scene-btn').forEach((b, idx) => {
-                if(idx === currentState) b.classList.add('scene-active');
+                if (idx === currentState) b.classList.add('scene-active');
                 else b.classList.remove('scene-active');
             });
             document.querySelectorAll('#scene-strip .scene-btn').forEach((b, idx) => {
-                if(idx === currentState) b.classList.add('scene-active');
+                if (idx === currentState) b.classList.add('scene-active');
                 else b.classList.remove('scene-active');
             });
-            
+
             refreshLiveUI();
         }
 
@@ -437,21 +598,21 @@
             Object.keys(templates).forEach(key => {
                 const btn = document.getElementById(`manual-play-${key}`);
                 const row = document.getElementById(`manual-row-${key}`);
-                if(!btn) return;
-                
-                if(liveTemplates.has(key)) {
+                if (!btn) return;
+
+                if (liveTemplates.has(key)) {
                     btn.classList.add('live-indicator');
-                    if(row) row.classList.add('btn-live-border');
+                    if (row) row.classList.add('btn-live-border');
                 } else {
                     btn.classList.remove('live-indicator');
-                    if(row) row.classList.remove('btn-live-border');
+                    if (row) row.classList.remove('btn-live-border');
                 }
             });
 
             // Update ticker UI
             const tickerLive = document.getElementById('ticker-live');
             const tickerCard = document.getElementById('ticker-card');
-            if(liveTemplates.has('ticker')) {
+            if (liveTemplates.has('ticker')) {
                 tickerLive.classList.remove('hidden');
                 tickerCard.classList.add('btn-live-border');
             } else {
@@ -461,12 +622,12 @@
 
             // Update panel badge
             const badge = document.getElementById('live-badge');
-            if(liveTemplates.size > 0) badge.classList.remove('hidden');
+            if (liveTemplates.size > 0) badge.classList.remove('hidden');
             else badge.classList.add('hidden');
         }
 
         async function nextScene() {
-            if(currentState >= scenes.length - 1) {
+            if (currentState >= scenes.length - 1) {
                 resetFlow();
                 return;
             }
@@ -475,18 +636,18 @@
         }
 
         async function prevScene() {
-            if(currentState <= 0) return;
+            if (currentState <= 0) return;
             currentState--;
             jumpToScene(currentState);
         }
 
         // ── Stinger timing constants ──────────────────────────────────────────
         // These match the defaults in 12_transition.html:
-        //   cycleDuration  = 1600ms  →  wipe-in half = 800ms
-        //   loopPauseMs    = 2400ms
-        // We fire scene commands DURING the mid-hold window (≈ wipe-in + safety margin).
-        const STINGER_WIPE_IN_MS  = 900;  // wait after play() before touching layers
-        const STINGER_SETTLE_MS   = 200;  // extra settle before calling stop()
+        //   cycleDuration  = 700ms   →  wipe-in half = 350ms
+        //   loopPauseMs    = 300ms
+        // We fire scene commands DURING the mid-hold window (wipe-in + safety margin).
+        const STINGER_WIPE_IN_MS = 900;  // wait after play() before touching layers
+        const STINGER_SETTLE_MS = 300;   // extra settle before calling stop()
 
         function showStingerFlash() {
             const f = document.getElementById('stinger-flash');
@@ -565,12 +726,12 @@
             const container = document.getElementById('dynamic-controls');
             const title = document.getElementById('panel-title');
             const desc = document.getElementById('panel-desc');
-            
+
             title.innerText = scene.name;
             desc.innerText = scene.desc;
             container.innerHTML = '';
 
-            if(scene.id === 1) { 
+            if (scene.id === 1) {
                 addControl("MATCH HUD", "leaderboard");
                 addControl("RANKINGS", "ranking");
                 addControl("ELIM POLLER", "eliminated");
@@ -617,10 +778,10 @@
                     <div class="flex flex-col gap-2">
                         <span class="text-[10px] font-bold text-gray-500 uppercase">PLAYER (1-4)</span>
                         <select onchange="targetPlayerIndex=this.value" class="bg-black/40 border border-white/10 rounded px-3 py-2 text-sm text-secondary outline-none focus:border-primary">
-                            <option value="1" ${targetPlayerIndex==="1"?'selected':''}>Player 1</option>
-                            <option value="2" ${targetPlayerIndex==="2"?'selected':''}>Player 2</option>
-                            <option value="3" ${targetPlayerIndex==="3"?'selected':''}>Player 3</option>
-                            <option value="4" ${targetPlayerIndex==="4"?'selected':''}>Player 4</option>
+                            <option value="1" ${targetPlayerIndex === "1" ? 'selected' : ''}>Player 1</option>
+                            <option value="2" ${targetPlayerIndex === "2" ? 'selected' : ''}>Player 2</option>
+                            <option value="3" ${targetPlayerIndex === "3" ? 'selected' : ''}>Player 3</option>
+                            <option value="4" ${targetPlayerIndex === "4" ? 'selected' : ''}>Player 4</option>
                         </select>
                     </div>
                 </div>
@@ -638,19 +799,19 @@
             const sheet = document.getElementById('sheet-url').value;
             const server = document.getElementById('server-url').value;
             const fields = [];
-            
+
             // Map data
-            if(["slots", "leaderboard", "eliminated", "winner", "standings", "topelims", "tableresult", "sidebar", "map", "stats", "ranking"].includes(key)) {
+            if (["slots", "leaderboard", "eliminated", "winner", "standings", "topelims", "tableresult", "sidebar", "map", "stats", "ranking"].includes(key)) {
                 const fieldName = (key === "sidebar" || key === "leaderboard") ? "f5" : "f7";
                 fields.push({ field: fieldName, value: sheet });
             }
 
-            if(key === "stats") {
+            if (key === "stats") {
                 fields.push({ field: "f9", value: targetSlot });
                 fields.push({ field: "f10", value: targetPlayerIndex });
             }
 
-            if(key === "bg") {
+            if (key === "bg") {
                 const currentSceneObj = scenes[currentState];
                 if (currentSceneObj && currentSceneObj.bgVideo) {
                     fields.push({ field: "f0", value: currentSceneObj.bgVideo });
@@ -662,7 +823,7 @@
             }
 
             // State Tracking
-            if(command === 'play') liveTemplates.add(key);
+            if (command === 'play') liveTemplates.add(key);
             else liveTemplates.delete(key);
 
             const body = {
@@ -681,7 +842,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if(!silent) showToast(command.toUpperCase() + ": " + temp.name);
+                if (!silent) showToast(command.toUpperCase() + ": " + temp.name);
                 refreshLiveUI();
             } catch (e) {
                 console.error("API Error:", e);
@@ -700,7 +861,7 @@
                 liveTemplates.clear();
                 refreshLiveUI();
                 showToast("PANIC: ALL LAYERS KILLED");
-            } catch(e) {}
+            } catch (e) { }
         }
 
         function resetFlow() {
@@ -746,4 +907,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -174,10 +174,10 @@
 
         // ── Configurable via update() ─────────────────────────────
         let cfg = {
-            cycleDuration : 1600,   // ms for one full in+out wipe
-            loopPauseMs   : 2400,   // pause (transparent screen) between wipes
-            label         : 'TRANSIÇÃO',
-            sub           : 'PUBG MOBILE ESPORTS',
+            cycleDuration : 1000,    // ms for one full in+out wipe  (was 1600)
+            loopPauseMs   : 1000,    // ms hold at full coverage      (was 2400)
+            label         : 'PUBG MOBILE',
+            sub           : 'ESPORTS BROADCAST',
             accentColor   : '#ec6a06'
         };
 
@@ -371,13 +371,13 @@
                     "field" : "f2",
                     "ftype" : "textfield",
                     "title" : "Wipe Duration (ms)",
-                    "value" : "1600"
+                    "value" : "1000"
                 },
                 {
                     "field" : "f3",
                     "ftype" : "textfield",
                     "title" : "Pause Between Loops (ms)",
-                    "value" : "2400"
+                    "value" : "1000"
                 },
                 {
                     "field" : "f4",
