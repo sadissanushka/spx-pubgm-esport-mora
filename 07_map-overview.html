@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SPX - PUBG Mobile - Combined Map Widget</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary": "#ffb690",
+                        "surface-dim": "#0b1326",
+                        "on-background": "#dae2fd",
+                        "secondary-container": "#ec6a06",
+                        "on-secondary": "#552100",
+                        "primary-container": "#4d8eff",
+                        "primary": "#adc6ff",
+                        "background": "#0b1326",
+                        "on-surface": "#dae2fd",
+                        "on-surface-variant": "#c2c6d6",
+                    },
+                    fontFamily: { "headline": ["Inter"], "body": ["Inter"], "label": ["Inter"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: transparent;
+            width: 1920px; height: 1080px;
+            overflow: hidden; margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ─── WRAPPER ─── */
+        #wrapper {
+            opacity: 0;
+            transition: opacity 1s ease;
+            width: 1920px; height: 1080px;
+            position: relative;
+        }
+
+        /* ─── INTRO SEQUENCE ─── */
+        #intro-sequence { transition: opacity 0.5s ease; }
+
+        .intro-card {
+            width: 260px; height: 200px;
+            background: rgba(19,27,46,0.88); backdrop-filter: blur(16px);
+            border-bottom: 5px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.9);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: all 0.6s cubic-bezier(0.25,1,0.5,1);
+            position: relative;
+        }
+        .card-match-header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.4); padding: 8px 0;
+            text-align: center; font-size: 14px; font-weight: 800;
+            color: #ffb690; letter-spacing: 3px; font-style: italic;
+        }
+        .card-map-name {
+            font-size: 32px; font-weight: 900; color: #fff;
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-top: 10px; text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+        .card-completed-status {
+            background: rgba(255,255,255,0.1); color: #dae2fd;
+            padding: 5px 15px; border-radius: 4px;
+            font-size: 13px; font-weight: 700; letter-spacing: 1px;
+            margin-top: 15px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .time-text { font-size: 18px; font-variant-numeric: tabular-nums; color: #ffb690; }
+
+        @keyframes cardEnter {
+            0%   { transform: translateY(100px) scale(0.9); opacity: 0; filter: blur(5px); }
+            100% { transform: translateY(0) scale(1);       opacity: 1; filter: blur(0); }
+        }
+        .intro-card.dimmed   { filter: blur(3px) brightness(0.4); transform: scale(0.95); }
+        .intro-card.selected {
+            border-bottom: 5px solid #ffb690; transform: scale(1.15);
+            box-shadow: 0 20px 60px rgba(236,106,6,0.3); z-index: 10;
+        }
+        .intro-card.selected .card-match-header { background: #ffb690; color: #0b1326; }
+        .intro-card.selected .card-map-name     { color: #ffb690; text-shadow: 0 0 20px rgba(255,182,144,0.6); }
+        .intro-card.zoom-out {
+            transform: scale(5) !important; opacity: 0 !important;
+            filter: blur(20px) !important; pointer-events: none;
+        }
+
+        /* ══════════════════════════════════════════════════
+           COMBINED WIDGET  — fully transparent canvas
+           ┌───────────────────────────────────────────────┐
+           │  [STATS PANEL top-right]                      │
+           │                                               │
+           │                       [MINI MAP bottom-right] │
+           └───────────────────────────────────────────────┘
+        ══════════════════════════════════════════════════ */
+
+        #widget-combined {
+            position: absolute; top: 0; left: 0;
+            width: 1920px; height: 1080px;
+            display: none; opacity: 0;
+            /* transparent — no background */
+        }
+
+        .widget-enter-combined {
+            animation: widgetFadeInCombined 0.9s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        @keyframes widgetFadeInCombined {
+            0%   { opacity: 0; filter: blur(10px); }
+            100% { opacity: 1; filter: blur(0); }
+        }
+
+        /* ─────────────────────────────────
+           STATS PANEL  — top-right corner
+        ───────────────────────────────── */
+        #stats-panel {
+            position: absolute;
+            top: 40px; right: 40px;
+            width: 360px;
+            /* fully transparent background */
+            background: transparent;
+            display: flex; flex-direction: column;
+        }
+
+        /* Orange header bar */
+        #stats-header {
+            background: #ffb690;
+            color: #552100;
+            padding: 10px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        #stats-header .sh-title {
+            font-size: 13px; font-weight: 900; letter-spacing: 3px;
+            text-transform: uppercase; font-style: italic;
+        }
+        #stats-header .sh-map {
+            font-size: 13px; font-weight: 800; letter-spacing: 2px;
+            text-transform: uppercase; opacity: 0.8;
+        }
+
+        /* Portrait map photo — above map name */
+        #map-portrait-wrap {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+        #map-portrait-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            /* portrait crop focuses on centre */
+            object-position: center 35%;
+            opacity: 0.85;
+            display: block;
+        }
+        /* gradient fade at bottom of portrait into info block */
+        #map-portrait-wrap::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0;
+            width: 100%; height: 80px;
+            background: linear-gradient(to bottom, transparent, rgba(8,14,30,0.95));
+            pointer-events: none;
+        }
+        /* match badge overlaid on portrait bottom-left */
+        #portrait-badge {
+            position: absolute; bottom: 10px; left: 14px;
+            z-index: 2;
+        }
+        #portrait-badge .pb-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(218,226,253,0.55);
+        }
+        #badge-match-num {
+            font-size: 18px; font-weight: 900; font-style: italic;
+            color: #ffb690; letter-spacing: 1px;
+        }
+
+        /* Map name + info block */
+        #stats-info {
+            background: rgba(8,14,30,0.92);
+            backdrop-filter: blur(12px);
+            border-left: 3px solid #ffb690;
+            padding: 16px 18px 0 18px;
+            display: flex; flex-direction: column;
+        }
+
+        .info-map-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(218,226,253,0.45);
+            margin-bottom: 2px;
+        }
+        #full-f0 {
+            font-size: 38px; font-weight: 900; text-transform: uppercase;
+            color: #adc6ff; line-height: 1; letter-spacing: -1px;
+            margin-bottom: 14px;
+        }
+
+        /* weather / e-portal row */
+        .info-tiles {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-bottom: 14px;
+        }
+        .info-tile {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            padding: 10px 12px;
+            display: flex; flex-direction: column; gap: 3px;
+        }
+        .info-tile .t-label {
+            font-size: 8px; font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(218,226,253,0.45);
+        }
+        .info-tile .t-value {
+            font-size: 16px; font-weight: 800;
+            text-transform: uppercase; color: #dae2fd;
+        }
+
+        /* live badge */
+        .live-badge {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 0 6px 0;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .live-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #f87171;
+            animation: pulseDot 1.4s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulseDot {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.4; transform: scale(1.5); }
+        }
+        .live-badge span {
+            font-size: 9px; font-weight: 800; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(218,226,253,0.5);
+        }
+
+        /* stat rows */
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .stat-row:last-of-type { border-bottom: none; }
+        .stat-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; color: rgba(218,226,253,0.45);
+        }
+        .stat-value {
+            font-size: 24px; font-weight: 900;
+            font-variant-numeric: tabular-nums; color: #dae2fd;
+        }
+        .accent-orange { color: #ffb690; }
+        .accent-blue   { color: #adc6ff; }
+
+        /* progress bar */
+        .prog-wrap {
+            padding: 12px 0 16px 0;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .prog-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 7px;
+        }
+        .prog-row .pl { font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(218,226,253,0.45); }
+        .prog-row .pp { font-size: 10px; font-weight: 800; color: #ffb690; }
+        .prog-track { width: 100%; height: 2px; background: rgba(255,255,255,0.08); }
+        .prog-fill  { height: 100%; background: #ffb690; transition: width 1s linear; }
+
+        /* footer accent lines */
+        #stats-footer {
+            display: flex; background: rgba(8,14,30,0.92);
+            backdrop-filter: blur(12px);
+        }
+        #stats-footer .ff { height: 3px; flex-grow: 1; background: rgba(255,182,144,0.3); }
+        #stats-footer .fs { height: 3px; width: 50px; background: #ffb690; }
+
+        /* ─────────────────────────────────
+           MINI MAP  — bottom-right corner
+        ───────────────────────────────── */
+        #mini-map-wrap {
+            position: absolute;
+            bottom: 40px; right: 40px;
+            width: 360px; height: 360px;
+            overflow: hidden;
+            border: 2px solid rgba(255,182,144,0.35);
+            box-shadow: 0 12px 60px rgba(0,0,0,0.65);
+        }
+        #mini-map-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0.8;
+        }
+        /* dark vignette inside mini map */
+        #mini-map-wrap::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle, transparent 55%, rgba(0,0,0,0.55) 100%);
+            pointer-events: none; z-index: 1;
+        }
+        /* bottom-left accent tag on mini map */
+        #mini-map-tag {
+            position: absolute; bottom: 0; left: 0;
+            background: #ffb690; color: #552100;
+            font-size: 10px; font-weight: 900; letter-spacing: 2px;
+            text-transform: uppercase; font-style: italic;
+            padding: 5px 12px; z-index: 3;
+        }
+
+        /* flight path SVG — inside mini map */
+        #flight-path-svg {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 2;
+        }
+    </style>
+</head>
+<body class="bg-transparent font-body text-on-surface">
+<div id="wrapper">
+
+    <!-- ══ INTRO SEQUENCE ══ -->
+    <div id="intro-sequence" class="absolute inset-0 flex items-center justify-center gap-6 z-0"></div>
+
+    <!-- ══ COMBINED TRANSPARENT WIDGET ══ -->
+    <div id="widget-combined">
+
+        <!-- ── STATS PANEL (top-right, transparent BG) ── -->
+        <div id="stats-panel">
+
+            <!-- Orange header -->
+            <div id="stats-header">
+                <span class="sh-title">MAP OVERVIEW</span>
+                <span id="hud-f0" class="sh-map">ERANGEL</span>
+            </div>
+
+            <!-- Portrait map photo -->
+            <div id="map-portrait-wrap">
+                <img id="portrait-map-asset" src="images/maps/erangel.jpeg" alt="Map Portrait">
+                <div id="portrait-badge">
+                    <div class="pb-label">CURRENT MATCH</div>
+                    <div id="badge-match-num">MATCH 01</div>
+                </div>
+            </div>
+
+            <!-- Info block (map name + tiles + stats) -->
+            <div id="stats-info">
+
+                <!-- Map Name -->
+                <div class="info-map-label">PLAYING ON</div>
+                <div id="full-f0">ERANGEL</div>
+
+                <!-- Weather / E-Portal -->
+                <div class="info-tiles">
+                    <div class="info-tile">
+                        <span class="t-label">WEATHER</span>
+                        <span id="full-f1" class="t-value">CLEAR SKY</span>
+                    </div>
+                    <div class="info-tile">
+                        <span class="t-label">E-PORTAL</span>
+                        <span id="full-f2" class="t-value">ACTIVE</span>
+                    </div>
+                </div>
+
+                <!-- Live badge -->
+                <div class="live-badge">
+                    <div class="live-dot"></div>
+                    <span>LIVE MATCH DATA</span>
+                </div>
+
+                <!-- Stat rows -->
+                <div class="stat-row">
+                    <span class="stat-label">PLAYERS ALIVE</span>
+                    <span id="hud-f1" class="stat-value accent-orange">64</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">TEAMS ALIVE</span>
+                    <span id="hud-f2" class="stat-value">16</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">ZONE PHASE</span>
+                    <span id="hud-f3" class="stat-value accent-blue">04</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">NEXT CIRCLE</span>
+                    <span id="hud-f4" class="stat-value">01:45</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">CLOSING IN</span>
+                    <span id="hud-f5" class="stat-value accent-orange">—</span>
+                </div>
+
+                <!-- Match Progress -->
+                <div class="prog-wrap">
+                    <div class="prog-row">
+                        <span class="pl">MATCH PROGRESS</span>
+                        <span id="progress-text" class="pp">0%</span>
+                    </div>
+                    <div class="prog-track">
+                        <div id="progress-bar" class="prog-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+            </div><!-- /stats-info -->
+
+            <!-- Footer accent -->
+            <div id="stats-footer">
+                <div class="ff"></div>
+                <div class="fs"></div>
+            </div>
+
+        </div><!-- /stats-panel -->
+
+        <!-- ── MINI MAP with flight path (bottom-right) ── -->
+        <div id="mini-map-wrap">
+            <img id="full-map-asset" src="images/maps/erangel.jpeg" alt="Map">
+
+            <!-- Flight Path SVG scaled to mini map -->
+            <svg id="flight-path-svg" viewBox="0 0 360 360">
+                <defs>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
+                <!-- Flight path line -->
+                <line x1="55" y1="65" x2="295" y2="295"
+                      stroke="white" stroke-width="1.8"
+                      stroke-dasharray="10,5" opacity="0.45"/>
+                <!-- Take-off dot + label -->
+                <circle cx="55" cy="65" r="5" fill="#ffb690" filter="url(#glow)"/>
+                <text x="65" y="62" fill="#ffb690" font-size="10"
+                      font-family="Inter" font-weight="700" letter-spacing="0.5" opacity="0.85">TAKE-OFF</text>
+                <!-- Landing dot + label -->
+                <circle cx="295" cy="295" r="5" fill="#ffb690" filter="url(#glow)"/>
+                <text x="200" y="313" fill="#ffb690" font-size="10"
+                      font-family="Inter" font-weight="700" letter-spacing="0.5" opacity="0.85">LANDING</text>
+                <!-- Plane icon midpoint -->
+                <circle cx="175" cy="180" r="3" fill="white" opacity="0.5"/>
+            </svg>
+
+            <div id="mini-map-tag">FLIGHT PATH</div>
+        </div><!-- /mini-map-wrap -->
+
+    </div><!-- /widget-combined -->
+
+</div><!-- /wrapper -->
+
+<script>
+    let sheetInterval    = null;
+    let progressInterval = null;
+    let matchStartTimeObj = null;
+    const FULL_MATCH_SECONDS = 1920;
+
+    let currentMapConfigJSON    = "";
+    let globalCurrentMatchIndex = 1;
+    let animationPlaying        = false;
+    let isDataLoaded            = false;
+    let queuedPlayCommand       = false;
+
+    // ─── Spreadsheet Fetch ────────────────────────────────────
+    async function fetchSheet(url) {
+        try {
+            let cleanUrl = url.trim();
+            if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+            if (cleanUrl.includes('pub?'))  cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+            const response = await fetch(cleanUrl);
+            const csvText  = await response.text();
+            if (csvText.includes('<!DOCTYPE html>')) return;
+
+            Papa.parse(csvText, {
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const rawLines = results.data;
+                    if (rawLines.length < 2) return;
+
+                    const headerCols = rawLines[0];
+                    if (headerCols.length > 9) setStartTime(headerCols[9]);
+
+                    // Players / Teams Alive
+                    let playersAlive = 0, teamsAlive = 0;
+                    rawLines.slice(2, 27).forEach(cols => {
+                        const teamName = cols[1]?.trim() || "";
+                        if (!cols[1] || teamName === "" || teamName === "TeamName") return;
+                        const p1 = cols[4]?.trim().toUpperCase() === 'TRUE';
+                        const p2 = cols[5]?.trim().toUpperCase() === 'TRUE';
+                        const p3 = cols[6]?.trim().toUpperCase() === 'TRUE';
+                        const p4 = cols[7]?.trim().toUpperCase() === 'TRUE';
+                        const alive = (p1?1:0) + (p2?1:0) + (p3?1:0) + (p4?1:0);
+                        if (alive > 0) { teamsAlive++; playersAlive += alive; }
+                    });
+                    if (playersAlive > 0) document.getElementById('hud-f1').innerText = (playersAlive < 10 ? '0' : '') + playersAlive;
+                    if (teamsAlive  > 0) document.getElementById('hud-f2').innerText = (teamsAlive  < 10 ? '0' : '') + teamsAlive;
+
+                    // Zone Phase / Circle timers
+                    const headers = rawLines[0];
+                    if (headers?.length > 8  && headers[8])  { const v = headers[8].trim();  if (v) document.getElementById('hud-f3').innerText = v; }
+                    if (headers?.length > 10 && headers[10]) { const v = headers[10].trim(); if (v) document.getElementById('hud-f4').innerText = v; }
+                    if (headers?.length > 11 && headers[11]) {
+                        const v = headers[11].trim();
+                        document.getElementById('hud-f5').innerText = v !== '' ? v : '—';
+                    }
+
+                    // Maps Parsing
+                    if (rawLines.length > 32) {
+                        const mapsRow   = rawLines[31];
+                        const selectRow = rawLines[32];
+                        const timesRow  = rawLines.length > 33 ? rawLines[33] : [];
+
+                        const b33Value = parseInt(selectRow[1]?.trim()) || 1;
+                        globalCurrentMatchIndex = b33Value;
+
+                        let mapConfig = [];
+                        for (let i = 1; i <= 6; i++) {
+                            if (mapsRow && mapsRow[i] && mapsRow[i].trim() !== '') {
+                                let timeCompleted = "";
+                                if (timesRow && timesRow[i] && timesRow[i].trim() !== '') timeCompleted = timesRow[i].trim();
+                                mapConfig.push({ id: i, name: mapsRow[i].trim().toUpperCase(), time: timeCompleted });
+                            }
+                        }
+
+                        if (!animationPlaying) buildIntroSequenceDOM(mapConfig, globalCurrentMatchIndex);
+
+                        const selMap = mapConfig.find(m => m.id === globalCurrentMatchIndex);
+                        if (selMap) {
+                            const mapName = selMap.name;
+                            const mapSrc  = `images/maps/${mapName.toLowerCase()}.jpeg`;
+                            document.getElementById('hud-f0').innerText          = mapName;
+                            document.getElementById('full-f0').innerText         = mapName;
+                            document.getElementById('badge-match-num').innerText = `MATCH 0${selMap.id}`;
+                            // update both map images
+                            document.getElementById('full-map-asset').src    = mapSrc;
+                            document.getElementById('portrait-map-asset').src = mapSrc;
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Auto Sync Error:", e);
+        }
+    }
+
+    // ─── Build Intro Cards ────────────────────────────────────
+    function buildIntroSequenceDOM(mapConfig, currentIndex) {
+        const freshJSON = JSON.stringify({ mapConfig });
+        if (freshJSON === currentMapConfigJSON) return;
+        currentMapConfigJSON = freshJSON;
+
+        const introContainer = document.getElementById('intro-sequence');
+        introContainer.innerHTML = '';
+
+        mapConfig.forEach(mapObj => {
+            let statusHTML = '';
+            if (mapObj.time) {
+                statusHTML = `<div class="card-completed-status"><span>COMPLETED</span><span class="time-text">${mapObj.time}</span></div>`;
+            }
+            introContainer.insertAdjacentHTML('beforeend', `
+                <div class="intro-card" data-id="${mapObj.id}">
+                    <div class="card-match-header">MATCH 0${mapObj.id}</div>
+                    <div class="card-map-name">${mapObj.name}</div>
+                    ${statusHTML}
+                </div>
+            `);
+        });
+
+        isDataLoaded = true;
+        if (queuedPlayCommand && !animationPlaying) executeAnimationFlow();
+    }
+
+    // ─── Match Start Time ──────────────────────────────────────
+    function setStartTime(j1Value) {
+        if (!j1Value || j1Value.trim() === '') return;
+        let timeStr = j1Value.trim();
+        let isPM = timeStr.toUpperCase().includes('PM');
+        let isAM = timeStr.toUpperCase().includes('AM');
+        timeStr = timeStr.replace(/[A-Za-z]/g, '').trim();
+        let parts   = timeStr.split(':');
+        let hours   = parseInt(parts[0]) || 0;
+        let minutes = parseInt(parts[1]) || 0;
+        let seconds = parseInt(parts[2]) || 0;
+        if (isPM && hours < 12) hours += 12;
+        if (isAM && hours === 12) hours = 0;
+        let now = new Date();
+        let st  = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+        if (st.getTime() > now.getTime() + 60000) st.setDate(st.getDate() - 1);
+        matchStartTimeObj = st;
+    }
+
+    // ─── Progress Bar ──────────────────────────────────────────
+    function updateProgress() {
+        if (!matchStartTimeObj) return;
+        const now      = new Date();
+        let elapsed    = Math.floor((now - matchStartTimeObj) / 1000);
+        if (elapsed < 0) elapsed = 0;
+        let pct        = Math.min((elapsed / FULL_MATCH_SECONDS) * 100, 100);
+        const pctStr   = Math.floor(pct) + '%';
+        document.getElementById('progress-text').innerText  = pctStr;
+        document.getElementById('progress-bar').style.width = pctStr;
+    }
+
+    // ─── SPX Update ───────────────────────────────────────────
+    function update(rawData) {
+        try {
+            let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+            if (data.f1) document.getElementById('full-f1').innerText = data.f1.toUpperCase ? data.f1.toUpperCase() : data.f1;
+            if (data.f2) document.getElementById('full-f2').innerText = data.f2.toUpperCase ? data.f2.toUpperCase() : data.f2;
+            if (data.f7 && data.f7.startsWith('http')) {
+                if (sheetInterval)    clearInterval(sheetInterval);
+                if (progressInterval) clearInterval(progressInterval);
+                fetchSheet(data.f7);
+                sheetInterval    = setInterval(() => fetchSheet(data.f7), 3500);
+                progressInterval = setInterval(updateProgress, 1000);
+            }
+        } catch (e) {
+            console.error("Update failed:", e);
+        }
+    }
+
+    // ─── SPX Play ─────────────────────────────────────────────
+    function play() {
+        document.getElementById('wrapper').style.opacity = '1';
+        queuedPlayCommand = true;
+        if (isDataLoaded && !animationPlaying) executeAnimationFlow();
+    }
+
+    // ─── Animation Sequence ───────────────────────────────────
+    function executeAnimationFlow() {
+        animationPlaying  = true;
+        queuedPlayCommand = false;
+
+        const intro     = document.getElementById('intro-sequence');
+        const wCombined = document.getElementById('widget-combined');
+
+        wCombined.style.display = 'none';
+        wCombined.style.opacity = '0';
+        wCombined.classList.remove('widget-enter-combined');
+
+        intro.style.display = 'flex';
+        intro.style.opacity = '1';
+
+        const cards = intro.querySelectorAll('.intro-card');
+
+        // Phase 1: Cards slide in
+        cards.forEach((card, index) => {
+            card.classList.remove('dimmed', 'selected', 'zoom-out');
+            card.style.opacity   = '0';
+            card.style.transform = 'scale(0.9)';
+            card.style.animation = `cardEnter 0.6s cubic-bezier(0.16,1,0.3,1) ${index * 0.15}s forwards`;
+        });
+
+        // Phase 2: Highlight current match
+        setTimeout(() => {
+            cards.forEach(card => {
+                const id = parseInt(card.dataset.id);
+                card.classList.add(id !== globalCurrentMatchIndex ? 'dimmed' : 'selected');
+            });
+        }, 2000);
+
+        // Phase 3: Zoom-out transition
+        setTimeout(() => {
+            const sel = intro.querySelector('.selected');
+            if (sel) sel.classList.add('zoom-out');
+            cards.forEach(card => {
+                if (parseInt(card.dataset.id) !== globalCurrentMatchIndex) {
+                    card.style.opacity    = '0';
+                    card.style.transition = 'opacity 0.3s ease';
+                }
+            });
+        }, 3800);
+
+        // Phase 4: Show combined widget
+        setTimeout(() => {
+            intro.style.opacity = '0';
+            setTimeout(() => {
+                intro.style.display = 'none';
+                animationPlaying    = false;
+            }, 500);
+
+            wCombined.style.display = 'block';
+            wCombined.classList.add('widget-enter-combined');
+        }, 4400);
+    }
+
+    // ─── SPX Stop ─────────────────────────────────────────────
+    function stop() {
+        document.getElementById('wrapper').style.opacity = '0';
+        animationPlaying = false;
+    }
+
+    // ─── SPX Template Definition ──────────────────────────────
+    window.SPXGCTemplateDefinition = {
+        "description": "PUBGM Combined Map Widget (Transparent)",
+        "playserver": "OVERLAY", "playchannel": "1", "playlayer": "5", "webplayout": "5",
+        "out": "manual", "dataformat": "json", "uicolor": "7",
+        "DataFields": [
+            { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
+            { "field": "f1", "ftype": "textfield", "title": "Weather",         "value": "Clear Sky" },
+            { "field": "f2", "ftype": "textfield", "title": "E-Portal Status", "value": "Active"    }
+        ]
+    };
+</script>
+</body>
+</html>
