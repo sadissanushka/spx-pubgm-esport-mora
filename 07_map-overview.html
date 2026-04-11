@@ -1,717 +1,1640 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>SPX - PUBG Mobile - Combined Map Widget</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SPX – PUBG Mobile Map Widget v4</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "secondary": "#ffb690",
-                        "surface-dim": "#0b1326",
-                        "on-background": "#dae2fd",
-                        "secondary-container": "#ec6a06",
-                        "on-secondary": "#552100",
-                        "primary-container": "#4d8eff",
-                        "primary": "#adc6ff",
-                        "background": "#0b1326",
-                        "on-surface": "#dae2fd",
-                        "on-surface-variant": "#c2c6d6",
-                    },
-                    fontFamily: { "headline": ["Inter"], "body": ["Inter"], "label": ["Inter"] },
-                },
-            },
-        }
-    </script>
     <style>
-        * { box-sizing: border-box; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --orange: #ffb690;
+            --blue: #adc6ff;
+            --bg-panel: rgba(5, 8, 20, 0.96);
+            --border: rgba(255, 255, 255, 0.06);
+            --text-dim: rgba(218, 226, 253, 0.36);
+            --text-full: #dae2fd;
+        }
+
         body {
             background: transparent;
-            width: 1920px; height: 1080px;
-            overflow: hidden; margin: 0;
-            font-family: 'Inter', sans-serif;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            font-family: 'Barlow', sans-serif;
         }
 
-        /* ─── WRAPPER ─── */
         #wrapper {
             opacity: 0;
-            transition: opacity 1s ease;
-            width: 1920px; height: 1080px;
+            transition: opacity 0.6s ease;
+            width: 1920px;
+            height: 1080px;
             position: relative;
         }
 
-        /* ─── INTRO SEQUENCE ─── */
-        #intro-sequence { transition: opacity 0.5s ease; }
+        /* ══════════════════════════════════════
+           PHASE 0 — INTRO CARDS
+        ══════════════════════════════════════ */
+        #intro-sequence {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 20;
+        }
 
         .intro-card {
-            width: 260px; height: 200px;
-            background: rgba(19,27,46,0.88); backdrop-filter: blur(16px);
-            border-bottom: 5px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0; transform: scale(0.9);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            transition: all 0.6s cubic-bezier(0.25,1,0.5,1);
-            position: relative;
-        }
-        .card-match-header {
-            position: absolute; top: 0; left: 0; width: 100%;
-            background: rgba(0,0,0,0.4); padding: 8px 0;
-            text-align: center; font-size: 14px; font-weight: 800;
-            color: #ffb690; letter-spacing: 3px; font-style: italic;
-        }
-        .card-map-name {
-            font-size: 32px; font-weight: 900; color: #fff;
-            text-transform: uppercase; letter-spacing: 2px;
-            margin-top: 10px; text-shadow: 0 0 15px rgba(255,255,255,0.3);
-        }
-        .card-completed-status {
-            background: rgba(255,255,255,0.1); color: #dae2fd;
-            padding: 5px 15px; border-radius: 4px;
-            font-size: 13px; font-weight: 700; letter-spacing: 1px;
-            margin-top: 15px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-        .time-text { font-size: 18px; font-variant-numeric: tabular-nums; color: #ffb690; }
-
-        @keyframes cardEnter {
-            0%   { transform: translateY(100px) scale(0.9); opacity: 0; filter: blur(5px); }
-            100% { transform: translateY(0) scale(1);       opacity: 1; filter: blur(0); }
-        }
-        .intro-card.dimmed   { filter: blur(3px) brightness(0.4); transform: scale(0.95); }
-        .intro-card.selected {
-            border-bottom: 5px solid #ffb690; transform: scale(1.15);
-            box-shadow: 0 20px 60px rgba(236,106,6,0.3); z-index: 10;
-        }
-        .intro-card.selected .card-match-header { background: #ffb690; color: #0b1326; }
-        .intro-card.selected .card-map-name     { color: #ffb690; text-shadow: 0 0 20px rgba(255,182,144,0.6); }
-        .intro-card.zoom-out {
-            transform: scale(5) !important; opacity: 0 !important;
-            filter: blur(20px) !important; pointer-events: none;
+            width: 200px;
+            background: rgba(6, 10, 22, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: border-color 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease, opacity 0.35s ease;
         }
 
-        /* ══════════════════════════════════════════════════
-           COMBINED WIDGET  — fully transparent canvas
-           ┌───────────────────────────────────────────────┐
-           │  [STATS PANEL top-right]                      │
-           │                                               │
-           │                       [MINI MAP bottom-right] │
-           └───────────────────────────────────────────────┘
-        ══════════════════════════════════════════════════ */
+        @keyframes cardIn {
+            0% {
+                opacity: 0;
+                transform: translateY(60px) scale(0.93);
+            }
 
-        #widget-combined {
-            position: absolute; top: 0; left: 0;
-            width: 1920px; height: 1080px;
-            display: none; opacity: 0;
-            /* transparent — no background */
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
-        .widget-enter-combined {
-            animation: widgetFadeInCombined 0.9s cubic-bezier(0.16,1,0.3,1) forwards;
-        }
-        @keyframes widgetFadeInCombined {
-            0%   { opacity: 0; filter: blur(10px); }
-            100% { opacity: 1; filter: blur(0); }
-        }
-
-        /* ─────────────────────────────────
-           STATS PANEL  — top-right corner
-        ───────────────────────────────── */
-        #stats-panel {
-            position: absolute;
-            top: 40px; right: 40px;
-            width: 360px;
-            /* fully transparent background */
-            background: transparent;
-            display: flex; flex-direction: column;
-        }
-
-        /* Orange header bar */
-        #stats-header {
-            background: #ffb690;
-            color: #552100;
-            padding: 10px 18px;
-            display: flex; align-items: center; justify-content: space-between;
-            flex-shrink: 0;
-        }
-        #stats-header .sh-title {
-            font-size: 13px; font-weight: 900; letter-spacing: 3px;
-            text-transform: uppercase; font-style: italic;
-        }
-        #stats-header .sh-map {
-            font-size: 13px; font-weight: 800; letter-spacing: 2px;
-            text-transform: uppercase; opacity: 0.8;
-        }
-
-        /* Portrait map photo — above map name */
-        #map-portrait-wrap {
+        .intro-card .ci-img {
             width: 100%;
-            height: 200px;
+            height: 120px;
             overflow: hidden;
             position: relative;
-            flex-shrink: 0;
         }
-        #map-portrait-wrap img {
-            width: 100%; height: 100%;
+
+        .intro-card .ci-img img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            /* portrait crop focuses on centre */
-            object-position: center 35%;
-            opacity: 0.85;
+            object-position: center top;
             display: block;
+            filter: brightness(0.6);
+            transition: filter 0.5s ease;
         }
-        /* gradient fade at bottom of portrait into info block */
-        #map-portrait-wrap::after {
-            content: '';
-            position: absolute; bottom: 0; left: 0;
-            width: 100%; height: 80px;
-            background: linear-gradient(to bottom, transparent, rgba(8,14,30,0.95));
+
+        .intro-card .ci-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(218, 226, 253, 0.55);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 3px 7px;
+        }
+
+        .intro-card .ci-body {
+            padding: 10px 12px 14px;
+        }
+
+        .intro-card .ci-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            color: var(--text-full);
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .intro-card .ci-status {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .intro-card .ci-time {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--orange);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .intro-card.dimmed {
+            filter: brightness(0.28);
+            transform: scale(0.95);
+        }
+
+        .intro-card.selected {
+            border-color: var(--orange);
+        }
+
+        .intro-card.selected .ci-img img {
+            filter: brightness(0.9);
+        }
+
+        .intro-card.selected .ci-name {
+            color: var(--orange);
+        }
+
+        .intro-card.selected .ci-badge {
+            background: var(--orange);
+            color: #3d1a00;
+        }
+
+        .intro-card.zoom-out {
+            transform: scale(10) !important;
+            opacity: 0 !important;
             pointer-events: none;
         }
-        /* match badge overlaid on portrait bottom-left */
-        #portrait-badge {
-            position: absolute; bottom: 10px; left: 14px;
+
+        /* ══════════════════════════════════════
+           PHASE 1 — CINEMATIC REVEAL
+        ══════════════════════════════════════ */
+        #map-reveal {
+            position: absolute;
+            inset: 0;
+            display: none;
+            overflow: hidden;
+            z-index: 15;
+        }
+
+        #map-reveal-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+            display: block;
+        }
+
+        #map-reveal::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 60% at 50% 50%, transparent 20%, rgba(4, 7, 16, 0.78) 100%),
+                linear-gradient(to bottom, rgba(4, 7, 16, 0.4) 0%, transparent 25%, transparent 70%, rgba(4, 7, 16, 0.75) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #map-reveal::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.04) 2px, rgba(0, 0, 0, 0.04) 4px);
+            pointer-events: none;
             z-index: 2;
         }
-        #portrait-badge .pb-label {
-            font-size: 9px; font-weight: 700; letter-spacing: 3px;
-            text-transform: uppercase; color: rgba(218,226,253,0.55);
-        }
-        #badge-match-num {
-            font-size: 18px; font-weight: 900; font-style: italic;
-            color: #ffb690; letter-spacing: 1px;
+
+        #reveal-lines {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 4;
         }
 
-        /* Map name + info block */
-        #stats-info {
-            background: rgba(8,14,30,0.92);
-            backdrop-filter: blur(12px);
-            border-left: 3px solid #ffb690;
-            padding: 16px 18px 0 18px;
-            display: flex; flex-direction: column;
+        #reveal-lines::before,
+        #reveal-lines::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 1px;
+            background: rgba(255, 182, 144, 0.35);
+            width: 0;
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .info-map-label {
-            font-size: 9px; font-weight: 700; letter-spacing: 3px;
-            text-transform: uppercase; color: rgba(218,226,253,0.45);
+        #reveal-lines::before {
+            right: 0;
+        }
+
+        #reveal-lines::after {
+            left: 0;
+        }
+
+        #reveal-lines.expand::before,
+        #reveal-lines.expand::after {
+            width: 800px;
+        }
+
+        #reveal-map-name {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 5;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .rmn-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 7px;
+            text-transform: uppercase;
+            color: rgba(255, 182, 144, 0.55);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        #reveal-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 160px;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -5px;
+            color: #fff;
+            line-height: 0.88;
+            display: block;
+        }
+
+        .rmn-match {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 9px;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-top: 10px;
+            display: block;
+        }
+
+        /* ══════════════════════════════════════
+           PHASE 2 — MAIN WIDGET
+        ══════════════════════════════════════ */
+        #widget-main {
+            position: absolute;
+            inset: 0;
+            display: none;
+            opacity: 0;
+        }
+
+        /* ── 1080×1080 TACTICAL CANVAS (left area) ── */
+        /* Sits at left:0, full height, width = 1080px to match 1:1 map */
+        #tactical-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1080px;
+            height: 1080px;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        @keyframes canvasIn {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* The SVG fills the entire 1080×1080 space */
+        #tactical-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Animated elements within SVG */
+        .grid-line {
+            animation: gridFade 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes gridFade {
+            0% {
+                opacity: 0.6
+            }
+
+            100% {
+                opacity: 1
+            }
+        }
+
+        .ring-pulse {
+            animation: ringPulse 4s ease-in-out infinite;
+            transform-origin: center;
+        }
+
+        @keyframes ringPulse {
+
+            0%,
+            100% {
+                opacity: 0.25;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.55;
+                transform: scale(1.015);
+            }
+        }
+
+        .scan-line {
+            animation: scanMove 6s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% {
+                transform: translateY(-1080px);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(1080px);
+                opacity: 0;
+            }
+        }
+
+        .dot-blink {
+            animation: dotBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes dotBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                r: 3;
+            }
+
+            50% {
+                opacity: 0.3;
+                r: 5;
+            }
+        }
+
+        /* Corner bracket elements */
+        .corner-bracket {
+            opacity: 0.5;
+        }
+
+        /* Map name watermark on tactical canvas */
+        #canvas-map-name {
+            position: absolute;
+            bottom: 52px;
+            left: 60px;
+            z-index: 3;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        #canvas-map-name .cmn-small {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: rgba(255, 182, 144, 0.35);
             margin-bottom: 2px;
         }
-        #full-f0 {
-            font-size: 38px; font-weight: 900; text-transform: uppercase;
-            color: #adc6ff; line-height: 1; letter-spacing: -1px;
-            margin-bottom: 14px;
+
+        #canvas-map-name .cmn-big {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 110px;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -4px;
+            color: rgba(255, 255, 255, 0.04);
+            line-height: 0.85;
+            /* Visible ghost text */
         }
 
-        /* weather / e-portal row */
-        .info-tiles {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 8px; margin-bottom: 14px;
-        }
-        .info-tile {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.07);
-            padding: 10px 12px;
-            display: flex; flex-direction: column; gap: 3px;
-        }
-        .info-tile .t-label {
-            font-size: 8px; font-weight: 700; letter-spacing: 3px;
-            text-transform: uppercase; color: rgba(218,226,253,0.45);
-        }
-        .info-tile .t-value {
-            font-size: 16px; font-weight: 800;
-            text-transform: uppercase; color: #dae2fd;
+        @keyframes canvasNameIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
-        /* live badge */
-        .live-badge {
-            display: flex; align-items: center; gap: 7px;
-            padding: 8px 0 6px 0;
-            border-top: 1px solid rgba(255,255,255,0.07);
+        /* Match indicator top-left of canvas */
+        #canvas-match-badge {
+            position: absolute;
+            top: 36px;
+            left: 40px;
+            z-index: 4;
+            opacity: 0;
         }
-        .live-dot {
-            width: 7px; height: 7px; border-radius: 50%;
-            background: #f87171;
-            animation: pulseDot 1.4s ease-in-out infinite;
+
+        @keyframes badgeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #canvas-match-badge .cmb-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(255, 182, 144, 0.4);
+        }
+
+        #canvas-match-badge .cmb-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            font-style: italic;
+            color: rgba(255, 182, 144, 0.15);
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        /* Zone phase indicator — centre-right of canvas */
+        #canvas-zone-block {
+            position: absolute;
+            top: 50%;
+            right: 60px;
+            transform: translateY(-50%);
+            z-index: 4;
+            text-align: right;
+            opacity: 0;
+        }
+
+        @keyframes zoneIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-50%) translateX(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        #canvas-zone-block .czb-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(173, 198, 255, 0.3);
+            display: block;
+        }
+
+        #canvas-zone-block .czb-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 72px;
+            font-weight: 900;
+            font-style: italic;
+            color: rgba(173, 198, 255, 0.08);
+            line-height: 1;
+            letter-spacing: -2px;
+            display: block;
+        }
+
+        /* Coordinate labels along edges — purely decorative */
+        .coord-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            fill: rgba(173, 198, 255, 0.18);
+        }
+
+        /* ── RIGHT SIDEBAR ── */
+        #sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 340px;
+            height: 1080px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateX(50px);
+        }
+
+        @keyframes sidebarIn {
+            0% {
+                opacity: 0;
+                transform: translateX(60px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Sidebar hero — portrait crop from TOP */
+        #sidebar-hero {
+            width: 100%;
+            height: 220px;
+            position: relative;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        #sidebar-hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+        }
+
+        #sidebar-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--bg-panel));
+            pointer-events: none;
+        }
+
+        #sh-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 2;
+        }
+
+        .shb-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(218, 226, 253, 0.38);
+        }
+
+        #badge-match-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            font-style: italic;
+            color: var(--orange);
+            line-height: 1;
+        }
+
+        #sh-map-name {
+            position: absolute;
+            bottom: 12px;
+            left: 14px;
+            right: 14px;
+            z-index: 2;
+        }
+
+        .shmn-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(218, 226, 253, 0.3);
+            margin-bottom: 1px;
+        }
+
+        #sh-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 34px;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            color: #fff;
+            line-height: 1;
+        }
+
+        /* Live row */
+        #live-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
+
+        .live-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #f87171;
+            animation: pulseDot 1.5s ease-in-out infinite;
+        }
+
         @keyframes pulseDot {
-            0%,100% { opacity: 1; transform: scale(1); }
-            50%      { opacity: 0.4; transform: scale(1.5); }
-        }
-        .live-badge span {
-            font-size: 9px; font-weight: 800; letter-spacing: 3px;
-            text-transform: uppercase; color: rgba(218,226,253,0.5);
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.2
+            }
         }
 
-        /* stat rows */
+        #live-row span {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        /* Info tiles */
+        #info-tiles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .info-tile {
+            background: var(--bg-panel);
+            padding: 10px 14px;
+        }
+
+        .t-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 2px;
+        }
+
+        .t-value {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-full);
+        }
+
+        /* Stats */
+        #stats-block {
+            flex-shrink: 0;
+        }
+
         .stat-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+            opacity: 0;
+            transform: translateX(18px);
         }
-        .stat-row:last-of-type { border-bottom: none; }
+
+        @keyframes statIn {
+            0% {
+                opacity: 0;
+                transform: translateX(24px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         .stat-label {
-            font-size: 10px; font-weight: 700; letter-spacing: 2px;
-            text-transform: uppercase; color: rgba(218,226,253,0.45);
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
         }
+
         .stat-value {
-            font-size: 24px; font-weight: 900;
-            font-variant-numeric: tabular-nums; color: #dae2fd;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            font-style: italic;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-full);
         }
-        .accent-orange { color: #ffb690; }
-        .accent-blue   { color: #adc6ff; }
 
-        /* progress bar */
-        .prog-wrap {
-            padding: 12px 0 16px 0;
-            border-top: 1px solid rgba(255,255,255,0.07);
+        .col-orange {
+            color: var(--orange);
         }
-        .prog-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 7px;
-        }
-        .prog-row .pl { font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(218,226,253,0.45); }
-        .prog-row .pp { font-size: 10px; font-weight: 800; color: #ffb690; }
-        .prog-track { width: 100%; height: 2px; background: rgba(255,255,255,0.08); }
-        .prog-fill  { height: 100%; background: #ffb690; transition: width 1s linear; }
 
-        /* footer accent lines */
-        #stats-footer {
-            display: flex; background: rgba(8,14,30,0.92);
-            backdrop-filter: blur(12px);
+        .col-blue {
+            color: var(--blue);
         }
-        #stats-footer .ff { height: 3px; flex-grow: 1; background: rgba(255,182,144,0.3); }
-        #stats-footer .fs { height: 3px; width: 50px; background: #ffb690; }
 
-        /* ─────────────────────────────────
-           MINI MAP  — bottom-right corner
-        ───────────────────────────────── */
-        #mini-map-wrap {
-            position: absolute;
-            bottom: 40px; right: 40px;
-            width: 360px; height: 360px;
+        /* Progress */
+        #progress-block {
+            padding: 10px 16px 12px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            opacity: 0;
+        }
+
+        @keyframes progIn {
+            0% {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .prog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .prog-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        #progress-text {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--orange);
+        }
+
+        .prog-track {
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .prog-fill {
+            height: 100%;
+            background: var(--orange);
+            transition: width 1s linear;
+        }
+
+        /* Map list */
+        #map-list-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            border: 2px solid rgba(255,182,144,0.35);
-            box-shadow: 0 12px 60px rgba(0,0,0,0.65);
-        }
-        #mini-map-wrap img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            display: block;
-            opacity: 0.8;
-        }
-        /* dark vignette inside mini map */
-        #mini-map-wrap::before {
-            content: '';
-            position: absolute; inset: 0;
-            background: radial-gradient(circle, transparent 55%, rgba(0,0,0,0.55) 100%);
-            pointer-events: none; z-index: 1;
-        }
-        /* bottom-left accent tag on mini map */
-        #mini-map-tag {
-            position: absolute; bottom: 0; left: 0;
-            background: #ffb690; color: #552100;
-            font-size: 10px; font-weight: 900; letter-spacing: 2px;
-            text-transform: uppercase; font-style: italic;
-            padding: 5px 12px; z-index: 3;
         }
 
-        /* flight path SVG — inside mini map */
-        #flight-path-svg {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; z-index: 2;
+        #map-list-hdr {
+            display: flex;
+            align-items: center;
+            padding: 9px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+            flex-shrink: 0;
+        }
+
+        #map-list-hdr span {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        #map-list-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ml-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        @keyframes mlIn {
+            0% {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .ml-item.active {
+            background: rgba(255, 182, 144, 0.06);
+        }
+
+        .ml-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--orange);
+        }
+
+        .ml-thumb {
+            width: 44px;
+            height: 30px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .ml-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+            filter: brightness(0.5) saturate(0.6);
+            transition: filter 0.3s ease;
+        }
+
+        .ml-item.active .ml-thumb img {
+            filter: brightness(0.85) saturate(1);
+        }
+
+        .ml-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ml-match {
+            font-size: 7px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            line-height: 1;
+        }
+
+        .ml-item.active .ml-match {
+            color: rgba(255, 182, 144, 0.5);
+        }
+
+        .ml-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            font-style: italic;
+            text-transform: uppercase;
+            color: rgba(218, 226, 253, 0.38);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.1;
+            margin-top: 1px;
+        }
+
+        .ml-item.active .ml-name {
+            color: var(--orange);
+        }
+
+        .ml-right {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .ml-done-tag {
+            font-size: 7px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(218, 226, 253, 0.2);
+        }
+
+        .ml-time {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(218, 226, 253, 0.35);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ml-live-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--orange);
+            animation: pulseDot 1.5s ease-in-out infinite;
         }
     </style>
 </head>
-<body class="bg-transparent font-body text-on-surface">
-<div id="wrapper">
 
-    <!-- ══ INTRO SEQUENCE ══ -->
-    <div id="intro-sequence" class="absolute inset-0 flex items-center justify-center gap-6 z-0"></div>
+<body>
+    <div id="wrapper">
 
-    <!-- ══ COMBINED TRANSPARENT WIDGET ══ -->
-    <div id="widget-combined">
+        <!-- PHASE 0: Intro cards -->
+        <div id="intro-sequence"></div>
 
-        <!-- ── STATS PANEL (top-right, transparent BG) ── -->
-        <div id="stats-panel">
-
-            <!-- Orange header -->
-            <div id="stats-header">
-                <span class="sh-title">MAP OVERVIEW</span>
-                <span id="hud-f0" class="sh-map">ERANGEL</span>
+        <!-- PHASE 1: Cinematic reveal -->
+        <div id="map-reveal">
+            <img id="map-reveal-img" src="images/maps/erangel.jpeg" alt="">
+            <div id="reveal-lines"></div>
+            <div id="reveal-map-name">
+                <span class="rmn-label">Now Playing</span>
+                <span id="reveal-title">Erangel</span>
+                <span class="rmn-match" id="reveal-match">Match 01</span>
             </div>
+        </div>
 
-            <!-- Portrait map photo -->
-            <div id="map-portrait-wrap">
-                <img id="portrait-map-asset" src="images/maps/erangel.jpeg" alt="Map Portrait">
-                <div id="portrait-badge">
-                    <div class="pb-label">CURRENT MATCH</div>
-                    <div id="badge-match-num">MATCH 01</div>
-                </div>
-            </div>
+        <!-- PHASE 2: Main widget -->
+        <div id="widget-main">
 
-            <!-- Info block (map name + tiles + stats) -->
-            <div id="stats-info">
+            <!-- 1080×1080 TACTICAL CANVAS — fully transparent, pure design -->
+            <div id="tactical-canvas">
 
-                <!-- Map Name -->
-                <div class="info-map-label">PLAYING ON</div>
-                <div id="full-f0">ERANGEL</div>
-
-                <!-- Weather / E-Portal -->
-                <div class="info-tiles">
-                    <div class="info-tile">
-                        <span class="t-label">WEATHER</span>
-                        <span id="full-f1" class="t-value">CLEAR SKY</span>
-                    </div>
-                    <div class="info-tile">
-                        <span class="t-label">E-PORTAL</span>
-                        <span id="full-f2" class="t-value">ACTIVE</span>
-                    </div>
+                <!-- Match badge top-left -->
+                <div id="canvas-match-badge">
+                    <div class="cmb-label">Current Match</div>
+                    <div id="canvas-match-num" class="cmb-num">01</div>
                 </div>
 
-                <!-- Live badge -->
-                <div class="live-badge">
+                <!-- Ghost map name watermark -->
+                <div id="canvas-map-name">
+                    <div class="cmn-small">Playing on</div>
+                    <div id="canvas-map-title" class="cmn-big">Erangel</div>
+                </div>
+
+                <!-- Zone phase ghost -->
+                <div id="canvas-zone-block">
+                    <span class="czb-label">Zone Phase</span>
+                    <span id="canvas-zone-num" class="czb-num">04</span>
+                </div>
+
+                <!-- SVG tactical grid -->
+                <svg id="tactical-svg" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Grid pattern: 90×90 cells = 12×12 grid matching PUBG map grid -->
+                        <pattern id="grid-major" x="0" y="0" width="90" height="90" patternUnits="userSpaceOnUse">
+                            <path d="M 90 0 L 0 0 0 90" fill="none" stroke="rgba(173,198,255,0.07)" stroke-width="1" />
+                        </pattern>
+                        <!-- Sub-grid: 18×18 cells (5 per major) -->
+                        <pattern id="grid-minor" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+                            <path d="M 18 0 L 0 0 0 18" fill="none" stroke="rgba(173,198,255,0.025)"
+                                stroke-width="0.5" />
+                        </pattern>
+                        <!-- Glow filter for accent elements -->
+                        <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                        <filter id="glow-orange" x="-30%" y="-30%" width="160%" height="160%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- ── BACKGROUND FILLS (all transparent) ── -->
+                    <!-- Minor grid -->
+                    <rect width="1080" height="1080" fill="url(#grid-minor)" />
+                    <!-- Major grid -->
+                    <rect width="1080" height="1080" fill="url(#grid-major)" />
+
+                    <!-- ── OUTER BORDER ── -->
+                    <rect x="1" y="1" width="1078" height="1078" fill="none" stroke="rgba(255,182,144,0.12)"
+                        stroke-width="1" />
+
+                    <!-- ── CORNER TICK MARKS ── -->
+                    <!-- TL -->
+                    <line x1="0" y1="0" x2="60" y2="0" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="0" y1="0" x2="0" y2="60" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <line x1="0" y1="0" x2="0" y2="20" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <!-- TR -->
+                    <line x1="1080" y1="0" x2="1020" y2="0" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="1080" y1="0" x2="1080" y2="60" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="1080" y1="0" x2="1060" y2="0" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <line x1="1080" y1="0" x2="1080" y2="20" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <!-- BL -->
+                    <line x1="0" y1="1080" x2="60" y2="1080" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="0" y1="1080" x2="0" y2="1020" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="0" y1="1080" x2="20" y2="1080" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <line x1="0" y1="1080" x2="0" y2="1060" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <!-- BR -->
+                    <line x1="1080" y1="1080" x2="1020" y2="1080" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="1080" y1="1080" x2="1080" y2="1020" stroke="rgba(255,182,144,0.4)" stroke-width="1.5" />
+                    <line x1="1080" y1="1080" x2="1060" y2="1080" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+                    <line x1="1080" y1="1080" x2="1080" y2="1060" stroke="rgba(255,182,144,0.9)" stroke-width="2" />
+
+                    <!-- ── COORDINATE LABELS — columns A–L top/bottom ── -->
+                    <text x="45" y="14" class="coord-label" text-anchor="middle">A</text>
+                    <text x="135" y="14" class="coord-label" text-anchor="middle">B</text>
+                    <text x="225" y="14" class="coord-label" text-anchor="middle">C</text>
+                    <text x="315" y="14" class="coord-label" text-anchor="middle">D</text>
+                    <text x="405" y="14" class="coord-label" text-anchor="middle">E</text>
+                    <text x="495" y="14" class="coord-label" text-anchor="middle">F</text>
+                    <text x="585" y="14" class="coord-label" text-anchor="middle">G</text>
+                    <text x="675" y="14" class="coord-label" text-anchor="middle">H</text>
+                    <text x="765" y="14" class="coord-label" text-anchor="middle">I</text>
+                    <text x="855" y="14" class="coord-label" text-anchor="middle">J</text>
+                    <text x="945" y="14" class="coord-label" text-anchor="middle">K</text>
+                    <text x="1035" y="14" class="coord-label" text-anchor="middle">L</text>
+
+                    <!-- bottom row -->
+                    <text x="45" y="1074" class="coord-label" text-anchor="middle">A</text>
+                    <text x="135" y="1074" class="coord-label" text-anchor="middle">B</text>
+                    <text x="225" y="1074" class="coord-label" text-anchor="middle">C</text>
+                    <text x="315" y="1074" class="coord-label" text-anchor="middle">D</text>
+                    <text x="405" y="1074" class="coord-label" text-anchor="middle">E</text>
+                    <text x="495" y="1074" class="coord-label" text-anchor="middle">F</text>
+                    <text x="585" y="1074" class="coord-label" text-anchor="middle">G</text>
+                    <text x="675" y="1074" class="coord-label" text-anchor="middle">H</text>
+                    <text x="765" y="1074" class="coord-label" text-anchor="middle">I</text>
+                    <text x="855" y="1074" class="coord-label" text-anchor="middle">J</text>
+                    <text x="945" y="1074" class="coord-label" text-anchor="middle">K</text>
+                    <text x="1035" y="1074" class="coord-label" text-anchor="middle">L</text>
+
+                    <!-- row numbers left/right -->
+                    <text x="12" y="49" class="coord-label" text-anchor="middle">1</text>
+                    <text x="12" y="139" class="coord-label" text-anchor="middle">2</text>
+                    <text x="12" y="229" class="coord-label" text-anchor="middle">3</text>
+                    <text x="12" y="319" class="coord-label" text-anchor="middle">4</text>
+                    <text x="12" y="409" class="coord-label" text-anchor="middle">5</text>
+                    <text x="12" y="499" class="coord-label" text-anchor="middle">6</text>
+                    <text x="12" y="589" class="coord-label" text-anchor="middle">7</text>
+                    <text x="12" y="679" class="coord-label" text-anchor="middle">8</text>
+                    <text x="12" y="769" class="coord-label" text-anchor="middle">9</text>
+                    <text x="12" y="859" class="coord-label" text-anchor="middle">10</text>
+                    <text x="12" y="949" class="coord-label" text-anchor="middle">11</text>
+                    <text x="12" y="1039" class="coord-label" text-anchor="middle">12</text>
+
+                    <text x="1068" y="49" class="coord-label" text-anchor="middle">1</text>
+                    <text x="1068" y="139" class="coord-label" text-anchor="middle">2</text>
+                    <text x="1068" y="229" class="coord-label" text-anchor="middle">3</text>
+                    <text x="1068" y="319" class="coord-label" text-anchor="middle">4</text>
+                    <text x="1068" y="409" class="coord-label" text-anchor="middle">5</text>
+                    <text x="1068" y="499" class="coord-label" text-anchor="middle">6</text>
+                    <text x="1068" y="589" class="coord-label" text-anchor="middle">7</text>
+                    <text x="1068" y="679" class="coord-label" text-anchor="middle">8</text>
+                    <text x="1068" y="769" class="coord-label" text-anchor="middle">9</text>
+                    <text x="1068" y="859" class="coord-label" text-anchor="middle">10</text>
+                    <text x="1068" y="949" class="coord-label" text-anchor="middle">11</text>
+                    <text x="1068" y="1039" class="coord-label" text-anchor="middle">12</text>
+
+                    <!-- ── CENTRE CROSSHAIR ── -->
+                    <!-- Horizontal axis line -->
+                    <line x1="440" y1="540" x2="640" y2="540" stroke="rgba(255,182,144,0.2)" stroke-width="0.75"
+                        stroke-dasharray="4,4" />
+                    <!-- Vertical axis line -->
+                    <line x1="540" y1="440" x2="540" y2="640" stroke="rgba(255,182,144,0.2)" stroke-width="0.75"
+                        stroke-dasharray="4,4" />
+                    <!-- Centre dot -->
+                    <circle cx="540" cy="540" r="2.5" fill="rgba(255,182,144,0.5)" filter="url(#glow-orange)" />
+                    <!-- Short solid ticks at centre -->
+                    <line x1="524" y1="540" x2="532" y2="540" stroke="rgba(255,182,144,0.7)" stroke-width="1.5" />
+                    <line x1="548" y1="540" x2="556" y2="540" stroke="rgba(255,182,144,0.7)" stroke-width="1.5" />
+                    <line x1="540" y1="524" x2="540" y2="532" stroke="rgba(255,182,144,0.7)" stroke-width="1.5" />
+                    <line x1="540" y1="548" x2="540" y2="556" stroke="rgba(255,182,144,0.7)" stroke-width="1.5" />
+
+                    <!-- ── ZONE RINGS — concentric, pulsing ── -->
+                    <!-- Outer zone ring -->
+                    <circle cx="540" cy="540" r="360" fill="none" stroke="rgba(173,198,255,0.06)" stroke-width="1.5"
+                        class="ring-pulse" />
+                    <!-- Mid zone ring -->
+                    <circle cx="540" cy="540" r="240" fill="none" stroke="rgba(173,198,255,0.09)" stroke-width="1"
+                        class="ring-pulse" style="animation-delay:-1.5s" />
+                    <!-- Inner zone ring -->
+                    <circle cx="540" cy="540" r="130" fill="none" stroke="rgba(173,198,255,0.12)" stroke-width="1"
+                        class="ring-pulse" style="animation-delay:-0.8s" />
+                    <!-- Innermost hint ring -->
+                    <circle cx="540" cy="540" r="52" fill="none" stroke="rgba(255,182,144,0.08)" stroke-width="1" />
+
+                    <!-- ── TICK MARKS on outer ring ── -->
+                    <!-- 12 equidistant ticks at 30° intervals on the 360r ring -->
+                    <g stroke="rgba(173,198,255,0.25)" stroke-width="1">
+                        <line x1="540" y1="176" x2="540" y2="190" /><!-- N -->
+                        <line x1="720" y1="228" x2="711" y2="244" /><!-- NE-ish -->
+                        <line x1="872" y1="368" x2="858" y2="376" /><!-- E-ish -->
+                        <line x1="900" y1="540" x2="886" y2="540" /><!-- E -->
+                        <line x1="872" y1="712" x2="858" y2="704" /><!-- SE-ish -->
+                        <line x1="720" y1="852" x2="711" y2="836" /><!-- S-ish -->
+                        <line x1="540" y1="904" x2="540" y2="890" /><!-- S -->
+                        <line x1="360" y1="852" x2="369" y2="836" /><!-- SW-ish -->
+                        <line x1="208" y1="712" x2="222" y2="704" /><!-- W-ish -->
+                        <line x1="180" y1="540" x2="194" y2="540" /><!-- W -->
+                        <line x1="208" y1="368" x2="222" y2="376" /><!-- NW-ish -->
+                        <line x1="360" y1="228" x2="369" y2="244" /><!-- NW -->
+                    </g>
+
+                    <!-- ── DIAGONAL SCAN LINE (animated) ── -->
+                    <line x1="0" y1="0" x2="1080" y2="0" stroke="rgba(173,198,255,0.06)" stroke-width="60"
+                        class="scan-line" />
+
+                    <!-- ── DECORATIVE QUADRANT MARKERS ── -->
+                    <!-- NW quadrant mark -->
+                    <text x="195" y="228" font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
+                        letter-spacing="2" fill="rgba(173,198,255,0.12)" text-anchor="middle">NW</text>
+                    <!-- NE -->
+                    <text x="885" y="228" font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
+                        letter-spacing="2" fill="rgba(173,198,255,0.12)" text-anchor="middle">NE</text>
+                    <!-- SW -->
+                    <text x="195" y="868" font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
+                        letter-spacing="2" fill="rgba(173,198,255,0.12)" text-anchor="middle">SW</text>
+                    <!-- SE -->
+                    <text x="885" y="868" font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
+                        letter-spacing="2" fill="rgba(173,198,255,0.12)" text-anchor="middle">SE</text>
+
+                    <!-- ── SCALE BAR — bottom centre ── -->
+                    <g transform="translate(390,1038)">
+                        <line x1="0" y1="0" x2="300" y2="0" stroke="rgba(173,198,255,0.2)" stroke-width="1" />
+                        <line x1="0" y1="-3" x2="0" y2="3" stroke="rgba(173,198,255,0.3)" stroke-width="1" />
+                        <line x1="150" y1="-3" x2="150" y2="3" stroke="rgba(173,198,255,0.2)" stroke-width="1" />
+                        <line x1="300" y1="-3" x2="300" y2="3" stroke="rgba(173,198,255,0.3)" stroke-width="1" />
+                        <text x="0" y="-7" font-family="'Barlow Condensed',sans-serif" font-size="8"
+                            fill="rgba(173,198,255,0.2)" text-anchor="middle">0</text>
+                        <text x="150" y="-7" font-family="'Barlow Condensed',sans-serif" font-size="8"
+                            fill="rgba(173,198,255,0.2)" text-anchor="middle">4km</text>
+                        <text x="300" y="-7" font-family="'Barlow Condensed',sans-serif" font-size="8"
+                            fill="rgba(173,198,255,0.2)" text-anchor="middle">8km</text>
+                    </g>
+
+                    <!-- ── SIDE RULER ticks — left edge ── -->
+                    <g stroke="rgba(173,198,255,0.15)" stroke-width="0.75">
+                        <line x1="24" y1="90" x2="34" y2="90" />
+                        <line x1="24" y1="180" x2="34" y2="180" />
+                        <line x1="24" y1="270" x2="34" y2="270" />
+                        <line x1="24" y1="360" x2="34" y2="360" />
+                        <line x1="24" y1="450" x2="34" y2="450" />
+                        <line x1="24" y1="540" x2="38" y2="540" stroke-width="1" stroke="rgba(255,182,144,0.25)" />
+                        <line x1="24" y1="630" x2="34" y2="630" />
+                        <line x1="24" y1="720" x2="34" y2="720" />
+                        <line x1="24" y1="810" x2="34" y2="810" />
+                        <line x1="24" y1="900" x2="34" y2="900" />
+                        <line x1="24" y1="990" x2="34" y2="990" />
+                    </g>
+                    <!-- top ruler ticks -->
+                    <g stroke="rgba(173,198,255,0.15)" stroke-width="0.75">
+                        <line x1="90" y1="24" x2="90" y2="34" />
+                        <line x1="180" y1="24" x2="180" y2="34" />
+                        <line x1="270" y1="24" x2="270" y2="34" />
+                        <line x1="360" y1="24" x2="360" y2="34" />
+                        <line x1="450" y1="24" x2="450" y2="34" />
+                        <line x1="540" y1="24" x2="540" y2="38" stroke-width="1" stroke="rgba(255,182,144,0.25)" />
+                        <line x1="630" y1="24" x2="630" y2="34" />
+                        <line x1="720" y1="24" x2="720" y2="34" />
+                        <line x1="810" y1="24" x2="810" y2="34" />
+                        <line x1="900" y1="24" x2="900" y2="34" />
+                        <line x1="990" y1="24" x2="990" y2="34" />
+                    </g>
+
+                    <!-- ── CENTRE LABEL ── -->
+                    <text x="540" y="510" font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
+                        letter-spacing="5" fill="rgba(255,182,144,0.2)" text-anchor="middle">CENTRE</text>
+
+                    <!-- ── BLINKING ALERT DOTS — strategic positions ── -->
+                    <circle cx="270" cy="270" r="3" fill="rgba(255,182,144,0.45)" class="dot-blink"
+                        style="animation-delay:0s" filter="url(#glow-orange)" />
+                    <circle cx="810" cy="270" r="3" fill="rgba(255,182,144,0.45)" class="dot-blink"
+                        style="animation-delay:-0.7s" filter="url(#glow-orange)" />
+                    <circle cx="270" cy="810" r="3" fill="rgba(255,182,144,0.45)" class="dot-blink"
+                        style="animation-delay:-1.3s" filter="url(#glow-orange)" />
+                    <circle cx="810" cy="810" r="3" fill="rgba(255,182,144,0.45)" class="dot-blink"
+                        style="animation-delay:-1.9s" filter="url(#glow-orange)" />
+                    <!-- Midpoint dots -->
+                    <circle cx="540" cy="180" r="2" fill="rgba(173,198,255,0.3)" class="dot-blink"
+                        style="animation-delay:-0.4s" />
+                    <circle cx="900" cy="540" r="2" fill="rgba(173,198,255,0.3)" class="dot-blink"
+                        style="animation-delay:-1.1s" />
+                    <circle cx="540" cy="900" r="2" fill="rgba(173,198,255,0.3)" class="dot-blink"
+                        style="animation-delay:-1.7s" />
+                    <circle cx="180" cy="540" r="2" fill="rgba(173,198,255,0.3)" class="dot-blink"
+                        style="animation-delay:-2.2s" />
+
+                </svg>
+            </div>
+
+            <!-- RIGHT SIDEBAR -->
+            <div id="sidebar">
+
+                <div id="sidebar-hero">
+                    <img id="portrait-map-asset" src="images/maps/erangel.jpeg" alt="">
+                    <div id="sh-badge">
+                        <div class="shb-label">Current Match</div>
+                        <div id="badge-match-num">M01</div>
+                    </div>
+                    <div id="sh-map-name">
+                        <div class="shmn-label">Playing on</div>
+                        <div id="sh-title">Erangel</div>
+                    </div>
+                </div>
+
+                <div id="live-row">
                     <div class="live-dot"></div>
-                    <span>LIVE MATCH DATA</span>
+                    <span>Live Match Data</span>
                 </div>
 
-                <!-- Stat rows -->
-                <div class="stat-row">
-                    <span class="stat-label">PLAYERS ALIVE</span>
-                    <span id="hud-f1" class="stat-value accent-orange">64</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">TEAMS ALIVE</span>
-                    <span id="hud-f2" class="stat-value">16</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">ZONE PHASE</span>
-                    <span id="hud-f3" class="stat-value accent-blue">04</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">NEXT CIRCLE</span>
-                    <span id="hud-f4" class="stat-value">01:45</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">CLOSING IN</span>
-                    <span id="hud-f5" class="stat-value accent-orange">—</span>
+                <div id="info-tiles">
+                    <div class="info-tile">
+                        <div class="t-label">Weather</div>
+                        <div id="full-f1" class="t-value">Clear Sky</div>
+                    </div>
+                    <div class="info-tile">
+                        <div class="t-label">E-Portal</div>
+                        <div id="full-f2" class="t-value">Active</div>
+                    </div>
                 </div>
 
-                <!-- Match Progress -->
-                <div class="prog-wrap">
-                    <div class="prog-row">
-                        <span class="pl">MATCH PROGRESS</span>
-                        <span id="progress-text" class="pp">0%</span>
+                <div id="stats-block">
+                    <div class="stat-row">
+                        <span class="stat-label">Players Alive</span>
+                        <span id="hud-f1" class="stat-value col-orange">64</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Teams Alive</span>
+                        <span id="hud-f2" class="stat-value">16</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Zone Phase</span>
+                        <span id="hud-f3" class="stat-value col-blue">04</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Next Circle</span>
+                        <span id="hud-f4" class="stat-value">01:45</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Closing In</span>
+                        <span id="hud-f5" class="stat-value col-orange">—</span>
+                    </div>
+                </div>
+
+                <div id="progress-block">
+                    <div class="prog-header">
+                        <span class="prog-label">Match Progress</span>
+                        <span id="progress-text">0%</span>
                     </div>
                     <div class="prog-track">
                         <div id="progress-bar" class="prog-fill" style="width:0%"></div>
                     </div>
                 </div>
 
-            </div><!-- /stats-info -->
-
-            <!-- Footer accent -->
-            <div id="stats-footer">
-                <div class="ff"></div>
-                <div class="fs"></div>
-            </div>
-
-        </div><!-- /stats-panel -->
-
-        <!-- ── MINI MAP with flight path (bottom-right) ── -->
-        <div id="mini-map-wrap">
-            <img id="full-map-asset" src="images/maps/erangel.jpeg" alt="Map">
-
-            <!-- Flight Path SVG scaled to mini map -->
-            <svg id="flight-path-svg" viewBox="0 0 360 360">
-                <defs>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                    </filter>
-                </defs>
-                <!-- Flight path line -->
-                <line x1="55" y1="65" x2="295" y2="295"
-                      stroke="white" stroke-width="1.8"
-                      stroke-dasharray="10,5" opacity="0.45"/>
-                <!-- Take-off dot + label -->
-                <circle cx="55" cy="65" r="5" fill="#ffb690" filter="url(#glow)"/>
-                <text x="65" y="62" fill="#ffb690" font-size="10"
-                      font-family="Inter" font-weight="700" letter-spacing="0.5" opacity="0.85">TAKE-OFF</text>
-                <!-- Landing dot + label -->
-                <circle cx="295" cy="295" r="5" fill="#ffb690" filter="url(#glow)"/>
-                <text x="200" y="313" fill="#ffb690" font-size="10"
-                      font-family="Inter" font-weight="700" letter-spacing="0.5" opacity="0.85">LANDING</text>
-                <!-- Plane icon midpoint -->
-                <circle cx="175" cy="180" r="3" fill="white" opacity="0.5"/>
-            </svg>
-
-            <div id="mini-map-tag">FLIGHT PATH</div>
-        </div><!-- /mini-map-wrap -->
-
-    </div><!-- /widget-combined -->
-
-</div><!-- /wrapper -->
-
-<script>
-    let sheetInterval    = null;
-    let progressInterval = null;
-    let matchStartTimeObj = null;
-    const FULL_MATCH_SECONDS = 1920;
-
-    let currentMapConfigJSON    = "";
-    let globalCurrentMatchIndex = 1;
-    let animationPlaying        = false;
-    let isDataLoaded            = false;
-    let queuedPlayCommand       = false;
-
-    // ─── Spreadsheet Fetch ────────────────────────────────────
-    async function fetchSheet(url) {
-        try {
-            let cleanUrl = url.trim();
-            if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
-            if (cleanUrl.includes('pub?'))  cleanUrl = cleanUrl.replace('output=html', 'output=csv');
-
-            const response = await fetch(cleanUrl);
-            const csvText  = await response.text();
-            if (csvText.includes('<!DOCTYPE html>')) return;
-
-            Papa.parse(csvText, {
-                skipEmptyLines: true,
-                complete: function(results) {
-                    const rawLines = results.data;
-                    if (rawLines.length < 2) return;
-
-                    const headerCols = rawLines[0];
-                    if (headerCols.length > 9) setStartTime(headerCols[9]);
-
-                    // Players / Teams Alive
-                    let playersAlive = 0, teamsAlive = 0;
-                    rawLines.slice(2, 27).forEach(cols => {
-                        const teamName = cols[1]?.trim() || "";
-                        if (!cols[1] || teamName === "" || teamName === "TeamName") return;
-                        const p1 = cols[4]?.trim().toUpperCase() === 'TRUE';
-                        const p2 = cols[5]?.trim().toUpperCase() === 'TRUE';
-                        const p3 = cols[6]?.trim().toUpperCase() === 'TRUE';
-                        const p4 = cols[7]?.trim().toUpperCase() === 'TRUE';
-                        const alive = (p1?1:0) + (p2?1:0) + (p3?1:0) + (p4?1:0);
-                        if (alive > 0) { teamsAlive++; playersAlive += alive; }
-                    });
-                    if (playersAlive > 0) document.getElementById('hud-f1').innerText = (playersAlive < 10 ? '0' : '') + playersAlive;
-                    if (teamsAlive  > 0) document.getElementById('hud-f2').innerText = (teamsAlive  < 10 ? '0' : '') + teamsAlive;
-
-                    // Zone Phase / Circle timers
-                    const headers = rawLines[0];
-                    if (headers?.length > 8  && headers[8])  { const v = headers[8].trim();  if (v) document.getElementById('hud-f3').innerText = v; }
-                    if (headers?.length > 10 && headers[10]) { const v = headers[10].trim(); if (v) document.getElementById('hud-f4').innerText = v; }
-                    if (headers?.length > 11 && headers[11]) {
-                        const v = headers[11].trim();
-                        document.getElementById('hud-f5').innerText = v !== '' ? v : '—';
-                    }
-
-                    // Maps Parsing
-                    if (rawLines.length > 32) {
-                        const mapsRow   = rawLines[31];
-                        const selectRow = rawLines[32];
-                        const timesRow  = rawLines.length > 33 ? rawLines[33] : [];
-
-                        const b33Value = parseInt(selectRow[1]?.trim()) || 1;
-                        globalCurrentMatchIndex = b33Value;
-
-                        let mapConfig = [];
-                        for (let i = 1; i <= 6; i++) {
-                            if (mapsRow && mapsRow[i] && mapsRow[i].trim() !== '') {
-                                let timeCompleted = "";
-                                if (timesRow && timesRow[i] && timesRow[i].trim() !== '') timeCompleted = timesRow[i].trim();
-                                mapConfig.push({ id: i, name: mapsRow[i].trim().toUpperCase(), time: timeCompleted });
-                            }
-                        }
-
-                        if (!animationPlaying) buildIntroSequenceDOM(mapConfig, globalCurrentMatchIndex);
-
-                        const selMap = mapConfig.find(m => m.id === globalCurrentMatchIndex);
-                        if (selMap) {
-                            const mapName = selMap.name;
-                            const mapSrc  = `images/maps/${mapName.toLowerCase()}.jpeg`;
-                            document.getElementById('hud-f0').innerText          = mapName;
-                            document.getElementById('full-f0').innerText         = mapName;
-                            document.getElementById('badge-match-num').innerText = `MATCH 0${selMap.id}`;
-                            // update both map images
-                            document.getElementById('full-map-asset').src    = mapSrc;
-                            document.getElementById('portrait-map-asset').src = mapSrc;
-                        }
-                    }
-                }
-            });
-        } catch (e) {
-            console.error("Auto Sync Error:", e);
-        }
-    }
-
-    // ─── Build Intro Cards ────────────────────────────────────
-    function buildIntroSequenceDOM(mapConfig, currentIndex) {
-        const freshJSON = JSON.stringify({ mapConfig });
-        if (freshJSON === currentMapConfigJSON) return;
-        currentMapConfigJSON = freshJSON;
-
-        const introContainer = document.getElementById('intro-sequence');
-        introContainer.innerHTML = '';
-
-        mapConfig.forEach(mapObj => {
-            let statusHTML = '';
-            if (mapObj.time) {
-                statusHTML = `<div class="card-completed-status"><span>COMPLETED</span><span class="time-text">${mapObj.time}</span></div>`;
-            }
-            introContainer.insertAdjacentHTML('beforeend', `
-                <div class="intro-card" data-id="${mapObj.id}">
-                    <div class="card-match-header">MATCH 0${mapObj.id}</div>
-                    <div class="card-map-name">${mapObj.name}</div>
-                    ${statusHTML}
+                <div id="map-list-section">
+                    <div id="map-list-hdr"><span>Match Schedule</span></div>
+                    <div id="map-list-inner"></div>
                 </div>
-            `);
-        });
 
-        isDataLoaded = true;
-        if (queuedPlayCommand && !animationPlaying) executeAnimationFlow();
-    }
+            </div><!-- /sidebar -->
 
-    // ─── Match Start Time ──────────────────────────────────────
-    function setStartTime(j1Value) {
-        if (!j1Value || j1Value.trim() === '') return;
-        let timeStr = j1Value.trim();
-        let isPM = timeStr.toUpperCase().includes('PM');
-        let isAM = timeStr.toUpperCase().includes('AM');
-        timeStr = timeStr.replace(/[A-Za-z]/g, '').trim();
-        let parts   = timeStr.split(':');
-        let hours   = parseInt(parts[0]) || 0;
-        let minutes = parseInt(parts[1]) || 0;
-        let seconds = parseInt(parts[2]) || 0;
-        if (isPM && hours < 12) hours += 12;
-        if (isAM && hours === 12) hours = 0;
-        let now = new Date();
-        let st  = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
-        if (st.getTime() > now.getTime() + 60000) st.setDate(st.getDate() - 1);
-        matchStartTimeObj = st;
-    }
+        </div><!-- /widget-main -->
 
-    // ─── Progress Bar ──────────────────────────────────────────
-    function updateProgress() {
-        if (!matchStartTimeObj) return;
-        const now      = new Date();
-        let elapsed    = Math.floor((now - matchStartTimeObj) / 1000);
-        if (elapsed < 0) elapsed = 0;
-        let pct        = Math.min((elapsed / FULL_MATCH_SECONDS) * 100, 100);
-        const pctStr   = Math.floor(pct) + '%';
-        document.getElementById('progress-text').innerText  = pctStr;
-        document.getElementById('progress-bar').style.width = pctStr;
-    }
+    </div><!-- /wrapper -->
 
-    // ─── SPX Update ───────────────────────────────────────────
-    function update(rawData) {
-        try {
-            let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-            if (data.f1) document.getElementById('full-f1').innerText = data.f1.toUpperCase ? data.f1.toUpperCase() : data.f1;
-            if (data.f2) document.getElementById('full-f2').innerText = data.f2.toUpperCase ? data.f2.toUpperCase() : data.f2;
-            if (data.f7 && data.f7.startsWith('http')) {
-                if (sheetInterval)    clearInterval(sheetInterval);
-                if (progressInterval) clearInterval(progressInterval);
-                fetchSheet(data.f7);
-                sheetInterval    = setInterval(() => fetchSheet(data.f7), 3500);
-                progressInterval = setInterval(updateProgress, 1000);
-            }
-        } catch (e) {
-            console.error("Update failed:", e);
+    <script>
+        let sheetInterval = null, progressInterval = null, matchStartTimeObj = null;
+        const FULL_MATCH_SECONDS = 1920;
+        let currentMapConfigJSON = "", globalCurrentMatchIndex = 1;
+        let animationPlaying = false, isDataLoaded = false, queuedPlayCommand = false;
+
+        const MAP_DISPLAY = { erangel: 'Erangel', miramar: 'Miramar', sanhok: 'Sanhok', vikendi: 'Vikendi', livik: 'Livik', karakin: 'Karakin' };
+        const dn = raw => MAP_DISPLAY[raw.toLowerCase()] || raw;
+        const el = id => document.getElementById(id);
+        const pad = n => (n < 10 ? '0' : '') + n;
+
+        /* ── Map list ── */
+        function buildMapList(mapConfig, currentIndex) {
+            const inner = el('map-list-inner');
+            inner.innerHTML = '';
+            mapConfig.forEach(m => {
+                const isActive = m.id === currentIndex;
+                const div = document.createElement('div');
+                div.className = 'ml-item' + (isActive ? ' active' : '');
+                const rightHTML = isActive
+                    ? `<div class="ml-live-dot"></div>`
+                    : m.time
+                        ? `<div class="ml-right"><div class="ml-done-tag">Done</div><div class="ml-time">${m.time}</div></div>`
+                        : '';
+                div.innerHTML = `
+                <div class="ml-thumb"><img src="images/maps/${m.name.toLowerCase()}.jpeg" alt="${dn(m.name)}"></div>
+                <div class="ml-info">
+                    <div class="ml-match">Match 0${m.id}</div>
+                    <div class="ml-name">${dn(m.name)}</div>
+                </div>${rightHTML}`;
+                inner.appendChild(div);
+            });
         }
-    }
 
-    // ─── SPX Play ─────────────────────────────────────────────
-    function play() {
-        document.getElementById('wrapper').style.opacity = '1';
-        queuedPlayCommand = true;
-        if (isDataLoaded && !animationPlaying) executeAnimationFlow();
-    }
-
-    // ─── Animation Sequence ───────────────────────────────────
-    function executeAnimationFlow() {
-        animationPlaying  = true;
-        queuedPlayCommand = false;
-
-        const intro     = document.getElementById('intro-sequence');
-        const wCombined = document.getElementById('widget-combined');
-
-        wCombined.style.display = 'none';
-        wCombined.style.opacity = '0';
-        wCombined.classList.remove('widget-enter-combined');
-
-        intro.style.display = 'flex';
-        intro.style.opacity = '1';
-
-        const cards = intro.querySelectorAll('.intro-card');
-
-        // Phase 1: Cards slide in
-        cards.forEach((card, index) => {
-            card.classList.remove('dimmed', 'selected', 'zoom-out');
-            card.style.opacity   = '0';
-            card.style.transform = 'scale(0.9)';
-            card.style.animation = `cardEnter 0.6s cubic-bezier(0.16,1,0.3,1) ${index * 0.15}s forwards`;
-        });
-
-        // Phase 2: Highlight current match
-        setTimeout(() => {
-            cards.forEach(card => {
-                const id = parseInt(card.dataset.id);
-                card.classList.add(id !== globalCurrentMatchIndex ? 'dimmed' : 'selected');
+        function animateMapListIn() {
+            document.querySelectorAll('.ml-item').forEach((e, i) => {
+                e.style.animation = `mlIn 0.55s cubic-bezier(0.16,1,0.3,1) ${0.55 + i * 0.08}s forwards`;
             });
-        }, 2000);
+        }
 
-        // Phase 3: Zoom-out transition
-        setTimeout(() => {
-            const sel = intro.querySelector('.selected');
-            if (sel) sel.classList.add('zoom-out');
-            cards.forEach(card => {
-                if (parseInt(card.dataset.id) !== globalCurrentMatchIndex) {
-                    card.style.opacity    = '0';
-                    card.style.transition = 'opacity 0.3s ease';
+        /* ── Set all map assets ── */
+        function setMapAssets(m) {
+            const src = `images/maps/${m.name.toLowerCase()}.jpeg`;
+            const name = dn(m.name);
+            el('portrait-map-asset').src = src;
+            el('map-reveal-img').src = src;
+            el('sh-title').innerText = name;
+            el('badge-match-num').innerText = `M0${m.id}`;
+            el('canvas-map-title').innerText = name;
+            el('canvas-match-num').innerText = pad(m.id);
+            el('reveal-title').innerText = name;
+            el('reveal-match').innerText = `Match 0${m.id}`;
+        }
+
+        /* ── Sheet sync ── */
+        async function fetchSheet(url) {
+            try {
+                let u = url.trim();
+                if (u.includes('/edit')) u = u.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (u.includes('pub?')) u = u.replace('output=html', 'output=csv');
+                const res = await fetch(u);
+                const csv = await res.text();
+                if (csv.includes('<!DOCTYPE html>')) return;
+                Papa.parse(csv, {
+                    skipEmptyLines: true, complete({ data }) {
+                        if (data.length < 2) return;
+                        const h = data[0];
+                        if (h.length > 9) setStartTime(h[9]);
+                        let pa = 0, ta = 0;
+                        data.slice(2, 27).forEach(cols => {
+                            const name = cols[1]?.trim() || '';
+                            if (!name || name === 'TeamName') return;
+                            const a = [4, 5, 6, 7].filter(i => cols[i]?.trim().toUpperCase() === 'TRUE').length;
+                            if (a > 0) { ta++; pa += a; }
+                        });
+                        if (pa > 0) el('hud-f1').innerText = pad(pa);
+                        if (ta > 0) el('hud-f2').innerText = pad(ta);
+                        const zone = h[8]?.trim();
+                        if (zone) { el('hud-f3').innerText = zone; el('canvas-zone-num').innerText = zone; }
+                        if (h[10]?.trim()) el('hud-f4').innerText = h[10].trim();
+                        el('hud-f5').innerText = h[11]?.trim() || '—';
+
+                        if (data.length > 32) {
+                            const mapsRow = data[31], selRow = data[32], timesRow = data[33] || [];
+                            globalCurrentMatchIndex = parseInt(selRow[1]?.trim()) || 1;
+                            let mapConfig = [];
+                            for (let i = 1; i <= 6; i++) {
+                                if (mapsRow[i]?.trim()) mapConfig.push({ id: i, name: mapsRow[i].trim().toUpperCase(), time: timesRow[i]?.trim() || '' });
+                            }
+                            if (!animationPlaying) buildIntroSequenceDOM(mapConfig, globalCurrentMatchIndex);
+                            buildMapList(mapConfig, globalCurrentMatchIndex);
+                            const sel = mapConfig.find(m => m.id === globalCurrentMatchIndex);
+                            if (sel) setMapAssets(sel);
+                        }
+                    }
+                });
+            } catch (e) { console.error('Sheet error:', e); }
+        }
+
+        function buildIntroSequenceDOM(mapConfig, currentIndex) {
+            const fresh = JSON.stringify({ mapConfig });
+            if (fresh === currentMapConfigJSON) return;
+            currentMapConfigJSON = fresh;
+            const intro = el('intro-sequence');
+            intro.innerHTML = '';
+            mapConfig.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'intro-card'; card.dataset.id = m.id;
+                card.innerHTML = `
+                <div class="ci-img">
+                    <img src="images/maps/${m.name.toLowerCase()}.jpeg" alt="${dn(m.name)}">
+                    <div class="ci-badge">Match 0${m.id}</div>
+                </div>
+                <div class="ci-body">
+                    <div class="ci-name">${dn(m.name)}</div>
+                    ${m.time
+                        ? `<div class="ci-status">Completed</div><div class="ci-time">${m.time}</div>`
+                        : `<div class="ci-status">Upcoming</div>`}
+                </div>`;
+                intro.appendChild(card);
+            });
+            isDataLoaded = true;
+            if (queuedPlayCommand && !animationPlaying) executeAnimationFlow();
+        }
+
+        function setStartTime(v) {
+            if (!v?.trim()) return;
+            let s = v.trim();
+            const isPM = s.toUpperCase().includes('PM');
+            const isAM = s.toUpperCase().includes('AM');
+            s = s.replace(/[A-Za-z]/g, '').trim();
+            const parts = s.split(':');
+            let hours = parseInt(parts[0]) || 0, m = parseInt(parts[1]) || 0, sec = parseInt(parts[2]) || 0;
+            if (isPM && hours < 12) hours += 12;
+            if (isAM && hours === 12) hours = 0;
+            const now = new Date();
+            const st = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, m, sec);
+            if (st > now.getTime() + 60000) st.setDate(st.getDate() - 1);
+            matchStartTimeObj = st;
+        }
+
+        function updateProgress() {
+            if (!matchStartTimeObj) return;
+            const elapsed = Math.max(0, Math.floor((Date.now() - matchStartTimeObj) / 1000));
+            const pct = Math.min((elapsed / FULL_MATCH_SECONDS) * 100, 100);
+            const s = Math.floor(pct) + '%';
+            el('progress-text').innerText = s;
+            el('progress-bar').style.width = s;
+        }
+
+        /* ── SPX API ── */
+        function update(rawData) {
+            try {
+                const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                if (data.f1) el('full-f1').innerText = data.f1;
+                if (data.f2) el('full-f2').innerText = data.f2;
+                if (data.f7?.startsWith('http')) {
+                    clearInterval(sheetInterval); clearInterval(progressInterval);
+                    fetchSheet(data.f7);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7), 3500);
+                    progressInterval = setInterval(updateProgress, 1000);
                 }
+            } catch (e) { console.error('Update:', e); }
+        }
+
+        function play() {
+            el('wrapper').style.opacity = '1';
+            queuedPlayCommand = true;
+            if (isDataLoaded && !animationPlaying) executeAnimationFlow();
+        }
+
+        function stop() {
+            el('wrapper').style.opacity = '0';
+            animationPlaying = false;
+        }
+
+        /* ── Main animation flow ── */
+        function executeAnimationFlow() {
+            animationPlaying = true; queuedPlayCommand = false;
+
+            const intro = el('intro-sequence');
+            const reveal = el('map-reveal');
+            const widget = el('widget-main');
+            const sidebar = el('sidebar');
+            const canvas = el('tactical-canvas');
+            const cBadge = el('canvas-match-badge');
+            const cName = el('canvas-map-name');
+            const cZone = el('canvas-zone-block');
+
+            [intro, reveal, widget].forEach(e => { e.style.display = 'none'; e.style.opacity = '0'; });
+
+            /* Phase 0: Intro cards */
+            intro.style.display = 'flex'; intro.style.opacity = '1';
+            const cards = intro.querySelectorAll('.intro-card');
+            cards.forEach((c, i) => {
+                c.classList.remove('dimmed', 'selected', 'zoom-out');
+                c.style.animation = `cardIn 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.11}s forwards`;
             });
-        }, 3800);
 
-        // Phase 4: Show combined widget
-        setTimeout(() => {
-            intro.style.opacity = '0';
             setTimeout(() => {
-                intro.style.display = 'none';
-                animationPlaying    = false;
-            }, 500);
+                cards.forEach(c => c.classList.add(parseInt(c.dataset.id) === globalCurrentMatchIndex ? 'selected' : 'dimmed'));
+            }, 1700);
 
-            wCombined.style.display = 'block';
-            wCombined.classList.add('widget-enter-combined');
-        }, 4400);
-    }
+            setTimeout(() => {
+                const sel = intro.querySelector('.selected');
+                if (sel) sel.classList.add('zoom-out');
+                cards.forEach(c => {
+                    if (parseInt(c.dataset.id) !== globalCurrentMatchIndex) {
+                        c.style.transition = 'opacity 0.25s ease'; c.style.opacity = '0';
+                    }
+                });
+            }, 3100);
 
-    // ─── SPX Stop ─────────────────────────────────────────────
-    function stop() {
-        document.getElementById('wrapper').style.opacity = '0';
-        animationPlaying = false;
-    }
+            /* Phase 1: Cinematic reveal */
+            setTimeout(() => {
+                intro.style.opacity = '0';
+                setTimeout(() => { intro.style.display = 'none'; }, 400);
 
-    // ─── SPX Template Definition ──────────────────────────────
-    window.SPXGCTemplateDefinition = {
-        "description": "PUBGM Combined Map Widget (Transparent)",
-        "playserver": "OVERLAY", "playchannel": "1", "playlayer": "5", "webplayout": "5",
-        "out": "manual", "dataformat": "json", "uicolor": "7",
-        "DataFields": [
-            { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
-            { "field": "f1", "ftype": "textfield", "title": "Weather",         "value": "Clear Sky" },
-            { "field": "f2", "ftype": "textfield", "title": "E-Portal Status", "value": "Active"    }
-        ]
-    };
-</script>
+                reveal.style.display = 'block'; reveal.style.opacity = '0';
+                const revImg = el('map-reveal-img');
+                const revName = el('reveal-map-name');
+                const revLines = el('reveal-lines');
+
+                revImg.style.cssText += ';transition:none;transform:scale(2.2);filter:brightness(0.08) saturate(0.3);';
+                revName.style.cssText += ';transition:none;transform:translate(-50%,-60%) scale(5);opacity:0;';
+                revLines.classList.remove('expand');
+                void revImg.offsetWidth;
+
+                reveal.style.transition = 'opacity 0.3s ease';
+                reveal.style.opacity = '1';
+
+                setTimeout(() => {
+                    revImg.style.transition = 'transform 3s cubic-bezier(0.16,1,0.3,1), filter 3s ease';
+                    revImg.style.transform = 'scale(1)';
+                    revImg.style.filter = 'brightness(0.28) saturate(0.5)';
+                    revName.style.transition = 'transform 2.8s cubic-bezier(0.16,1,0.3,1), opacity 0.6s ease';
+                    revName.style.transform = 'translate(-50%,-50%) scale(1)';
+                    revName.style.opacity = '1';
+                    setTimeout(() => revLines.classList.add('expand'), 500);
+                }, 180);
+            }, 3500);
+
+            /* Phase 2: Main widget */
+            setTimeout(() => {
+                reveal.style.transition = 'opacity 0.75s ease';
+                reveal.style.opacity = '0';
+                setTimeout(() => { reveal.style.display = 'none'; }, 750);
+
+                widget.style.display = 'block'; widget.style.opacity = '1';
+
+                /* Tactical canvas fades in */
+                canvas.style.animation = 'canvasIn 1.2s ease 0.1s forwards';
+
+                /* Canvas overlays stagger in */
+                cBadge.style.animation = 'badgeIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s forwards';
+                cName.style.animation = 'canvasNameIn 1s cubic-bezier(0.16,1,0.3,1) 0.6s forwards';
+                cZone.style.animation = 'zoneIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.7s forwards';
+
+                /* Sidebar slides in */
+                sidebar.style.animation = 'sidebarIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.15s forwards';
+
+                /* Stat rows */
+                const statRows = sidebar.querySelectorAll('.stat-row');
+                statRows.forEach((row, i) => {
+                    row.style.animation = `statIn 0.55s cubic-bezier(0.16,1,0.3,1) ${0.3 + i * 0.07}s forwards`;
+                });
+                el('progress-block').style.animation =
+                    `progIn 0.55s cubic-bezier(0.16,1,0.3,1) ${0.3 + statRows.length * 0.07}s forwards`;
+
+                animateMapListIn();
+                animationPlaying = false;
+            }, 7300);
+        }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Map Widget v4 — Tactical Canvas",
+            "playserver": "OVERLAY", "playchannel": "1", "playlayer": "5", "webplayout": "5",
+            "out": "manual", "dataformat": "json", "uicolor": "7",
+            "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL", "value": "" },
+                { "field": "f1", "ftype": "textfield", "title": "Weather", "value": "Clear Sky" },
+                { "field": "f2", "ftype": "textfield", "title": "E-Portal Status", "value": "Active" }
+            ]
+        };
+    </script>
 </body>
+
 </html>

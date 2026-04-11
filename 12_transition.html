@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPX - Transition Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; width: 1920px; height: 1080px; background: transparent; font-family: 'Inter', sans-serif; }
+        #wrapper { opacity: 0; transition: opacity 0.2s; width: 100%; height: 100%; position: relative; }
+        
+        .shard-container {
+            position: absolute;
+            top: 0; left: -250%;
+            width: 250%; height: 100%;
+            display: flex;
+            transform: skewX(-15deg);
+            z-index: 10;
+        }
+        
+        .shard {
+            height: 100%;
+            flex-grow: 1;
+            background: #0b1326;
+            border-right: 8px solid #ec6a06;
+            box-shadow: 40px 0 100px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Add some detail to shards */
+        .shard::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, transparent 0%, rgba(236,106,6,0.05) 50%, transparent 100%);
+            animation: lightSweep 2s infinite;
+        }
+        
+        .shard:nth-child(odd) { background: #171f33; }
+        .shard:nth-child(3) { background: #ec6a06; flex-grow: 0.15; border-right: none; }
+        .shard:nth-child(3)::after { display: none; }
+        
+        .center-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 140px;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -8px;
+            z-index: 20;
+            opacity: 0;
+            text-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            white-space: nowrap;
+        }
+        
+        /* Animations */
+        @keyframes sweepIn {
+            0% { transform: skewX(-15deg) translateX(0%); }
+            100% { transform: skewX(-15deg) translateX(200%); }
+        }
+        
+        @keyframes textGlitch {
+            0% { opacity: 0; transform: translate(-50%, -40%) skewX(-5deg) scale(1.2); filter: blur(20px); }
+            40% { opacity: 0; }
+            48% { opacity: 1; transform: translate(-50%, -52%) skewX(5deg) scale(1.05); filter: blur(0px); }
+            50% { opacity: 1; transform: translate(-50%, -50%) skewX(0deg) scale(1); }
+            60% { opacity: 1; transform: translate(-50%, -50%) skewX(0deg) scale(1); }
+            62% { opacity: 1; transform: translate(-50%, -48%) skewX(-5deg) scale(1.05); }
+            70% { opacity: 0; transform: translate(-50%, -60%) skewX(5deg) scale(0.9); filter: blur(20px); }
+            100% { opacity: 0; }
+        }
+
+        @keyframes lightSweep {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .animate-sweep { animation: sweepIn 1.3s cubic-bezier(0.86, 0, 0.07, 1) forwards; }
+        .animate-text { animation: textGlitch 1.3s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="shards" class="shard-container">
+            <div class="shard"></div>
+            <div class="shard"></div>
+            <div class="shard"></div>
+            <div class="shard"></div>
+            <div class="shard"></div>
+        </div>
+        <div id="title" class="center-text">PUBG MOBILE</div>
+    </div>
+
+    <script>
+        function play() {
+            const wrapper = document.getElementById('wrapper');
+            const shards = document.getElementById('shards');
+            const title = document.getElementById('title');
+            
+            // Reset wrapper
+            wrapper.style.opacity = '1';
+            
+            // Force reset of animations
+            shards.classList.remove('animate-sweep');
+            title.classList.remove('animate-text');
+            void shards.offsetWidth; // Force reflow
+            
+            // Double-rAF: guarantees the browser commits the class removal
+            // in one paint before re-adding in the next, preventing silent skips
+            // on rapid/repeated play() calls.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    shards.classList.add('animate-sweep');
+                    title.classList.add('animate-text');
+                });
+            });
+            
+            // Auto hide: 1300ms (anim) + 100ms buffer + 200ms CSS fade = safe
+            setTimeout(() => {
+                wrapper.style.opacity = '0';
+            }, 1600);
+        }
+
+        // Allow manual testing in browser
+        window.addEventListener('mousedown', () => {
+            if (window.self === window.top) play();
+        });
+
+        function stop() {
+            document.getElementById('wrapper').style.opacity = '0';
+        }
+
+        // SPX GC Integration
+        window.SPXGCTemplateDefinition = {
+            "description": "Professional Production Stinger",
+            "playserver": "OVERLAY",
+            "playchannel": "1",
+            "playlayer": "50",
+            "webplayout": "50",
+            "out": "manual",
+            "uicolor": "5",
+            "DataFields": [
+                { "field": "f0", "ftype": "textfield", "title": "Center Text", "value": "PUBG MOBILE" }
+            ]
+        };
+
+        function update(rawData) {
+            const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+            if (data.f0) document.getElementById('title').innerText = data.f0.toUpperCase();
+        }
+    </script>
+</body>
+</html>
