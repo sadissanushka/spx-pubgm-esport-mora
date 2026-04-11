@@ -50,6 +50,26 @@
         }
         .btn-live-border { border-color: #ef4444 !important; border-width: 2px !important; }
 
+        /* ── STINGER FLASH OVERLAY ── */
+        #stinger-flash {
+            pointer-events: none;
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, rgba(236,106,6,0.18) 0%, rgba(11,19,38,0.22) 100%);
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        #stinger-flash.active { opacity: 1; }
+        /* Stinger toast variant */
+        #stinger-toast {
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-60px);
+            background: #ec6a06; color: #0b1326;
+            padding: 6px 20px; border-radius: 999px;
+            font-size: 11px; font-weight: 900; letter-spacing: 0.25em;
+            text-transform: uppercase; z-index: 10000;
+            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.3s;
+            opacity: 0; white-space: nowrap;
+        }
+        #stinger-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
         /* ── MOBILE SCENE STRIP ── */
         /* On small screens the LEFT panel becomes a sticky bottom bar */
         #scene-sidebar {
@@ -302,6 +322,10 @@
         COMMAND SENT
     </div>
 
+    <!-- Stinger Flash Overlay + Toast -->
+    <div id="stinger-flash"></div>
+    <div id="stinger-toast">⚡ STINGER FIRING</div>
+
     <script>
         // CONFIG & DATA
         let currentState = -1; 
@@ -323,7 +347,7 @@
             "bg": { path: "13_background.html", layer: 1, name: "Video Background" },
             "ticker": { path: "00_broadcast.html", layer: 10, name: "Live Ticker" },
             "eliminated": { path: "02_eliminated.html", layer: 19, name: "Elim Poller" },
-            "transition": { path: "12_transition.html", layer: 50, name: "Stinger" }
+            "transition": { path: "12_transition.html", layer: 20, name: "Stinger" }
         };
 
         const scenes = [
@@ -349,6 +373,27 @@
             
             initManualList();
             updateMasterFlowLabel();
+
+            // ── PRE-WARM: Load the transition template into SPX-GC's browser layer
+            // on startup so it's already cached when the first scene switch fires.
+            // Without this, the first directplayout 'play' call needs to load the
+            // template from disk, which can take >900ms, causing our 'stop' to
+            // arrive before 'play' has even executed (nothing ever shows).
+            if (savedTransition) {
+                setTimeout(async () => {
+                    try {
+                        await triggerManual('transition', 'play', true);
+                        liveTemplates.delete('transition');
+                        // Give it a brief moment to render then immediately hide
+                        await new Promise(r => setTimeout(r, 200));
+                        await triggerManual('transition', 'stop', true);
+                        liveTemplates.delete('transition');
+                        console.log('[Stinger] Pre-warm complete – transition template cached.');
+                    } catch(e) {
+                        console.warn('[Stinger] Pre-warm skipped (SPX-GC not ready yet):', e.message);
+                    }
+                }, 3000); // 3 second delay – gives SPX-GC time to fully start up
+            }
         };
 
         function saveSettings() {
@@ -435,54 +480,79 @@
             jumpToScene(currentState);
         }
 
+        // ── Stinger timing constants ──────────────────────────────────────────
+        // These match the defaults in 12_transition.html:
+        //   cycleDuration  = 1600ms  →  wipe-in half = 800ms
+        //   loopPauseMs    = 2400ms
+        // We fire scene commands DURING the mid-hold window (≈ wipe-in + safety margin).
+        const STINGER_WIPE_IN_MS  = 900;  // wait after play() before touching layers
+        const STINGER_SETTLE_MS   = 200;  // extra settle before calling stop()
+
+        function showStingerFlash() {
+            const f = document.getElementById('stinger-flash');
+            const t = document.getElementById('stinger-toast');
+            f.classList.add('active');
+            t.classList.add('show');
+            setTimeout(() => {
+                f.classList.remove('active');
+                t.classList.remove('show');
+            }, STINGER_WIPE_IN_MS * 2 + STINGER_SETTLE_MS + 400);
+        }
+
         async function jumpToScene(id) {
             currentState = id;
             const scene = scenes[id];
-            const sheet = document.getElementById('sheet-url').value;
             const useTransition = document.getElementById('use-transitions').checked;
 
-            if(useTransition) {
+            // ── STEP 1: Fire the stinger and show a UI flash ─────────────────
+            if (useTransition) {
+                showStingerFlash();
                 await triggerManual('transition', 'play', true);
-                // Remove from liveTemplates immediately so SPX always treats
-                // the next call as a fresh 'play' (not an already-loaded template).
+                // Remove from tracking so the next call is always treated as fresh
                 liveTemplates.delete('transition');
-                await new Promise(r => setTimeout(r, 800)); // Wait past sweep midpoint (accounts for API latency)
+                // Wait for wipe-in to reach full coverage (mid-point of animation)
+                await new Promise(r => setTimeout(r, STINGER_WIPE_IN_MS));
             }
 
-            // 1. CLEANSING LOGIC: Stop existing animations correctly
-            if(scene.clearOthers) {
-                // Hard reset of all live templates (except ticker, eliminated poller, and persisting background)
-                for(let key of liveTemplates) {
-                    // Check if current 'bg' should persist (must be in target scene and have SAME video file)
+            // ── STEP 2: Swap layers while screen is covered by the wipe ──────
+
+            // 2a. Stop layers that should be cleared
+            if (scene.clearOthers) {
+                for (let key of [...liveTemplates]) {
+                    // Decide if the background can persist unchanged
                     let shouldPersistBg = false;
                     if (key === "bg" && scene.play.includes("bg")) {
-                        const prevScene = scenes.find(s => s.play.includes("bg") && s.id < id); // Find last used bg scene
-                        if (prevScene && prevScene.bgVideo === scene.bgVideo) shouldPersistBg = true;
+                        const prevBgScene = scenes.find(s => s.play.includes("bg") && s.id < id);
+                        if (prevBgScene && prevBgScene.bgVideo === scene.bgVideo) shouldPersistBg = true;
                     }
-
-                    const isWhitelisted = (key === "ticker" || key === "eliminated" || shouldPersistBg);
-                    if(!isWhitelisted) await triggerManual(key, 'stop', true);
+                    const whitelisted = (key === "ticker" || key === "eliminated" || shouldPersistBg || key === "transition");
+                    if (!whitelisted) await triggerManual(key, 'stop', true);
                 }
             }
-            
-            if(scene.stopLayers) {
-                // Stop specific layers that this scene replaces
-                for(let layer of scene.stopLayers) {
-                    // Find which live template is occupying this layer
-                    for(let key of liveTemplates) {
-                        if(templates[key].layer === layer) await triggerManual(key, 'stop', true);
+
+            if (scene.stopLayers) {
+                for (let layer of scene.stopLayers) {
+                    for (let key of [...liveTemplates]) {
+                        if (templates[key].layer === layer) await triggerManual(key, 'stop', true);
                     }
                 }
             }
 
-            // 2. PLAY LOGIC
-            for(let key of scene.play) {
-                // Optimization: Don't reload the background if it's already playing AND it's the same video
+            // 2b. Play new layers for the target scene
+            for (let key of scene.play) {
                 if (key === "bg" && liveTemplates.has("bg")) {
-                    const prevScene = scenes.find(s => s.play.includes("bg") && s.id < id);
-                    if (prevScene && prevScene.bgVideo === scene.bgVideo) continue;
+                    const prevBgScene = scenes.find(s => s.play.includes("bg") && s.id < id);
+                    if (prevBgScene && prevBgScene.bgVideo === scene.bgVideo) continue;
                 }
                 await triggerManual(key, 'play', true);
+            }
+
+            // ── STEP 3: Scene is ready — tell the stinger to stop (graceful) ─
+            if (useTransition) {
+                await new Promise(r => setTimeout(r, STINGER_SETTLE_MS));
+                // Trigger stop: stinger finishes its current wipe-out cycle then hides
+                await triggerManual('transition', 'stop', true);
+                liveTemplates.delete('transition'); // keep tracking clean
             }
 
             updateMasterFlowLabel();
@@ -586,7 +656,10 @@
                     fields.push({ field: "f0", value: currentSceneObj.bgVideo });
                 }
             }
-            if(key === "transition") fields.push({ field: "f0", value: "PUBG MOBILE" }); // Default or could be dynamic
+            if (key === "transition") {
+                fields.push({ field: "f0", value: "PUBG MOBILE" });
+                fields.push({ field: "f1", value: "ESPORTS BROADCAST" });
+            }
 
             // State Tracking
             if(command === 'play') liveTemplates.add(key);
@@ -641,7 +714,8 @@
         function initManualList() {
             const list = document.getElementById('manual-list');
             Object.keys(templates).forEach(key => {
-                if(key === "ticker") return;
+                // Ticker is controlled via its own card; transition is auto-managed by the stinger system
+                if (key === "ticker" || key === "transition") return;
                 const temp = templates[key];
                 const div = document.createElement('div');
                 div.id = `manual-row-${key}`;

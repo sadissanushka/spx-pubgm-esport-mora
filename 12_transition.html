@@ -17,12 +17,15 @@
         }
 
         /* ─── Wrapper – hidden by default ──────────────────────────── */
+        /* NOTE: We use opacity:0 (NOT display:none) so elements are always
+           in the browser render tree. display:none causes Web Animations API
+           to silently fail when SPX-GC calls play() on first template load. */
         #wrapper {
             position: absolute;
             inset: 0;
             pointer-events: none;
-            /* visibility toggled by play() / stop() */
-            display: none;
+            opacity: 0;
+            transition: opacity 0.1s linear;
         }
 
         /* ═══════════════════════════════════════════════════════════ *
@@ -270,15 +273,23 @@
         // ── Loop engine ─────────────────────────────────────────────
         async function loopEngine() {
             while (looping) {
+                // Reset panel positions to their off-screen start before each cycle
+                // (guards against a partially-completed previous animation leaving
+                //  panels in a wrong position)
+                p1.style.transform = 'translateX(-110%)';
+                p2.style.transform = 'translateX(-110%)';
+                p3.style.transform = 'translateX(-110%)';
+
                 await runCycle();
+
                 if (stopAfter) {
                     looping   = false;
                     stopAfter = false;
-                    wrapper.style.display = 'none';
+                    wrapper.style.opacity = '0';
                     break;
                 }
-                // Brief pause between loop iterations (half the hold time)
-                await sleep(cfg.loopPauseMs / 2);
+                // Brief pause between loop iterations
+                await sleep(400);
             }
         }
 
@@ -290,7 +301,6 @@
         function applyConfig() {
             brandLbl.textContent = cfg.label;
             brandSub.textContent = cfg.sub;
-            // Recolour p2 panel accent
             p2.style.background = `linear-gradient(135deg, ${cfg.accentColor} 0%, #ff8c00 60%, #ffc200 100%)`;
         }
 
@@ -301,17 +311,11 @@
         function update(rawData) {
             try {
                 const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                // f0 = label text
                 if (data.f0 !== undefined) cfg.label = data.f0.toUpperCase();
-                // f1 = sub-title text
                 if (data.f1 !== undefined) cfg.sub   = data.f1.toUpperCase();
-                // f2 = cycle duration ms  (e.g. "1600")
                 if (data.f2 !== undefined && !isNaN(parseInt(data.f2))) cfg.cycleDuration = Math.max(400, parseInt(data.f2));
-                // f3 = pause between loops ms (e.g. "2400")
                 if (data.f3 !== undefined && !isNaN(parseInt(data.f3))) cfg.loopPauseMs   = Math.max(200, parseInt(data.f3));
-                // f4 = accent colour hex (e.g. "#ec6a06")
                 if (data.f4 !== undefined && data.f4.trim()) cfg.accentColor = data.f4.trim();
-
                 applyConfig();
             } catch(e) {
                 console.error('update() error:', e);
@@ -320,7 +324,7 @@
 
         function play() {
             applyConfig();
-            wrapper.style.display = 'block';
+            wrapper.style.opacity = '1';   // ← opacity not display, matching all other templates
             if (!looping) {
                 looping   = true;
                 stopAfter = false;
@@ -329,11 +333,12 @@
         }
 
         function stop() {
-            // Graceful: completes the current wipe cycle before hiding
-            stopAfter = true;
-            // If not currently running (e.g. called before play), hide immediately
-            if (!looping) {
-                wrapper.style.display = 'none';
+            if (looping) {
+                // Graceful: let current cycle finish, then hide
+                stopAfter = true;
+            } else {
+                // play() hasn't been called yet (or already done) — hide immediately
+                wrapper.style.opacity = '0';
             }
         }
 
