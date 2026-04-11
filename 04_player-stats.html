@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>SPX - PUBG Mobile - Player Stats</title>
+    <title>SPX - PUBGM Premium Player Stats</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -14,162 +14,209 @@
             theme: {
                 extend: {
                     colors: {
-                        "error": "#ffb4ab",
-                        "surface-container-high": "#222a3d",
-                        "surface-container": "#171f33",
-                        "outline": "#8c909f",
+                        "primary": "#ec6a06",
                         "secondary": "#ffb690",
-                        "on-tertiary-fixed": "#191c1e",
-                        "on-secondary-container": "#4a1c00",
-                        "tertiary-fixed": "#e0e3e5",
-                        "surface-dim": "#0b1326",
-                        "on-error": "#690005",
-                        "on-background": "#dae2fd",
-                        "secondary-fixed-dim": "#ffb690",
-                        "on-secondary": "#552100",
-                        "tertiary": "#c4c7c9",
-                        "on-error-container": "#ffdad6",
-                        "secondary-container": "#ec6a06",
-                        "on-tertiary-fixed-variant": "#444749",
-                        "surface-container-highest": "#2d3449",
-                        "on-tertiary": "#2d3133",
-                        "on-primary-container": "#00285d",
-                        "inverse-surface": "#dae2fd",
-                        "error-container": "#93000a",
-                        "surface-container-lowest": "#060e20",
-                        "on-secondary-fixed-variant": "#783200",
-                        "surface-tint": "#adc6ff",
-                        "on-primary-fixed-variant": "#004395",
-                        "inverse-on-surface": "#283044",
-                        "on-primary": "#002e6a",
                         "surface": "#0b1326",
-                        "outline-variant": "#424754",
                         "surface-variant": "#2d3449",
-                        "tertiary-container": "#8e9193",
-                        "surface-container-low": "#131b2e",
-                        "primary-container": "#4d8eff",
-                        "inverse-primary": "#005ac2",
-                        "surface-bright": "#31394d",
-                        "on-primary-fixed": "#001a42",
-                        "primary-fixed": "#d8e2ff",
-                        "tertiary-fixed-dim": "#c4c7c9",
-                        "secondary-fixed": "#ffdbca",
-                        "primary": "#adc6ff",
-                        "on-secondary-fixed": "#341100",
-                        "background": "#0b1326",
                         "on-surface": "#dae2fd",
-                        "on-surface-variant": "#c2c6d6",
-                        "primary-fixed-dim": "#adc6ff",
-                        "on-tertiary-container": "#272a2c"
+                        "accent-blue": "#adc6ff",
+                        "mvp-gold": "#FFD700"
                     },
                     fontFamily: {
-                        "headline": ["Inter"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    },
-                    borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
+                        "sans": ["Inter", "sans-serif"],
+                    }
                 },
             },
         }
     </script>
     <style>
         body { background: transparent; width: 1920px; height: 1080px; overflow: hidden; margin: 0; }
-        #wrapper { opacity: 0; transition: opacity 0.5s ease; width: 100%; height: 100%; }
-        .player-card {
-            position: absolute;
-            left: 200px; top: 150px;
-            width: 1500px;
-            height: 780px;
-            display: flex;
-            align-items: flex-end;
-        }
-        .portrait-container {
-            width: 600px;
-            height: 100%;
+        
+        #wrapper { 
+            opacity: 0; 
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1); 
+            width: 100%; height: 100%; 
             position: relative;
+        }
+
+        /* ── BACKGROUND ACCENTS ── */
+        .bg-shape {
+            position: absolute;
+            z-index: 1;
+            background: linear-gradient(135deg, rgba(236,106,6,0.1) 0%, transparent 70%);
+            clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%);
+            transform: skewX(-15deg);
+        }
+
+        /* ── PLAYER SECTION (Left) ── */
+        .player-visual {
+            position: absolute;
+            left: 0; top: 0;
+            width: 900px; height: 1080px;
             z-index: 10;
         }
-        .portrait-container img {
-            width: 100%;
-            height: 100%;
+        .character-img {
+            width: 100%; height: 100%;
             object-fit: contain;
-            object-position: bottom;
-            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+            object-position: bottom left;
+            filter: drop-shadow(0 0 50px rgba(0,0,0,0.8));
+            transform: translateX(-100px);
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .stats-content {
-            flex-grow: 1;
-            background: rgba(11, 19, 38, 0.85);
-            backdrop-blur: 24px;
-            height: 600px;
-            margin-left: -100px;
-            padding: 60px 80px 60px 140px;
-            border-left: 8px solid #ffb690;
+        #wrapper.play .character-img {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        /* ── CONTENT SECTION (Right) ── */
+        .content-section {
+            position: absolute;
+            right: 0; top: 0;
+            width: 1100px; height: 1080px;
+            background: linear-gradient(90deg, transparent 0%, rgba(11, 19, 38, 0.95) 20%);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
             justify-content: center;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 5% 100%);
+            padding-left: 150px;
+            padding-right: 150px;
+            z-index: 5;
+            transform: translateX(200px);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
         }
-        .stat-grid {
+        #wrapper.play .content-section {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        /* ── STAT CARDS ── */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-            margin-top: 40px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 48px;
         }
-        .stat-item {
+        .stat-card {
             background: rgba(255,255,255,0.03);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-left: 4px solid #ec6a06;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s ease;
         }
-        @keyframes slideUpIn {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 100px; height: 100px;
+            background: radial-gradient(circle at top right, rgba(236,106,6,0.1), transparent);
         }
-        .animate-in { animation: slideUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .stat-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 56px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        /* ── MVP BADGE ── */
+        #mvp-badge {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 8px 24px;
+            font-weight: 950;
+            text-transform: uppercase;
+            font-style: italic;
+            letter-spacing: 2px;
+            border-radius: 4px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            margin-bottom: 16px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: pulse-gold 2s infinite;
+        }
+        @keyframes pulse-gold {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 215, 0, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+        }
+
+        .highlight-glow {
+            position: absolute;
+            left: 100px; top: 20%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(236,106,6,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 1;
+            filter: blur(100px);
+        }
     </style>
 </head>
-<body class="bg-transparent font-body text-on-surface">
+<body class="bg-transparent font-sans text-on-surface">
     <div id="wrapper">
-        <div id="card" class="player-card">
-            <div class="portrait-container">
-                <img id="f2" src="images/characters/1.png" alt="Player Portrait">
-            </div>
-            <div class="stats-content">
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-3">
-                        <img id="team-logo" src="team_logos/titan.png" class="w-12 h-12 object-contain" alt="">
-                        <span id="f1" class="text-secondary font-black tracking-[0.4em] uppercase text-xl">TEAM TITANS</span>
-                    </div>
-                    <h1 id="f0" class="font-black text-8xl uppercase italic tracking-tighter leading-none mb-4">TITAN_REX</h1>
-                </div>
+        <!-- Background decorative shapes -->
+        <div class="bg-shape w-[1000px] h-[1000px] top-[-100px] left-[-200px]"></div>
+        <div class="highlight-glow"></div>
 
-                <div class="stat-grid">
-                    <div class="stat-item">
-                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">KILLS</span>
-                        <span id="f3" class="text-primary font-black text-5xl">45</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">DAMAGE</span>
-                        <span id="f4" class="text-on-surface font-black text-5xl">12,480</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">HEADSHOTS</span>
-                        <span id="f5" class="text-on-surface font-black text-5xl">14</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">SURVIVAL TIME</span>
-                        <span id="f6" class="text-on-surface font-black text-5xl">22:14</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">ASSISTS</span>
-                        <span id="f7" class="text-on-surface font-black text-5xl">12</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">ACCURACY</span>
-                        <span id="f8" class="text-on-surface font-black text-5xl">34%</span>
-                    </div>
+        <!-- Character Visual -->
+        <div class="player-visual">
+            <img id="f2" src="images/characters/1.png" class="character-img" alt="Player">
+        </div>
+
+        <!-- Content Section -->
+        <div class="content-section">
+            <div id="mvp-badge">
+                <span class="material-symbols-outlined">stars</span>
+                Match MVP
+            </div>
+
+            <div class="flex items-center gap-4 mb-2">
+                <img id="team-logo" src="team_logos/titan.png" class="w-16 h-16 object-contain filter drop-shadow-lg" alt="">
+                <div class="flex flex-col">
+                    <span class="text-primary font-black tracking-[0.4em] uppercase text-sm opacity-80">PLAYER PROFILE</span>
+                    <span id="f1" class="text-white font-black tracking-[0.1em] uppercase text-2xl">TEAM TITANS</span>
+                </div>
+            </div>
+
+            <h1 id="f0" class="font-black text-[120px] uppercase italic tracking-tighter leading-[0.9] mb-8 text-white">TITAN_REX</h1>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">TOTAL KILLS</div>
+                    <div id="f3" class="stat-value">45</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">TOTAL DAMAGE</div>
+                    <div id="f4" class="stat-value">12,480</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">HEADSHOTS</div>
+                    <div id="f5" class="stat-value">14</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">SURVIVAL TIME</div>
+                    <div id="f6" class="stat-value">22:14</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ASSISTS</div>
+                    <div id="f7_assists" class="stat-value">12</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ACCURACY</div>
+                    <div id="f8" class="stat-value">34%</div>
                 </div>
             </div>
         </div>
@@ -182,58 +229,68 @@
             try {
                 let cleanUrl = url.trim();
                 let docIdMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                let csvText = null;
+                if (!docIdMatch) return;
+                
+                let docId = docIdMatch[1];
+                
+                // 1. Fetch "Inputs" sheet for Position/Rank
+                let inputsUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=Inputs`;
+                const inputsRes = await fetch(inputsUrl);
+                const inputsCsv = await inputsRes.text();
+                
+                // 2. Fetch "Teams" sheet for Player Names/Kills
+                let teamsUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=Teams`;
+                const teamsRes = await fetch(teamsUrl);
+                const teamsCsv = await teamsRes.text();
 
-                if (docIdMatch) {
-                    let docId = docIdMatch[1];
-                    let teamsUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=Teams`;
-                    try {
-                        const res = await fetch(teamsUrl);
-                        const txt = await res.text();
-                        if (!txt.includes('<!DOCTYPE html>') && txt.includes(',')) {
-                            csvText = txt;
-                        }
-                    } catch (e) {}
-                }
+                if (inputsCsv.includes('<!DOCTYPE html>') || teamsCsv.includes('<!DOCTYPE html>')) return;
 
-                if (!csvText) {
-                    if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
-                    if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
-                    const response = await fetch(cleanUrl);
-                    csvText = await response.text();
-                }
+                const inputsResult = Papa.parse(inputsCsv, { skipEmptyLines: true });
+                const teamsResult = Papa.parse(teamsCsv, { skipEmptyLines: true });
 
-                if (csvText.includes('<!DOCTYPE html>')) return;
+                const inputsLines = inputsResult.data;
+                const teamsLines = teamsResult.data;
 
-                Papa.parse(csvText, {
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        const lines = results.data;
-                        if (lines.length < 2) return;
+                // Find data for targetSlot
+                const inputRow = inputsLines.find(cols => cols[0] == targetSlot);
+                const teamRow = teamsLines.find(cols => cols[0] == targetSlot);
 
-                        // Find the row for targetSlot
-                        const teamRow = lines.find(cols => cols[0] == targetSlot);
-                        if (!teamRow) return;
+                if (!inputRow || !teamRow) return;
 
-                        const teamName = teamRow[1]?.trim() || '';
-                        const teamTag = teamRow[2]?.trim() || '';
-                        
-                        // Player Index is 1-4. Member names are at 4, 5, 6, 7. Kills at 8, 9, 10, 11
-                        const pIdx = parseInt(targetPlayerIndex) - 1;
-                        if (pIdx < 0 || pIdx > 3) return;
+                const teamName = teamRow[1]?.trim() || '';
+                const teamTag = teamRow[2]?.trim() || '';
+                const rank = parseInt(inputRow[9]?.trim()) || 999; // Rank/Position in Inputs column J
 
-                        const playerName = teamRow[4 + pIdx]?.trim() || 'UNKNOWN';
-                        const playerKills = teamRow[8 + pIdx]?.trim() || '0';
-                        
-                        // Update UI manually for the automated parts
-                        document.getElementById('f0').innerText = playerName.toUpperCase();
-                        document.getElementById('f1').innerText = teamName.toUpperCase();
-                        document.getElementById('f3').innerText = playerKills;
-                        
-                        let logo = teamTag.toLowerCase() || teamName.split(' ')[0].toLowerCase();
-                        document.getElementById('team-logo').src = `team_logos/${logo}.png`;
+                const pIdx = parseInt(targetPlayerIndex) - 1;
+                if (pIdx < 0 || pIdx > 3) return;
+
+                const playerName = teamRow[4 + pIdx]?.trim() || 'UNKNOWN';
+                const playerKills = parseInt(teamRow[8 + pIdx]?.trim()) || 0;
+                
+                // MVP LOGIC: If Rank 1, find max kills in the team
+                let isMVP = false;
+                if (rank === 1) {
+                    const k1 = parseInt(teamRow[8]) || 0;
+                    const k2 = parseInt(teamRow[9]) || 0;
+                    const k3 = parseInt(teamRow[10]) || 0;
+                    const k4 = parseInt(teamRow[11]) || 0;
+                    const maxKills = Math.max(k1, k2, k3, k4);
+                    if (playerKills === maxKills && playerKills > 0) {
+                        isMVP = true;
                     }
-                });
+                }
+
+                // Update UI
+                document.getElementById('f0').innerText = playerName.toUpperCase();
+                document.getElementById('f1').innerText = teamName.toUpperCase();
+                document.getElementById('f3').innerText = playerKills;
+                
+                const mvpBadge = document.getElementById('mvp-badge');
+                mvpBadge.style.display = isMVP ? 'flex' : 'none';
+
+                let logoAsset = teamTag.toLowerCase() || teamName.split(' ')[0].toLowerCase();
+                document.getElementById('team-logo').src = `team_logos/${logoAsset}.png`;
+
             } catch (e) {
                 console.error("Auto Sync Error:", e);
             }
@@ -254,7 +311,6 @@
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
                 if (data.f1) {
                     document.getElementById('f1').innerText = data.f1.toUpperCase();
-                    // Auto-load logo if icon asset specified
                     let logo = data.f1.split(' ')[0].toLowerCase();
                     document.getElementById('team-logo').src = `team_logos/${logo}.png`;
                 }
@@ -266,7 +322,8 @@
                 }
                 
                 ['f3', 'f4', 'f5', 'f6', 'f7_assists', 'f8'].forEach(field => {
-                    if (data[field]) document.getElementById(field.replace('_assists', '')).innerText = data[field];
+                    const id = field === 'f7_assists' ? 'f7_assists' : field;
+                    if (data[field]) document.getElementById(id).innerText = data[field];
                 });
                 
             } catch (e) {
@@ -275,19 +332,19 @@
         }
 
         function play() {
-            document.getElementById('wrapper').style.opacity = '1';
-            const card = document.getElementById('card');
-            card.classList.remove('animate-in');
-            void card.offsetWidth;
-            card.classList.add('animate-in');
+            const wrapper = document.getElementById('wrapper');
+            wrapper.style.opacity = '1';
+            wrapper.classList.add('play');
         }
 
         function stop() {
-            document.getElementById('wrapper').style.opacity = '0';
+            const wrapper = document.getElementById('wrapper');
+            wrapper.style.opacity = '0';
+            wrapper.classList.remove('play');
         }
 
         window.SPXGCTemplateDefinition = {
-            "description": "PUBGM Player Highlight Stats",
+            "description": "Premium Player Stats Profile",
             "playserver": "OVERLAY",
             "playchannel": "1",
             "playlayer": "13",
