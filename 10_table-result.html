@@ -270,18 +270,35 @@
         async function fetchSheet(url) {
             try {
                 let cleanUrl = url.trim();
-                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
-                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+                let docIdMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                let csvText = null;
 
-                const response = await fetch(cleanUrl);
-                const csvText = await response.text();
+                if (docIdMatch) {
+                    let docId = docIdMatch[1];
+                    let inputsUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=Inputs`;
+                    try {
+                        const res = await fetch(inputsUrl);
+                        const txt = await res.text();
+                        if (!txt.includes('<!DOCTYPE html>') && txt.includes(',')) {
+                            csvText = txt;
+                        }
+                    } catch (e) {}
+                }
+
+                if (!csvText) {
+                    if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                    if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+                    const response = await fetch(cleanUrl);
+                    csvText = await response.text();
+                }
+
                 if (csvText.includes('<!DOCTYPE html>')) return;
 
                 Papa.parse(csvText, {
                     skipEmptyLines: true,
                     complete: function(results) {
                         const lines = results.data;
-                        if (lines.length < 2) return;
+                        if (lines.length < 3) return;
 
                         const teams = lines.slice(2, 27).map(cols => {
                             if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;

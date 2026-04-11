@@ -1,0 +1,51 @@
+"Point system" sheet
+this help to calculate inside sheet
+
+"Inputs" sheet
+
+A3:A27->team slot number 1-25
+B3:B27->each team's team name
+C3:c27->team tag to easily identify team logo
+D3:D25->is team in bluezone
+E3:H27->team member alive or not p1-p4
+H1->number of team in match
+J1->match start time(when airplane start)
+K1->next zone time
+I3:I27->team kills
+J3:J27->position(automatically calculate inside sheet)
+K3:K27->Points(automatically calculate inside sheet)
+M3:P27->Survive time
+Q3:T27->Kills
+B32:G32->matchs map list
+B33->current running match
+B34:G34->match duration
+
+"Teams" sheet
+A2:A26->team slot number 1-25
+B2:B26->each team's team name
+C2:c26->team tag to easily identify team logo
+E2:H26->team members name
+I2:L26->player 1-4 total kills for each
+M2:M26->Total kills(all matches)
+n2:n26->Total Points(all matches)
+
+after each match Input sheet data copy to Match {index} 
+"Match {index}" sheets
+A2:A26->team slot number 1-25
+B2:B26->each team's player 1 name
+C2:c26->each team's player 1 killcount
+D2:D26->survival time player 1
+E2:E26->each team's player 2 name
+F2:F26->each team's player 2 killcount
+G2:G26->survival time player 2
+H2:H26->each team's player 3 name
+I2:I26->each team's player 3 killcount
+J3:J27->survival time player 3
+K3:K27->each team's player 4 name
+L3:L27->each team's player 4 killcount
+M3:M27->survival time player 4
+N3:N27->team kills
+O3:O27->position
+P3:P27->Points
+
+,i want to check all layout are strictly follow these range, what can i improve, and make all style unified 

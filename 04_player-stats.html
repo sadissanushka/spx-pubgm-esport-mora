@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -175,9 +176,81 @@
     </div>
 
     <script>
+        let sheetInterval = null;
+
+        async function fetchSheet(url, targetSlot, targetPlayerIndex) {
+            try {
+                let cleanUrl = url.trim();
+                let docIdMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                let csvText = null;
+
+                if (docIdMatch) {
+                    let docId = docIdMatch[1];
+                    let teamsUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=Teams`;
+                    try {
+                        const res = await fetch(teamsUrl);
+                        const txt = await res.text();
+                        if (!txt.includes('<!DOCTYPE html>') && txt.includes(',')) {
+                            csvText = txt;
+                        }
+                    } catch (e) {}
+                }
+
+                if (!csvText) {
+                    if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                    if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+                    const response = await fetch(cleanUrl);
+                    csvText = await response.text();
+                }
+
+                if (csvText.includes('<!DOCTYPE html>')) return;
+
+                Papa.parse(csvText, {
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const lines = results.data;
+                        if (lines.length < 2) return;
+
+                        // Find the row for targetSlot
+                        const teamRow = lines.find(cols => cols[0] == targetSlot);
+                        if (!teamRow) return;
+
+                        const teamName = teamRow[1]?.trim() || '';
+                        const teamTag = teamRow[2]?.trim() || '';
+                        
+                        // Player Index is 1-4. Member names are at 4, 5, 6, 7. Kills at 8, 9, 10, 11
+                        const pIdx = parseInt(targetPlayerIndex) - 1;
+                        if (pIdx < 0 || pIdx > 3) return;
+
+                        const playerName = teamRow[4 + pIdx]?.trim() || 'UNKNOWN';
+                        const playerKills = teamRow[8 + pIdx]?.trim() || '0';
+                        
+                        // Update UI manually for the automated parts
+                        document.getElementById('f0').innerText = playerName.toUpperCase();
+                        document.getElementById('f1').innerText = teamName.toUpperCase();
+                        document.getElementById('f3').innerText = playerKills;
+                        
+                        let logo = teamTag.toLowerCase() || teamName.split(' ')[0].toLowerCase();
+                        document.getElementById('team-logo').src = `team_logos/${logo}.png`;
+                    }
+                });
+            } catch (e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+
+                if (data.f7 && data.f7.startsWith('http')) {
+                    const slot = data.f9 || "1";
+                    const pIdx = data.f10 || "1";
+                    if (sheetInterval) clearInterval(sheetInterval);
+                    fetchSheet(data.f7, slot, pIdx);
+                    sheetInterval = setInterval(() => fetchSheet(data.f7, slot, pIdx), 5000);
+                }
+
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
                 if (data.f1) {
                     document.getElementById('f1').innerText = data.f1.toUpperCase();
@@ -192,8 +265,8 @@
                     document.getElementById('f2').src = path;
                 }
                 
-                ['f3', 'f4', 'f5', 'f6', 'f7', 'f8'].forEach(field => {
-                    if (data[field]) document.getElementById(field).innerText = data[field];
+                ['f3', 'f4', 'f5', 'f6', 'f7_assists', 'f8'].forEach(field => {
+                    if (data[field]) document.getElementById(field.replace('_assists', '')).innerText = data[field];
                 });
                 
             } catch (e) {
@@ -223,14 +296,17 @@
             "dataformat": "json",
             "uicolor": "6",
             "DataFields": [
-                { "field": "f0", "ftype": "textfield", "title": "Player Name", "value": "TITAN_REX" },
-                { "field": "f1", "ftype": "textfield", "title": "Team Name", "value": "TEAM TITANS" },
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL (Auto Mode)", "value": "" },
+                { "field": "f9", "ftype": "textfield", "title": "Team Slot Number", "value": "1" },
+                { "field": "f10", "ftype": "textfield", "title": "Player Index (1-4)", "value": "1" },
+                { "field": "f0", "ftype": "textfield", "title": "Player Name (Manual)", "value": "TITAN_REX" },
+                { "field": "f1", "ftype": "textfield", "title": "Team Name (Manual)", "value": "TEAM TITANS" },
                 { "field": "f2", "ftype": "textfield", "title": "Portrait ID", "value": "1" },
                 { "field": "f3", "ftype": "textfield", "title": "Kills", "value": "45" },
                 { "field": "f4", "ftype": "textfield", "title": "Damage", "value": "12,480" },
                 { "field": "f5", "ftype": "textfield", "title": "Headshots", "value": "14" },
                 { "field": "f6", "ftype": "textfield", "title": "Survival Time", "value": "22:14" },
-                { "field": "f7", "ftype": "textfield", "title": "Assists", "value": "12" },
+                { "field": "f7_assists", "ftype": "textfield", "title": "Assists", "value": "12" },
                 { "field": "f8", "ftype": "textfield", "title": "Accuracy", "value": "34%" }
             ]
         };

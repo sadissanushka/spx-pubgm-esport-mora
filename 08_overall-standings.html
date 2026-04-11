@@ -299,15 +299,14 @@
                         if (lines.length < 2) return;
 
                         const teams = lines.slice(1, 26).map(cols => {
-                            if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                            if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName" || cols[1].trim() === "Team Name") return null;
                             const slot = parseInt(cols[0]) || 999;
-                            if (slot === 999) return null;
-
+                            
                             return {
                                 name: cols[1].trim(),
                                 logo: cols[2]?.trim() || '',
-                                kills: parseInt(cols[8]?.trim()) || 0,
-                                pts: parseInt(cols[9]?.trim()) || 0
+                                kills: parseInt(cols[12]?.trim()) || 0,
+                                pts: parseInt(cols[13]?.trim()) || 0
                             };
                         }).filter(t => t !== null);
 
