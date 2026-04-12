@@ -235,6 +235,24 @@
         let sheetInterval = null;
         let isAutoMode = false;
         let hasTriggeredWinner = false;
+        let currentWinnerData = null;
+
+        // Auto-initialize if URL is in query param (used by controller)
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sheetUrl = urlParams.get('sheet') || localStorage.getItem('pubg_sheet_url');
+            if (sheetUrl) {
+                console.log("Auto-initializing sheet polling from param/storage:", sheetUrl);
+                startAutoMode(sheetUrl);
+            }
+        };
+
+        function startAutoMode(url) {
+            isAutoMode = true;
+            if (sheetInterval) clearInterval(sheetInterval);
+            fetchSheet(url);
+            sheetInterval = setInterval(() => fetchSheet(url), 3000); // 3s polling
+        }
 
         function createConfetti() {
             const colors = ['#ec6a06', '#adc6ff', '#ffffff', '#ffb690'];
@@ -278,16 +296,34 @@
                                 logo: cols[2]?.trim() || '',
                                 kills: parseInt(cols[8]?.trim()) || 0,
                                 rank: parseInt(cols[9]?.trim()) || 999,
-                                total: parseInt(cols[10]?.trim()) || 0,
+                                total: (parseInt(cols[10]?.trim()) || 0) + (parseInt(cols[9]?.trim()) === 1 ? 10 : 0),
                                 isAlive: pips > 0
                             };
                         }).filter(t => t !== null);
 
-                        // Auto detection logic: Only trigger if exactly 1 team standing
-                        const alive = teams.filter(t => t.isAlive);
-                        if (alive.length === 1 && !hasTriggeredWinner) {
-                            hasTriggeredWinner = true;
-                            showWinner(alive[0]);
+                        if (teams.length === 0) return;
+
+                        // 1. Identify the current "Standing Team" (Rank 1)
+                        const rank1Team = teams.find(t => t.rank === 1) || teams[0];
+                        currentWinnerData = rank1Team; // Always have it ready
+
+                        // 2. Identify if any team has Rank 2 (meaning the match results are being finalized)
+                        const rank2Team = teams.find(t => t.rank === 2);
+                        const aliveCount = teams.filter(t => t.isAlive).length;
+
+                        // Reset trigger if more than 2 teams are alive (new match start)
+                        if (aliveCount > 2) {
+                            hasTriggeredWinner = false;
+                            // Optional: document.getElementById('wrapper').style.opacity = '0';
+                        }
+
+                        // Trigger if Rank 2 exists OR if exactly 1 team remains
+                        if ((rank2Team || aliveCount === 1) && !hasTriggeredWinner) {
+                            if (rank1Team) {
+                                hasTriggeredWinner = true;
+                                console.log("Winner Triggered Automatically:", rank1Team.name);
+                                showWinner(rank1Team);
+                            }
                         }
                     }
                 });
@@ -319,11 +355,7 @@
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 
                 if (data.f7 && data.f7.startsWith('http')) {
-                    isAutoMode = true;
-                    document.getElementById('wrapper').style.opacity = '0';
-                    if (sheetInterval) clearInterval(sheetInterval);
-                    fetchSheet(data.f7);
-                    sheetInterval = setInterval(() => fetchSheet(data.f7), 3500); // Poll faster 3.5s
+                    startAutoMode(data.f7);
                 } else {
                     isAutoMode = false;
                     if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
@@ -342,13 +374,24 @@
         }
 
         function play() {
-            if (!isAutoMode) {
-                const card = document.getElementById('card');
-                card.className = "main-winner-card winner-pulse shine-element";
-                void card.offsetWidth;
-                card.classList.add('animate-zoom-in');
-                createConfetti();
-                document.getElementById('wrapper').style.opacity = '1';
+            // Always show the card immediately
+            const card = document.getElementById('card');
+            card.className = "main-winner-card winner-pulse shine-element";
+            void card.offsetWidth;
+            card.classList.add('animate-zoom-in');
+            createConfetti();
+            document.getElementById('wrapper').style.opacity = '1';
+
+            // If we already have winner data from polling, update display immediately
+            if (currentWinnerData) {
+                showWinner(currentWinnerData);
+            }
+
+            // If in auto-mode, immediately re-fetch so we don't wait the full 3s interval
+            if (isAutoMode) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const sheetUrl = urlParams.get('sheet') || localStorage.getItem('pubg_sheet_url');
+                if (sheetUrl) fetchSheet(sheetUrl);
             }
         }
 
@@ -360,8 +403,8 @@
             "description": "PUBGM Winner Screen",
             "playserver": "OVERLAY",
             "playchannel": "1",
-            "playlayer": "15",
-            "webplayout": "15",
+            "playlayer": "21",
+            "webplayout": "21",
             "out": "manual",
             "dataformat": "json",
             "uicolor": "5",
