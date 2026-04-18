@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SPX - PUBG Mobile - Team vs Team</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec6a06",
+                        "secondary": "#adc6ff",
+                        "surface": "#0b1326",
+                        "surface-container": "#171f33",
+                        "surface-dim": "#060e20",
+                        "on-surface": "#dae2fd",
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background: transparent;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        #wrapper {
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            position: relative;
+        }
+
+        .vs-pulse {
+            animation: vs-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes vs-glow {
+
+            0%,
+            100% {
+                text-shadow: 0 0 10px rgba(236, 106, 6, 0.4);
+                transform: scale(1);
+            }
+
+            50% {
+                text-shadow: 0 0 40px rgba(236, 106, 6, 0.9);
+                transform: scale(1.08);
+            }
+        }
+
+        .window-frame {
+            width: 760px;
+            height: 362px;
+            /* 21:10 ratio */
+            background: rgba(0, 0, 0, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .window-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .window-frame::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: #ec6a06;
+            z-index: 20;
+            box-shadow: 0 0 15px #ec6a06;
+        }
+
+        /* Left team info: clip right side */
+        .team-label-left {
+            clip-path: polygon(0 0, 100% 0, 94% 100%, 0% 100%);
+        }
+
+        /* Right team info: clip left side */
+        .team-label-right {
+            clip-path: polygon(6% 0, 100% 0, 100% 100%, 0% 100%);
+        }
+
+        @keyframes slide-left {
+            from {
+                transform: translateX(-120px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slide-right {
+            from {
+                transform: translateX(120px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fade-up {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-left {
+            animation: slide-left 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-slide-right {
+            animation: slide-right 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-fade-up {
+            animation: fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Team columns */
+        .team-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            flex-shrink: 0;
+        }
+
+        /* VS column */
+        .vs-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 240px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 50;
+        }
+
+        /* Info card for each team */
+        .info-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 28px;
+            background: rgba(11, 19, 38, 0.92);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            width: 760px;
+        }
+
+        .team-logo-box {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .slot-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ec6a06;
+            padding: 6px 28px;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+
+<body class="bg-transparent font-body text-on-surface">
+    <div id="wrapper">
+
+        <!-- Left Team Column -->
+        <div id="team1-container" class="team-col animate-slide-left">
+            <!-- Live feed window -->
+            <div class="window-frame"></div>
+
+            <!-- Info card -->
+            <div style="position: relative;">
+                <div class="slot-tag team-label-left">
+                    <span id="t1-slot" class="text-white font-black text-xl italic tracking-tighter">SLOT 01</span>
+                </div>
+                <div class="info-card" style="border-left: 8px solid #ec6a06; justify-content: flex-end;">
+                    <div class="text-right">
+                        <span
+                            class="text-secondary text-[10px] font-black tracking-[0.4em] uppercase mb-1 block">CONTENDER</span>
+                        <h2 id="t1-name"
+                            class="text-white font-black text-5xl uppercase tracking-tighter leading-none italic">TEAM
+                            ALPHA</h2>
+                    </div>
+                    <div class="team-logo-box">
+                        <img id="t1-logo" src="team_logos/titan.png" class="max-w-full max-h-full object-contain" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VS Column -->
+        <div id="vs-container" class="vs-col animate-fade-up">
+            <div
+                style="position: absolute; inset: 0; background: rgba(236,106,6,0.15); filter: blur(50px); border-radius: 50%; transform: scale(1.5); z-index: -1;">
+            </div>
+            <span class="text-[110px] font-black italic text-white tracking-tighter vs-pulse"
+                style="line-height: 1;">VS</span>
+            <div
+                style="background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); padding: 4px 20px; margin-top: -8px;">
+                <span class="text-secondary font-black tracking-[0.5em] text-[10px] uppercase">MATCH MATCHUP</span>
+            </div>
+        </div>
+
+        <!-- Right Team Column -->
+        <div id="team2-container" class="team-col animate-slide-right">
+            <!-- Live feed window -->
+            <div class="window-frame"></div>
+
+            <!-- Info card -->
+            <div style="position: relative; display: flex; flex-direction: column; align-items: flex-end;">
+                <div class="slot-tag team-label-right" style="align-self: flex-start;">
+                    <span id="t2-slot" class="text-white font-black text-xl italic tracking-tighter">SLOT 02</span>
+                </div>
+                <div class="info-card" style="border-right: 8px solid #ec6a06; justify-content: flex-start;">
+                    <div class="team-logo-box">
+                        <img id="t2-logo" src="team_logos/epic.png" class="max-w-full max-h-full object-contain" />
+                    </div>
+                    <div class="text-left">
+                        <span
+                            class="text-secondary text-[10px] font-black tracking-[0.4em] uppercase mb-1 block">CHALLENGER</span>
+                        <h2 id="t2-name"
+                            class="text-white font-black text-5xl uppercase tracking-tighter leading-none italic">TEAM
+                            BRAVO</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        let teamsList = [];
+
+        async function fetchSheet(url) {
+            try {
+                let cleanUrl = url.trim();
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+
+                const response = await fetch(cleanUrl);
+                const csvText = await response.text();
+                if (csvText.includes('<!DOCTYPE html>')) return;
+
+                Papa.parse(csvText, {
+                    skipEmptyLines: true,
+                    complete: function (results) {
+                        const rawLines = results.data;
+                        if (rawLines.length < 2) return;
+                        teamsList = rawLines.slice(2, 35).map(cols => {
+                            if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                            return { slot: parseInt(cols[0]) || 0, name: cols[1].trim(), logo: cols[2]?.trim() || '' };
+                        }).filter(t => t !== null);
+                    }
+                });
+            } catch (e) { console.error("Sheet Error:", e); }
+        }
+
+        function getTeamBySlot(slot) { return teamsList.find(t => t.slot === parseInt(slot)); }
+
+        function resolveLogo(path) {
+            if (!path.includes('/')) path = 'team_logos/' + path;
+            if (!path.includes('.')) path += '.png';
+            return path;
+        }
+
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+
+                if (data.f7 && data.f7.startsWith('http')) fetchSheet(data.f7);
+
+                if (data.f1) {
+                    document.getElementById('t1-slot').innerText = "SLOT " + String(data.f1).padStart(2, '0');
+                    const team = getTeamBySlot(data.f1);
+                    if (team) {
+                        document.getElementById('t1-name').innerText = team.name.toUpperCase();
+                        document.getElementById('t1-logo').src = resolveLogo(team.logo);
+                    }
+                }
+                if (data.f2) {
+                    document.getElementById('t2-slot').innerText = "SLOT " + String(data.f2).padStart(2, '0');
+                    const team = getTeamBySlot(data.f2);
+                    if (team) {
+                        document.getElementById('t2-name').innerText = team.name.toUpperCase();
+                        document.getElementById('t2-logo').src = resolveLogo(team.logo);
+                    }
+                }
+
+                if (data.f3) document.getElementById('t1-name').innerText = data.f3.toUpperCase();
+                if (data.f4) document.getElementById('t2-name').innerText = data.f4.toUpperCase();
+                if (data.f5) document.getElementById('t1-logo').src = resolveLogo(data.f5);
+                if (data.f6) document.getElementById('t2-logo').src = resolveLogo(data.f6);
+
+            } catch (e) { console.error("Update failed:", e); }
+        }
+
+        function play() {
+            document.getElementById('wrapper').style.opacity = '1';
+
+            const t1 = document.getElementById('team1-container');
+            const t2 = document.getElementById('team2-container');
+            const vs = document.getElementById('vs-container');
+
+            [t1, t2, vs].forEach(el => {
+                el.classList.remove('animate-slide-left', 'animate-slide-right', 'animate-fade-up');
+            });
+            void t1.offsetWidth;
+            t1.classList.add('animate-slide-left');
+            t2.classList.add('animate-slide-right');
+            vs.classList.add('animate-fade-up');
+        }
+
+        function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+
+        window.SPXGCTemplateDefinition = {
+            "description": "PUBGM Team vs Team Matchup",
+            "playserver": "OVERLAY", "playchannel": "1", "playlayer": "15", "webplayout": "15",
+            "out": "manual", "dataformat": "json", "uicolor": "2",
+            "DataFields": [
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL", "value": "" },
+                { "field": "f1", "ftype": "textfield", "title": "Team 1 Slot", "value": "1" },
+                { "field": "f2", "ftype": "textfield", "title": "Team 2 Slot", "value": "2" },
+                { "field": "f3", "ftype": "textfield", "title": "Team 1 Name (Manual)", "value": "" },
+                { "field": "f4", "ftype": "textfield", "title": "Team 2 Name (Manual)", "value": "" },
+                { "field": "f5", "ftype": "textfield", "title": "Team 1 Logo (Manual)", "value": "" },
+                { "field": "f6", "ftype": "textfield", "title": "Team 2 Logo (Manual)", "value": "" }
+            ]
+        };
+    </script>
+</body>
+
+</html>

@@ -125,53 +125,110 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script>
-        function update(rawData) {
+        let pollTimer;
+        let sheetURL = '';
+
+        async function fetchSheet(url) {
             try {
-                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                let rankings = [];
-                if (data.f1) {
-                    rankings = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
-                } else {
-                    const logos = ['titan', 'epic', 'aut', 'gs', 'abn', 'b4', 'titan', 'epic', 'aut', 'gs'];
-                    for(let i=1; i<=10; i++) {
-                        rankings.push({ rank: i, logo: logos[i-1], name: `TEAM ${logos[i-1].toUpperCase()}`, pts: 100 - i*5 });
+                let cleanUrl = url.trim();
+                // Avoid caching by adding timestamp if it's an export link
+                if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv&gid=0');
+                if (cleanUrl.includes('pub?')) cleanUrl = cleanUrl.replace('output=html', 'output=csv');
+                
+                const response = await fetch(cleanUrl + '&t=' + new Date().getTime());
+                const csvText = await response.text();
+                if (csvText.includes('<!DOCTYPE html>')) return;
+
+                Papa.parse(csvText, {
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const lines = results.data;
+                        if (lines.length < 2) return;
+
+                        let allTeams = lines.slice(2, 27).map(cols => {
+                            if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+                            const r = parseInt(cols[9]) || 999; // Rank is column J
+                            return {
+                                slot: cols[0]?.trim() || '0', 
+                                name: cols[1]?.trim() || '', 
+                                logo: cols[2]?.trim() || '',
+                                pts: parseInt(cols[10]?.trim()) || 0, // Points is column K
+                                rank: r
+                            };
+                        }).filter(r => r !== null);
+
+                        // Sort by rank and take top 10
+                        allTeams.sort((a, b) => a.rank - b.rank);
+                        const top10 = allTeams.slice(0, 10);
+                        renderRankings(top10);
                     }
-                }
+                });
+            } catch (e) {
+                console.error("Sheet Error:", e);
+            }
+        }
 
-                const list = document.getElementById('rank-list');
-                list.innerHTML = '';
-                rankings.forEach((team, index) => {
-                    const row = document.createElement('div');
-                    row.className = `ranking-row animate-rank ${team.rank <= 3 ? 'top-3' : ''}`;
-                    row.style.animationDelay = `${index * 0.05}s`;
-                    
-                    let logoPath = team.logo;
-                    if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
-                    if (!logoPath.includes('.')) logoPath += '.png';
-
-                    row.innerHTML = `
+        function renderRankings(rankings) {
+            const list = document.getElementById('rank-list');
+            
+            // Only re-render if something changed (very basic diffing by stringifying)
+            const newHTML = rankings.map((team, index) => {
+                let logoPath = team.logo;
+                if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
+                if (!logoPath.includes('.')) logoPath += '.png';
+                
+                const isTop3 = team.rank <= 3 ? 'top-3' : '';
+                return `
+                    <div class="ranking-row animate-rank ${isTop3}" style="animation-delay: ${index * 0.05}s">
                         <div class="rank-num">${team.rank}</div>
                         <img src="${logoPath}" class="team-logo" onerror="this.style.opacity=0">
                         <span class="team-name">${team.name}</span>
                         <span class="team-pts">${team.pts}</span>
-                    `;
-                    list.appendChild(row);
-                });
+                    </div>
+                `;
+            }).join("");
+
+            if (list.innerHTML !== newHTML) {
+                list.innerHTML = newHTML;
+            }
+        }
+
+        function update(rawData) {
+            try {
+                let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                
+                if (data.f7 && data.f7.startsWith('http')) {
+                    sheetURL = data.f7;
+                    fetchSheet(sheetURL);
+                    if (!pollTimer) {
+                        pollTimer = setInterval(() => fetchSheet(sheetURL), 5000);
+                    }
+                } else if (data.f1) {
+                    // Fallback to manual JSON if necessary
+                    let rankings = typeof data.f1 === 'string' ? JSON.parse(data.f1) : data.f1;
+                    renderRankings(rankings);
+                }
             } catch (e) {
                 console.error("Update failed:", e);
             }
         }
 
         function play() { document.getElementById('wrapper').style.opacity = '1'; }
-        function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+        function stop() { 
+            document.getElementById('wrapper').style.opacity = '0'; 
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
+        }
 
         window.SPXGCTemplateDefinition = {
             "description": "PUBGM Live Match Ranking",
             "playserver": "OVERLAY", "playchannel": "1", "playlayer": "7", "webplayout": "7",
             "out": "manual", "dataformat": "json", "uicolor": "12",
             "DataFields": [
-                { "field": "f1", "ftype": "textfield", "title": "JSON Data", "value": "[]" }
+                { "field": "f7", "ftype": "textfield", "title": "Spreadsheet URL", "value": "" },
+                { "field": "f1", "ftype": "textfield", "title": "Manual JSON Fallback", "value": "[]" }
             ]
         };
     </script>

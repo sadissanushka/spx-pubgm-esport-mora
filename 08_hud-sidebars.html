@@ -7,71 +7,71 @@
   <title>SPX - Dual Sidebar HUD (Alive vs Dead)</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;display=swap" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "error": "#ffb4ab",
-                        "surface-container-high": "#222a3d",
-                        "surface-container": "#171f33",
-                        "outline": "#8c909f",
-                        "secondary": "#ffb690",
-                        "on-tertiary-fixed": "#191c1e",
-                        "on-secondary-container": "#4a1c00",
-                        "tertiary-fixed": "#e0e3e5",
-                        "surface-dim": "#0b1326",
-                        "on-error": "#690005",
-                        "on-background": "#dae2fd",
-                        "secondary-fixed-dim": "#ffb690",
-                        "on-secondary": "#552100",
-                        "tertiary": "#c4c7c9",
-                        "on-error-container": "#ffdad6",
-                        "secondary-container": "#ec6a06",
-                        "on-tertiary-fixed-variant": "#444749",
-                        "surface-container-highest": "#2d3449",
-                        "on-tertiary": "#2d3133",
-                        "on-primary-container": "#00285d",
-                        "inverse-surface": "#dae2fd",
-                        "error-container": "#93000a",
-                        "surface-container-lowest": "#060e20",
-                        "on-secondary-fixed-variant": "#783200",
-                        "surface-tint": "#adc6ff",
-                        "on-primary-fixed-variant": "#004395",
-                        "inverse-on-surface": "#283044",
-                        "on-primary": "#002e6a",
-                        "surface": "#0b1326",
-                        "outline-variant": "#424754",
-                        "surface-variant": "#2d3449",
-                        "tertiary-container": "#8e9193",
-                        "surface-container-low": "#131b2e",
-                        "primary-container": "#4d8eff",
-                        "inverse-primary": "#005ac2",
-                        "surface-bright": "#31394d",
-                        "on-primary-fixed": "#001a42",
-                        "primary-fixed": "#d8e2ff",
-                        "tertiary-fixed-dim": "#c4c7c9",
-                        "secondary-fixed": "#ffdbca",
-                        "primary": "#adc6ff",
-                        "on-secondary-fixed": "#341100",
-                        "background": "#0b1326",
-                        "on-surface": "#dae2fd",
-                        "on-surface-variant": "#c2c6d6",
-                        "primary-fixed-dim": "#adc6ff",
-                        "on-tertiary-container": "#272a2c"
-                    },
-                    fontFamily: {
-                        "headline": ["Inter"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    },
-                    borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
-                },
-            },
-        }
-    </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "error": "#ffb4ab",
+            "surface-container-high": "#222a3d",
+            "surface-container": "#171f33",
+            "outline": "#8c909f",
+            "secondary": "#ffb690",
+            "on-tertiary-fixed": "#191c1e",
+            "on-secondary-container": "#4a1c00",
+            "tertiary-fixed": "#e0e3e5",
+            "surface-dim": "#0b1326",
+            "on-error": "#690005",
+            "on-background": "#dae2fd",
+            "secondary-fixed-dim": "#ffb690",
+            "on-secondary": "#552100",
+            "tertiary": "#c4c7c9",
+            "on-error-container": "#ffdad6",
+            "secondary-container": "#ec6a06",
+            "on-tertiary-fixed-variant": "#444749",
+            "surface-container-highest": "#2d3449",
+            "on-tertiary": "#2d3133",
+            "on-primary-container": "#00285d",
+            "inverse-surface": "#dae2fd",
+            "error-container": "#93000a",
+            "surface-container-lowest": "#060e20",
+            "on-secondary-fixed-variant": "#783200",
+            "surface-tint": "#adc6ff",
+            "on-primary-fixed-variant": "#004395",
+            "inverse-on-surface": "#283044",
+            "on-primary": "#002e6a",
+            "surface": "#0b1326",
+            "outline-variant": "#424754",
+            "surface-variant": "#2d3449",
+            "tertiary-container": "#8e9193",
+            "surface-container-low": "#131b2e",
+            "primary-container": "#4d8eff",
+            "inverse-primary": "#005ac2",
+            "surface-bright": "#31394d",
+            "on-primary-fixed": "#001a42",
+            "primary-fixed": "#d8e2ff",
+            "tertiary-fixed-dim": "#c4c7c9",
+            "secondary-fixed": "#ffdbca",
+            "primary": "#adc6ff",
+            "on-secondary-fixed": "#341100",
+            "background": "#0b1326",
+            "on-surface": "#dae2fd",
+            "on-surface-variant": "#c2c6d6",
+            "primary-fixed-dim": "#adc6ff",
+            "on-tertiary-container": "#272a2c"
+          },
+          fontFamily: {
+            "headline": ["Inter"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
+        },
+      },
+    }
+  </script>
   <style>
     body {
       background-color: transparent;
@@ -203,25 +203,25 @@
     function setTimer(timeStr) {
       if (!timeStr) return;
       if (timeStr === lastTimeStr) return;
-      
+
       const match = timeStr.match(/(\d{1,2}):(\d{2})/);
       if (match) {
         lastTimeStr = timeStr;
         const newSecs = parseInt(match[1]) * 60 + parseInt(match[2]);
-        
+
         if (Math.abs(newSecs - currentSeconds) > 3) {
-           currentSeconds = newSecs;
-           timerRunning = true;
-           updateTimerDisplay();
-           
-           if (!timerInterval) {
-             timerInterval = setInterval(() => {
-               if (timerRunning && currentSeconds > 0) {
-                 currentSeconds--;
-                 updateTimerDisplay();
-               }
-             }, 1000);
-           }
+          currentSeconds = newSecs;
+          timerRunning = true;
+          updateTimerDisplay();
+
+          if (!timerInterval) {
+            timerInterval = setInterval(() => {
+              if (timerRunning && currentSeconds > 0) {
+                currentSeconds--;
+                updateTimerDisplay();
+              }
+            }, 1000);
+          }
         }
       }
     }
@@ -237,55 +237,55 @@
         if (csvText.includes('<!DOCTYPE html>')) return;
 
         Papa.parse(csvText, {
-            skipEmptyLines: true,
-            complete: function(results) {
-                const lines = results.data;
-                if (lines.length < 2) return;
+          skipEmptyLines: true,
+          complete: function (results) {
+            const lines = results.data;
+            if (lines.length < 2) return;
 
-                let totalAlive = 0;
-                let totalParticipating = 0;
-                let rawTime = "";
+            let totalAlive = 0;
+            let totalParticipating = 0;
+            let rawTime = "";
 
-                lines.forEach(cols => {
-                  cols.forEach(col => { if (col && col.includes(':') && !rawTime) rawTime = col.trim(); });
-                });
+            lines.forEach(cols => {
+              cols.forEach(col => { if (col && col.includes(':') && !rawTime) rawTime = col.trim(); });
+            });
 
-                const allRows = lines.slice(2, 27).map(cols => {
-                  if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
+            const allRows = lines.slice(2, 27).map(cols => {
+              if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
 
-                  const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
-                  totalAlive += pips;
-                  totalParticipating += 4;
+              const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+              totalAlive += pips;
+              totalParticipating += 4;
 
-                  return {
-                    slot: cols[0]?.trim() || '0', name: cols[1].trim(), logo: cols[2]?.trim() || '',
-                    pts: cols[10]?.trim() || '0', rank: cols[9]?.trim() || '', alive: pips
-                  };
-                }).filter(r => r !== null);
+              return {
+                slot: cols[0]?.trim() || '0', name: cols[1].trim(), logo: cols[2]?.trim() || '',
+                pts: cols[10]?.trim() || '0', rank: cols[9]?.trim() || '', alive: pips
+              };
+            }).filter(r => r !== null);
 
-                document.getElementById('alive-counter').innerText = `ALIVE: ${totalAlive} / ${totalParticipating}`;
-                if (rawTime) {
-                  setTimer(rawTime);
-                }
-
-                allRows.sort((a, b) => {
-                  const rA = parseInt(a.rank) || 999;
-                  const rB = parseInt(b.rank) || 999;
-                  if (rA !== rB) return rA - rB;
-                  
-                  const ptsA = parseInt(a.pts) || 0;
-                  const ptsB = parseInt(b.pts) || 0;
-                  if (ptsA !== ptsB) return ptsB - ptsA;
-
-                  return parseInt(a.slot) - parseInt(b.slot);
-                });
-
-                if (document.startViewTransition) {
-                  document.startViewTransition(() => renderSeparatedSidebars(allRows));
-                } else {
-                  renderSeparatedSidebars(allRows);
-                }
+            document.getElementById('alive-counter').innerText = `ALIVE: ${totalAlive} / ${totalParticipating}`;
+            if (rawTime) {
+              setTimer(rawTime);
             }
+
+            allRows.sort((a, b) => {
+              const rA = parseInt(a.rank) || 999;
+              const rB = parseInt(b.rank) || 999;
+              if (rA !== rB) return rA - rB;
+
+              const ptsA = parseInt(a.pts) || 0;
+              const ptsB = parseInt(b.pts) || 0;
+              if (ptsA !== ptsB) return ptsB - ptsA;
+
+              return parseInt(a.slot) - parseInt(b.slot);
+            });
+
+            if (document.startViewTransition) {
+              document.startViewTransition(() => renderSeparatedSidebars(allRows));
+            } else {
+              renderSeparatedSidebars(allRows);
+            }
+          }
         });
       } catch (e) { console.error("Sync Error:", e); }
     }
@@ -391,7 +391,7 @@
       "DataFields": [
         { "field": "f5", "ftype": "textfield", "title": "Spreadsheet URL", "value": "" },
         { "field": "f0", "ftype": "textfield", "title": "Main Title", "value": "BATTLEGROUNDS" },
-        { "field": "f1", "ftype": "textfield", "title": "Phase Info", "value": "PHASE 04" },
+        { "field": "f1", "ftype": "textfield", "title": "Phase Info", "value": "UOM | UOK" },
         { "field": "f3", "ftype": "textfield", "title": "Manual Timer", "value": "00:00" }
       ]
     };

@@ -74,8 +74,8 @@
             position: absolute;
             right: 0; top: 0;
             width: 1100px; height: 1080px;
-            background: linear-gradient(90deg, transparent 0%, rgba(11, 19, 38, 0.95) 20%);
-            backdrop-filter: blur(20px);
+            background: linear-gradient(90deg, transparent 0%, rgba(11, 19, 38, 0.3) 30%, rgba(11, 19, 38, 0.5) 100%);
+            backdrop-filter: blur(6px);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -93,41 +93,46 @@
 
         /* ── STAT CARDS ── */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
+            display: flex;
+            gap: 40px;
             margin-top: 48px;
         }
         .stat-card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.08);
-            border-left: 4px solid #ec6a06;
-            padding: 24px;
+            border-bottom: 4px solid #ec6a06;
+            padding: 24px 40px;
             position: relative;
             overflow: hidden;
             transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 24px;
         }
         .stat-card::after {
             content: '';
             position: absolute;
-            top: 0; right: 0;
-            width: 100px; height: 100px;
-            background: radial-gradient(circle at top right, rgba(236,106,6,0.1), transparent);
+            bottom: 0; right: 0;
+            width: 150px; height: 150px;
+            background: radial-gradient(circle at bottom right, rgba(236,106,6,0.15), transparent);
         }
         .stat-label {
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.2em;
-            color: rgba(255,255,255,0.4);
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            color: rgba(236,106,6,0.8);
             text-transform: uppercase;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            text-align: center;
         }
         .stat-value {
-            font-size: 56px;
+            font-size: 110px;
             font-weight: 900;
             color: #fff;
-            line-height: 1;
-            margin-top: 8px;
+            line-height: 0.9;
             font-style: italic;
+            text-shadow: 0 0 30px rgba(0,0,0,0.4);
         }
 
         /* ── MVP BADGE ── */
@@ -195,28 +200,12 @@
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">TOTAL KILLS</div>
-                    <div id="f3" class="stat-value">45</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">TOTAL DAMAGE</div>
-                    <div id="f4" class="stat-value">12,480</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">HEADSHOTS</div>
-                    <div id="f5" class="stat-value">14</div>
+                    <div class="stat-label">MATCH KILLS</div>
+                    <div id="f3" class="stat-value">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">SURVIVAL TIME</div>
-                    <div id="f6" class="stat-value">22:14</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">ASSISTS</div>
-                    <div id="f7_assists" class="stat-value">12</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">ACCURACY</div>
-                    <div id="f8" class="stat-value">34%</div>
+                    <div id="f6" class="stat-value">00:00</div>
                 </div>
             </div>
         </div>
@@ -265,15 +254,20 @@
                 if (pIdx < 0 || pIdx > 3) return;
 
                 const playerName = teamRow[4 + pIdx]?.trim() || 'UNKNOWN';
-                const playerKills = parseInt(teamRow[8 + pIdx]?.trim()) || 0;
                 
-                // MVP LOGIC: If Rank 1, find max kills in the team
+                // Match stats from Inputs sheet mapping:
+                // M:P = Survive time (index 12, 13, 14, 15)
+                // Q:T = Kills (index 16, 17, 18, 19)
+                const playerKills = parseInt(inputRow[16 + pIdx]?.trim()) || 0;
+                const survivalTime = inputRow[12 + pIdx]?.trim() || '00:00';
+                
+                // MVP LOGIC: If Rank 1, find max kills in the team from Q:T
                 let isMVP = false;
                 if (rank === 1) {
-                    const k1 = parseInt(teamRow[8]) || 0;
-                    const k2 = parseInt(teamRow[9]) || 0;
-                    const k3 = parseInt(teamRow[10]) || 0;
-                    const k4 = parseInt(teamRow[11]) || 0;
+                    const k1 = parseInt(inputRow[16]) || 0;
+                    const k2 = parseInt(inputRow[17]) || 0;
+                    const k3 = parseInt(inputRow[18]) || 0;
+                    const k4 = parseInt(inputRow[19]) || 0;
                     const maxKills = Math.max(k1, k2, k3, k4);
                     if (playerKills === maxKills && playerKills > 0) {
                         isMVP = true;
@@ -284,6 +278,7 @@
                 document.getElementById('f0').innerText = playerName.toUpperCase();
                 document.getElementById('f1').innerText = teamName.toUpperCase();
                 document.getElementById('f3').innerText = playerKills;
+                document.getElementById('f6').innerText = survivalTime;
                 
                 const mvpBadge = document.getElementById('mvp-badge');
                 mvpBadge.style.display = isMVP ? 'flex' : 'none';
@@ -321,9 +316,9 @@
                     document.getElementById('f2').src = path;
                 }
                 
-                ['f3', 'f4', 'f5', 'f6', 'f7_assists', 'f8'].forEach(field => {
-                    const id = field === 'f7_assists' ? 'f7_assists' : field;
-                    if (data[field]) document.getElementById(id).innerText = data[field];
+                ['f3', 'f6'].forEach(field => {
+                    const el = document.getElementById(field);
+                    if (data[field] && el) el.innerText = data[field];
                 });
                 
             } catch (e) {
@@ -359,12 +354,8 @@
                 { "field": "f0", "ftype": "textfield", "title": "Player Name (Manual)", "value": "TITAN_REX" },
                 { "field": "f1", "ftype": "textfield", "title": "Team Name (Manual)", "value": "TEAM TITANS" },
                 { "field": "f2", "ftype": "textfield", "title": "Portrait ID", "value": "1" },
-                { "field": "f3", "ftype": "textfield", "title": "Kills", "value": "45" },
-                { "field": "f4", "ftype": "textfield", "title": "Damage", "value": "12,480" },
-                { "field": "f5", "ftype": "textfield", "title": "Headshots", "value": "14" },
-                { "field": "f6", "ftype": "textfield", "title": "Survival Time", "value": "22:14" },
-                { "field": "f7_assists", "ftype": "textfield", "title": "Assists", "value": "12" },
-                { "field": "f8", "ftype": "textfield", "title": "Accuracy", "value": "34%" }
+                { "field": "f3", "ftype": "textfield", "title": "Kills", "value": "7" },
+                { "field": "f6", "ftype": "textfield", "title": "Survival Time", "value": "22:14" }
             ]
         };
     </script>
