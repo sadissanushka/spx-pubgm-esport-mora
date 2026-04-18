@@ -297,12 +297,72 @@
             opacity: 0;
         }
 
-        /* ── 1080×1080 TACTICAL CANVAS (left area) ── */
-        /* Sits at left:0, full height, width = 1080px to match 1:1 map */
-        #tactical-canvas {
+        #left-sidebar {
             position: absolute;
             top: 0;
             left: 0;
+            width: 420px;
+            height: 1080px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 60px;
+            z-index: 10;
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+
+        @keyframes leftbarIn {
+            0% { opacity: 0; transform: translateX(-60px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .logo-row-1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .uni-logo {
+            height: 100px;
+            width: auto;
+            max-width: 120px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+        }
+
+        .log-cross {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 34px;
+            color: var(--orange);
+            font-weight: 700;
+        }
+
+        .logo-row-2 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .tourney-logo {
+            width: 260px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+
+        /* ── 1080×1080 TACTICAL CANVAS (left area) ── */
+        /* Sits in the middle: width = 1080px to match 1:1 map */
+        #tactical-canvas {
+            position: absolute;
+            top: 0;
+            left: 420px;
             width: 1080px;
             height: 1080px;
             overflow: hidden;
@@ -548,7 +608,7 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 340px;
+            width: 420px;
             height: 1080px;
             background: var(--bg-panel);
             border-left: 1px solid var(--border);
@@ -1005,6 +1065,17 @@
 
         <!-- PHASE 2: Main widget -->
         <div id="widget-main">
+
+            <div id="left-sidebar">
+               <div class="logo-row-1">
+                   <img src="images/uni/uok.png" class="uni-logo" alt="">
+                   <span class="log-cross">x</span>
+                   <img src="images/uni/uom b.png" class="uni-logo" alt="">
+               </div>
+               <div class="logo-row-2">
+                   <img src="images/uni/tournement logo b.png" class="tourney-logo" alt="">
+               </div>
+            </div>
 
             <!-- 1080×1080 TACTICAL CANVAS — fully transparent, pure design -->
             <div id="tactical-canvas">
@@ -1607,6 +1678,9 @@
                 setTimeout(() => { reveal.style.display = 'none'; }, 750);
 
                 widget.style.display = 'block'; widget.style.opacity = '1';
+
+                /* Left sidebar fades/slides in */
+                el('left-sidebar').style.animation = 'leftbarIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.15s forwards';
 
                 /* Tactical canvas fades in */
                 canvas.style.animation = 'canvasIn 1.2s ease 0.1s forwards';
