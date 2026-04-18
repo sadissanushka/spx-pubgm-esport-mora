@@ -6,6 +6,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>SPX - PUBG Mobile - Team vs Team</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="uni_mapper.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
         rel="stylesheet" />
     <script id="tailwind-config">
@@ -231,13 +232,13 @@
                 <div class="slot-tag team-label-left">
                     <span id="t1-slot" class="text-white font-black text-xl italic tracking-tighter">SLOT 01</span>
                 </div>
-                <div class="info-card" style="border-left: 8px solid #ec6a06; justify-content: flex-end;">
+                <div class="info-card" style="border-left: 8px solid #ec6a06; justify-content: flex-end; gap: 10px;">
                     <div class="text-right">
-                        <span
-                            class="text-secondary text-[10px] font-black tracking-[0.4em] uppercase mb-1 block">CONTENDER</span>
-                        <h2 id="t1-name"
-                            class="text-white font-black text-5xl uppercase tracking-tighter leading-none italic">TEAM
-                            ALPHA</h2>
+                        <span class="text-secondary text-[10px] font-black tracking-[0.4em] uppercase mb-1 block">CONTENDER</span>
+                        <h2 id="t1-name" class="text-white font-black text-5xl uppercase tracking-tighter leading-none italic">TEAM ALPHA</h2>
+                    </div>
+                    <div class="team-logo-box hidden" id="t1-uni-wrapper" style="border:1px solid rgba(255,255,255,0.1)">
+                        <img id="t1-uni" src="" class="max-w-full max-h-full object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                     </div>
                     <div class="team-logo-box">
                         <img id="t1-logo" src="team_logos/titan.png" class="max-w-full max-h-full object-contain" />
@@ -269,16 +270,16 @@
                 <div class="slot-tag team-label-right" style="align-self: flex-start;">
                     <span id="t2-slot" class="text-white font-black text-xl italic tracking-tighter">SLOT 02</span>
                 </div>
-                <div class="info-card" style="border-right: 8px solid #ec6a06; justify-content: flex-start;">
+                <div class="info-card" style="border-right: 8px solid #ec6a06; justify-content: flex-start; gap: 10px;">
                     <div class="team-logo-box">
                         <img id="t2-logo" src="team_logos/epic.png" class="max-w-full max-h-full object-contain" />
                     </div>
+                    <div class="team-logo-box hidden" id="t2-uni-wrapper" style="border:1px solid rgba(255,255,255,0.1)">
+                        <img id="t2-uni" src="" class="max-w-full max-h-full object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
+                    </div>
                     <div class="text-left">
-                        <span
-                            class="text-secondary text-[10px] font-black tracking-[0.4em] uppercase mb-1 block">CHALLENGER</span>
-                        <h2 id="t2-name"
-                            class="text-white font-black text-5xl uppercase tracking-tighter leading-none italic">TEAM
-                            BRAVO</h2>
+                        <span class="text-secondary text-[10px] font-black tracking-[0.4em] uppercase mb-1 block">CHALLENGER</span>
+                        <h2 id="t2-name" class="text-white font-black text-5xl uppercase tracking-tighter leading-none italic">TEAM BRAVO</h2>
                     </div>
                 </div>
             </div>
@@ -322,6 +323,25 @@
             return path;
         }
 
+        function renderTeam(teamName, tIndex) {
+            if(!teamName) return;
+            const uniLogoPath = window.getUniLogo ? window.getUniLogo(teamName) : null;
+            const cleanName = window.cleanTeamName ? window.cleanTeamName(teamName) : teamName;
+            
+            document.getElementById(`t${tIndex}-name`).innerText = cleanName.toUpperCase();
+            
+            const uniWrapper = document.getElementById(`t${tIndex}-uni-wrapper`);
+            const uniLogoEl = document.getElementById(`t${tIndex}-uni`);
+            if (uniWrapper && uniLogoEl) {
+                if (uniLogoPath) {
+                    uniLogoEl.src = uniLogoPath;
+                    uniWrapper.classList.remove('hidden');
+                } else {
+                    uniWrapper.classList.add('hidden');
+                }
+            }
+        }
+
         function update(rawData) {
             try {
                 let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
@@ -332,7 +352,7 @@
                     document.getElementById('t1-slot').innerText = "SLOT " + String(data.f1).padStart(2, '0');
                     const team = getTeamBySlot(data.f1);
                     if (team) {
-                        document.getElementById('t1-name').innerText = team.name.toUpperCase();
+                        renderTeam(team.name, 1);
                         document.getElementById('t1-logo').src = resolveLogo(team.logo);
                     }
                 }
@@ -340,13 +360,13 @@
                     document.getElementById('t2-slot').innerText = "SLOT " + String(data.f2).padStart(2, '0');
                     const team = getTeamBySlot(data.f2);
                     if (team) {
-                        document.getElementById('t2-name').innerText = team.name.toUpperCase();
+                        renderTeam(team.name, 2);
                         document.getElementById('t2-logo').src = resolveLogo(team.logo);
                     }
                 }
 
-                if (data.f3) document.getElementById('t1-name').innerText = data.f3.toUpperCase();
-                if (data.f4) document.getElementById('t2-name').innerText = data.f4.toUpperCase();
+                if (data.f3) renderTeam(data.f3, 1);
+                if (data.f4) renderTeam(data.f4, 2);
                 if (data.f5) document.getElementById('t1-logo').src = resolveLogo(data.f5);
                 if (data.f6) document.getElementById('t2-logo').src = resolveLogo(data.f6);
 

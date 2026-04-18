@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -189,6 +190,7 @@
             </div>
 
             <div class="flex items-center gap-4 mb-2">
+                <img id="uni-logo" src="images/uni/uom.png" class="w-16 h-16 object-contain filter drop-shadow-lg hidden" alt="">
                 <img id="team-logo" src="team_logos/titan.png" class="w-16 h-16 object-contain filter drop-shadow-lg" alt="">
                 <div class="flex flex-col">
                     <span class="text-primary font-black tracking-[0.4em] uppercase text-sm opacity-80">PLAYER PROFILE</span>
@@ -275,16 +277,29 @@
                 }
 
                 // Update UI
+                const uniLogoPath = window.getUniLogo ? window.getUniLogo(teamName) : null;
+                const cleanName = window.cleanTeamName ? window.cleanTeamName(teamName) : teamName;
+
                 document.getElementById('f0').innerText = playerName.toUpperCase();
-                document.getElementById('f1').innerText = teamName.toUpperCase();
+                document.getElementById('f1').innerText = cleanName.toUpperCase();
                 document.getElementById('f3').innerText = playerKills;
                 document.getElementById('f6').innerText = survivalTime;
                 
                 const mvpBadge = document.getElementById('mvp-badge');
                 mvpBadge.style.display = isMVP ? 'flex' : 'none';
 
-                let logoAsset = teamTag.toLowerCase() || teamName.split(' ')[0].toLowerCase();
+                let logoAsset = teamTag.toLowerCase() || cleanName.split(' ')[0].toLowerCase();
                 document.getElementById('team-logo').src = `team_logos/${logoAsset}.png`;
+
+                const uniLogoEl = document.getElementById('uni-logo');
+                if (uniLogoEl) {
+                    if (uniLogoPath) {
+                        uniLogoEl.src = uniLogoPath;
+                        uniLogoEl.classList.remove('hidden');
+                    } else {
+                        uniLogoEl.classList.add('hidden');
+                    }
+                }
 
             } catch (e) {
                 console.error("Auto Sync Error:", e);
@@ -305,9 +320,23 @@
 
                 if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
                 if (data.f1) {
-                    document.getElementById('f1').innerText = data.f1.toUpperCase();
-                    let logo = data.f1.split(' ')[0].toLowerCase();
+                    const rawTeamName = data.f1;
+                    const uniLogoPath = window.getUniLogo ? window.getUniLogo(rawTeamName) : null;
+                    const cleanName = window.cleanTeamName ? window.cleanTeamName(rawTeamName) : rawTeamName;
+                    
+                    document.getElementById('f1').innerText = cleanName.toUpperCase();
+                    let logo = cleanName.split(' ')[0].toLowerCase();
                     document.getElementById('team-logo').src = `team_logos/${logo}.png`;
+
+                    const uniLogoEl = document.getElementById('uni-logo');
+                    if (uniLogoEl) {
+                        if (uniLogoPath) {
+                            uniLogoEl.src = uniLogoPath;
+                            uniLogoEl.classList.remove('hidden');
+                        } else {
+                            uniLogoEl.classList.add('hidden');
+                        }
+                    }
                 }
                 if (data.f2) {
                     let path = data.f2;

@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -139,8 +140,13 @@
                         
                         <!-- Team Identity with Logo -->
                         <div class="relative z-10 flex items-center">
-                            <div class="team-logo-container">
-                                <img id="team-logo" src="team_logos/titan.png" alt="" class="max-w-full max-h-full object-contain">
+                            <div class="flex items-center gap-4 mr-5">
+                                <div id="uni-logo-wrapper" class="hidden w-[90px] h-[90px] bg-white/5 backdrop-blur border border-white/10 flex items-center justify-center p-2">
+                                    <img id="uni-logo" src="" alt="" class="max-w-full max-h-full object-contain">
+                                </div>
+                                <div class="team-logo-container !mr-0">
+                                    <img id="team-logo" src="team_logos/titan.png" alt="" class="max-w-full max-h-full object-contain">
+                                </div>
                             </div>
                             <div class="flex flex-col">
                                 <span class="text-secondary text-[0.6875rem] font-black tracking-[0.3em] uppercase mb-2">RANKED SQUAD</span>
@@ -317,13 +323,27 @@
         }
 
         function renderElimination(data) {
-            if (data.name) document.getElementById('f0').innerText = data.name.toUpperCase();
+            const uniLogoPath = window.getUniLogo ? window.getUniLogo(data.name) : null;
+            const cleanName = window.cleanTeamName ? window.cleanTeamName(data.name) : data.name;
+
+            if (cleanName) document.getElementById('f0').innerText = cleanName.toUpperCase();
             
             if (data.logo) {
                 let logoPath = data.logo;
                 if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
                 if (!logoPath.includes('.')) logoPath = logoPath + '.png';
                 document.getElementById('team-logo').src = logoPath;
+            }
+
+            const uniWrapper = document.getElementById('uni-logo-wrapper');
+            const uniLogoEl = document.getElementById('uni-logo');
+            if (uniWrapper && uniLogoEl) {
+                if (uniLogoPath) {
+                    uniLogoEl.src = uniLogoPath;
+                    uniWrapper.classList.remove('hidden');
+                } else {
+                    uniWrapper.classList.add('hidden');
+                }
             }
 
             let rank = data.rank || 'N/A';

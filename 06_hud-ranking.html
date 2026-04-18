@@ -126,6 +126,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script>
         let pollTimer;
         let sheetURL = '';
@@ -179,12 +180,19 @@
                 if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
                 if (!logoPath.includes('.')) logoPath += '.png';
                 
+                const uniLogoPath = window.getUniLogo ? window.getUniLogo(team.name) : null;
+                const cleanName = window.cleanTeamName ? window.cleanTeamName(team.name) : team.name;
+                const uniImgTag = uniLogoPath ? `<img src="${uniLogoPath}" class="team-logo mr-1" onerror="this.style.display='none'">` : '';
+                
                 const isTop3 = team.rank <= 3 ? 'top-3' : '';
                 return `
                     <div class="ranking-row animate-rank ${isTop3}" style="animation-delay: ${index * 0.05}s">
                         <div class="rank-num">${team.rank}</div>
-                        <img src="${logoPath}" class="team-logo" onerror="this.style.opacity=0">
-                        <span class="team-name">${team.name}</span>
+                        <div class="flex items-center w-full">
+                            ${uniImgTag}
+                            <img src="${logoPath}" class="team-logo mr-2 opacity-90" onerror="this.style.opacity=0">
+                            <span class="team-name truncate pr-2 w-[110px]" title="${cleanName}">${cleanName}</span>
+                        </div>
                         <span class="team-pts">${team.pts}</span>
                     </div>
                 `;

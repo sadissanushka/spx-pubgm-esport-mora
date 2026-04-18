@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -205,9 +206,14 @@
             <div class="winner-content">
                 <div class="glow-overlay"></div>
                 <div class="flex items-center gap-12 z-10">
-                    <div class="winner-logo animate-float">
-                        <div class="material-symbols-outlined crown" style="font-variation-settings: 'FILL' 1;">crown</div>
-                        <img id="f1" src="team_logos/titan.png" alt="" class="max-w-full max-h-full object-contain filter drop-shadow-[0_0_15px_rgba(236,106,6,0.3)]">
+                    <div class="flex items-center gap-8">
+                        <div id="uni-wrapper" class="winner-logo animate-float hidden" style="background: rgba(255,255,255,0.05);">
+                            <img id="uni-logo" src="" alt="" class="max-w-full max-h-full object-contain filter drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                        </div>
+                        <div class="winner-logo animate-float">
+                            <div class="material-symbols-outlined crown" style="font-variation-settings: 'FILL' 1;">crown</div>
+                            <img id="f1" src="team_logos/titan.png" alt="" class="max-w-full max-h-full object-contain filter drop-shadow-[0_0_15px_rgba(236,106,6,0.3)]">
+                        </div>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-secondary text-lg font-black tracking-widest uppercase opacity-80 mb-2">CHAMPIONS</span>
@@ -333,11 +339,27 @@
         }
 
         function showWinner(winner) {
-            document.getElementById('f0').innerText = winner.name.toUpperCase();
+            const uniLogoPath = window.getUniLogo ? window.getUniLogo(winner.name) : null;
+            const cleanName = window.cleanTeamName ? window.cleanTeamName(winner.name) : winner.name;
+            
+            document.getElementById('f0').innerText = cleanName.toUpperCase();
+            
             let path = winner.logo;
             if (!path.includes('/')) path = 'team_logos/' + path;
             if (!path.includes('.')) path += '.png';
             document.getElementById('f1').src = path;
+            
+            const uniWrapper = document.getElementById('uni-wrapper');
+            const uniLogoEl = document.getElementById('uni-logo');
+            if (uniWrapper && uniLogoEl) {
+                if (uniLogoPath) {
+                    uniLogoEl.src = uniLogoPath;
+                    uniWrapper.classList.remove('hidden');
+                } else {
+                    uniWrapper.classList.add('hidden');
+                }
+            }
+
             document.getElementById('f2').innerText = winner.kills;
             document.getElementById('f3').innerText = winner.total;
 
@@ -358,7 +380,24 @@
                     startAutoMode(data.f7);
                 } else {
                     isAutoMode = false;
-                    if (data.f0) document.getElementById('f0').innerText = data.f0.toUpperCase();
+                    if (data.f0) {
+                        const rawTeamName = data.f0;
+                        const uniLogoPath = window.getUniLogo ? window.getUniLogo(rawTeamName) : null;
+                        const cleanName = window.cleanTeamName ? window.cleanTeamName(rawTeamName) : rawTeamName;
+                        
+                        document.getElementById('f0').innerText = cleanName.toUpperCase();
+                        
+                        const uniWrapper = document.getElementById('uni-wrapper');
+                        const uniLogoEl = document.getElementById('uni-logo');
+                        if (uniWrapper && uniLogoEl) {
+                            if (uniLogoPath) {
+                                uniLogoEl.src = uniLogoPath;
+                                uniWrapper.classList.remove('hidden');
+                            } else {
+                                uniWrapper.classList.add('hidden');
+                            }
+                        }
+                    }
                     if (data.f1) {
                         let path = data.f1;
                         if (!path.includes('/')) path = 'team_logos/' + path;

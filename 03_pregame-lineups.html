@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -153,8 +154,8 @@
                         <h2 id="team-name" class="text-white font-black text-[70px] uppercase leading-none drop-shadow-2xl">TEAM TITANS</h2>
                     </div>
                 </div>
-                
-                <div class="flex items-center justify-center transform -translate-y-4 scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                <div class="flex items-center justify-center transform -translate-y-4 scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] gap-6">
+                    <img id="uni-logo" src="" class="h-[120px] w-auto object-contain hidden" />
                     <img id="team-logo" src="" class="h-[160px] w-auto object-contain" />
                 </div>
                 
@@ -275,13 +276,26 @@
             
             const slotNum = team.slot || team.id || 1;
             
+            const uniLogoPath = window.getUniLogo ? window.getUniLogo(team.name) : null;
+            const cleanName = window.cleanTeamName ? window.cleanTeamName(team.name) : team.name;
+
             document.getElementById('slot-id').innerText = slotNum;
-            document.getElementById('team-name').innerText = team.name;
+            document.getElementById('team-name').innerText = cleanName;
             
             let logoPath = team.logo;
             if (!logoPath.includes('/')) logoPath = 'team_logos/' + logoPath;
             if (!logoPath.includes('.')) logoPath += '.png';
             document.getElementById('team-logo').src = logoPath;
+
+            const uniLogoEl = document.getElementById('uni-logo');
+            if (uniLogoEl) {
+                if (uniLogoPath) {
+                    uniLogoEl.src = uniLogoPath;
+                    uniLogoEl.classList.remove('hidden');
+                } else {
+                    uniLogoEl.classList.add('hidden');
+                }
+            }
             
             document.getElementById('p1-name').innerText = team.p1Name || 'PLAYER 1';
             document.getElementById('p1-img').style.opacity = 0;

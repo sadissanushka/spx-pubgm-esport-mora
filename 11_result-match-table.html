@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -102,7 +103,7 @@
 
         .team-row {
             display: grid;
-            grid-template-columns: 60px 80px 1fr 220px;
+            grid-template-columns: 60px 130px 1fr 220px;
             height: 60px;
             background: rgba(19, 27, 46, 0.75);
             backdrop-blur: 16px;
@@ -362,11 +363,18 @@
                 let placePts = team.total - team.kills;
                 if (placePts < 0) placePts = 0;
 
+                const uniLogoPath = window.getUniLogo ? window.getUniLogo(team.name) : null;
+                const cleanName = window.cleanTeamName ? window.cleanTeamName(team.name) : team.name;
+                const uniImgTag = uniLogoPath ? `<img src="${uniLogoPath}" class="logo mr-[-4px]" onerror="this.style.display='none'">` : '';
+
                 const newHTML = `
                     <div class="material-symbols-outlined crown" style="font-variation-settings: 'FILL' 1;">crown</div>
                     <div class="rank">#${team.rank === 999 ? '-' : team.rank}</div>
-                    <div><img class="logo" src="${logoPath}" onerror="this.style.opacity=0"></div>
-                    <div class="name">${team.name}</div>
+                    <div class="flex items-center justify-center w-full gap-2">
+                        ${uniImgTag}
+                        <img class="logo ml-0" src="${logoPath}" onerror="this.style.opacity=0">
+                    </div>
+                    <div class="name">${cleanName}</div>
                     <div class="stats-block">
                         <div class="pill pill-place"><div class="pill-label">Place</div><div class="pill-val">${placePts}</div></div>
                         <div class="pill pill-kill"><div class="pill-label">Kills</div><div class="pill-val">${team.kills}</div></div>

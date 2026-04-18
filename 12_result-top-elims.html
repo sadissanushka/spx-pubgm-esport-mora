@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="uni_mapper.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -203,12 +204,17 @@
                 if (!tPath.includes('/')) tPath = 'team_logos/' + tPath;
                 if (!tPath.includes('.')) tPath += '.png';
 
+                const uniLogoPath = window.getUniLogo ? window.getUniLogo(team.name) : null;
+                const cleanName = window.cleanTeamName ? window.cleanTeamName(team.name) : team.name;
+                const uniImgTag = uniLogoPath ? `<img src="${uniLogoPath}" style="max-width:140px; max-height:140px; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.display='none'">` : '';
+
                 const newHTML = `
-                    <div style="width:100%; height:350px; display:flex; align-items:center; justify-content:center; padding: 40px; background: radial-gradient(circle, rgba(255,182,144,0.1) 0%, transparent 60%);">
-                       <img src="${tPath}" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.opacity=0">
+                    <div style="width:100%; height:350px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px; background: radial-gradient(circle, rgba(255,182,144,0.1) 0%, transparent 60%); gap: 30px;">
+                       ${uniImgTag}
+                       <img src="${tPath}" style="max-width:140px; max-height:140px; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.opacity=0">
                     </div>
                     <div class="fragger-info" style="border-top: 2px solid rgba(255,255,255,0.1);">
-                        <span class="text-xl font-black uppercase italic tracking-widest text-center h-7 truncate w-full">${team.name}</span>
+                        <span class="text-xl font-black uppercase italic tracking-widest text-center h-7 truncate w-full" title="${cleanName}">${cleanName}</span>
                         <div class="mt-4 flex items-baseline gap-2">
                             <span class="text-4xl font-black text-secondary">${team.kills}</span>
                             <span class="text-xs font-bold text-on-surface-variant tracking-widest">TEAM KILLS</span>
@@ -263,12 +269,17 @@
                         if (!tPath.includes('/')) tPath = 'team_logos/' + tPath;
                         if (!tPath.includes('.')) tPath += '.png';
 
+                        const uniLogoPath = window.getUniLogo ? window.getUniLogo(player.name) : null;
+                        const cleanName = window.cleanTeamName ? window.cleanTeamName(player.name) : player.name;
+                        const uniImgTag = uniLogoPath ? `<img src="${uniLogoPath}" style="max-width:140px; max-height:140px; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.display='none'">` : '';
+
                         const newHTML = `
-                            <div style="width:100%; height:350px; display:flex; align-items:center; justify-content:center; padding: 40px; background: radial-gradient(circle, rgba(255,182,144,0.1) 0%, transparent 60%);">
-                               <img src="${tPath}" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.opacity=0">
+                            <div style="width:100%; height:350px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px; background: radial-gradient(circle, rgba(255,182,144,0.1) 0%, transparent 60%); gap: 30px;">
+                               ${uniImgTag}
+                               <img src="${tPath}" style="max-width:140px; max-height:140px; object-fit:contain; filter:drop-shadow(0 0 20px rgba(0,0,0,0.8));" onerror="this.style.opacity=0">
                             </div>
                             <div class="fragger-info" style="border-top: 2px solid rgba(255,255,255,0.1);">
-                                <span class="text-xl font-black uppercase italic tracking-widest text-center h-7 truncate w-full">${player.name}</span>
+                                <span class="text-xl font-black uppercase italic tracking-widest text-center h-7 truncate w-full" title="${cleanName}">${cleanName}</span>
                                 <div class="mt-4 flex items-baseline gap-2">
                                     <span class="text-4xl font-black text-secondary">${player.kills}</span>
                                     <span class="text-xs font-bold text-on-surface-variant tracking-widest">TEAM KILLS</span>
