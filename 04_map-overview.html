@@ -54,6 +54,7 @@
             justify-content: center;
             gap: 16px;
             z-index: 20;
+            background: radial-gradient(circle at center, rgba(11, 19, 38, 0.95) 0%, #050814 100%);
         }
 
         .intro-card {
@@ -1070,7 +1071,7 @@
                <div class="logo-row-1">
                    <img src="images/uni/uok.png" class="uni-logo" alt="">
                    <span class="log-cross">x</span>
-                   <img src="images/uni/uom b.png" class="uni-logo" alt="">
+                   <img src="images/uni/uom.png" class="uni-logo" alt="">
                </div>
                <div class="logo-row-2">
                    <img src="images/uni/tournement logo b.png" class="tourney-logo" alt="">
@@ -1426,6 +1427,7 @@
         const FULL_MATCH_SECONDS = 1920;
         let currentMapConfigJSON = "", globalCurrentMatchIndex = 1;
         let animationPlaying = false, isDataLoaded = false, queuedPlayCommand = false;
+        let animTimeouts = [];
 
         const MAP_DISPLAY = { erangel: 'Erangel', miramar: 'Miramar', sanhok: 'Sanhok', vikendi: 'Vikendi', livik: 'Livik', karakin: 'Karakin' };
         const dn = raw => MAP_DISPLAY[raw.toLowerCase()] || raw;
@@ -1603,6 +1605,8 @@
         function stop() {
             el('wrapper').style.opacity = '0';
             animationPlaying = false;
+            animTimeouts.forEach(clearTimeout);
+            animTimeouts = [];
         }
 
         /* ── Main animation flow ── */
@@ -1628,11 +1632,11 @@
                 c.style.animation = `cardIn 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.11}s forwards`;
             });
 
-            setTimeout(() => {
+            animTimeouts.push(setTimeout(() => {
                 cards.forEach(c => c.classList.add(parseInt(c.dataset.id) === globalCurrentMatchIndex ? 'selected' : 'dimmed'));
-            }, 1700);
+            }, 1700));
 
-            setTimeout(() => {
+            animTimeouts.push(setTimeout(() => {
                 const sel = intro.querySelector('.selected');
                 if (sel) sel.classList.add('zoom-out');
                 cards.forEach(c => {
@@ -1640,12 +1644,12 @@
                         c.style.transition = 'opacity 0.25s ease'; c.style.opacity = '0';
                     }
                 });
-            }, 3100);
+            }, 3100));
 
             /* Phase 1: Cinematic reveal */
-            setTimeout(() => {
+            animTimeouts.push(setTimeout(() => {
                 intro.style.opacity = '0';
-                setTimeout(() => { intro.style.display = 'none'; }, 400);
+                animTimeouts.push(setTimeout(() => { intro.style.display = 'none'; }, 400));
 
                 reveal.style.display = 'block'; reveal.style.opacity = '0';
                 const revImg = el('map-reveal-img');
@@ -1660,22 +1664,22 @@
                 reveal.style.transition = 'opacity 0.3s ease';
                 reveal.style.opacity = '1';
 
-                setTimeout(() => {
+                animTimeouts.push(setTimeout(() => {
                     revImg.style.transition = 'transform 3s cubic-bezier(0.16,1,0.3,1), filter 3s ease';
                     revImg.style.transform = 'scale(1)';
                     revImg.style.filter = 'brightness(0.28) saturate(0.5)';
                     revName.style.transition = 'transform 2.8s cubic-bezier(0.16,1,0.3,1), opacity 0.6s ease';
                     revName.style.transform = 'translate(-50%,-50%) scale(1)';
                     revName.style.opacity = '1';
-                    setTimeout(() => revLines.classList.add('expand'), 500);
-                }, 180);
-            }, 3500);
+                    animTimeouts.push(setTimeout(() => revLines.classList.add('expand'), 500));
+                }, 180));
+            }, 3500));
 
             /* Phase 2: Main widget */
-            setTimeout(() => {
+            animTimeouts.push(setTimeout(() => {
                 reveal.style.transition = 'opacity 0.75s ease';
                 reveal.style.opacity = '0';
-                setTimeout(() => { reveal.style.display = 'none'; }, 750);
+                animTimeouts.push(setTimeout(() => { reveal.style.display = 'none'; }, 750));
 
                 widget.style.display = 'block'; widget.style.opacity = '1';
 
@@ -1703,7 +1707,7 @@
 
                 animateMapListIn();
                 animationPlaying = false;
-            }, 7300);
+            }, 7300));
         }
 
         window.SPXGCTemplateDefinition = {

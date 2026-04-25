@@ -348,7 +348,11 @@
         }
 
         function play() { document.getElementById('wrapper').style.opacity = '1'; }
-        function stop() { document.getElementById('wrapper').style.opacity = '0'; }
+        function stop() { 
+            document.getElementById('wrapper').style.opacity = '0'; 
+            if (cycleInterval) clearInterval(cycleInterval);
+            cycleInterval = null;
+        }
 
         window.SPXGCTemplateDefinition = {
             "description": "PUBGM Squad Lineup Slots",
