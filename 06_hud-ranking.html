@@ -150,13 +150,15 @@
 
                         let allTeams = lines.slice(2, 27).map(cols => {
                             if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
-                            const r = parseInt(cols[9]) || 999; // Rank is column J
+                            const rText = cols[9]?.trim();
+                            const r = parseInt(rText) || 999; // Rank is column J
                             return {
                                 slot: cols[0]?.trim() || '0', 
                                 name: cols[1]?.trim() || '', 
                                 logo: cols[2]?.trim() || '',
                                 pts: parseInt(cols[10]?.trim()) || 0, // Points is column K
-                                rank: r
+                                rank: r,
+                                rankDisplay: r === 999 ? "-" : r
                             };
                         }).filter(r => r !== null);
 
@@ -187,7 +189,7 @@
                 const isTop3 = team.rank <= 3 ? 'top-3' : '';
                 return `
                     <div class="ranking-row animate-rank ${isTop3}" style="animation-delay: ${index * 0.05}s">
-                        <div class="rank-num">${team.rank}</div>
+                        <div class="rank-num">${team.rankDisplay}</div>
                         <div class="flex items-center w-full">
                             ${uniImgTag}
                             <img src="${logoPath}" class="team-logo mr-2 opacity-90" onerror="this.style.opacity=0">

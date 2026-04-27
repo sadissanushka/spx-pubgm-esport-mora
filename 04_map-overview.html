@@ -1051,6 +1051,7 @@
     <div id="wrapper">
 
         <!-- PHASE 0: Intro cards -->
+        <div id="solid-bg" style="position: absolute; inset: 0; background: #0b1326; z-index: 10;"></div>
         <div id="intro-sequence"></div>
 
         <!-- PHASE 1: Cinematic reveal -->
@@ -1682,6 +1683,14 @@
                 animTimeouts.push(setTimeout(() => { reveal.style.display = 'none'; }, 750));
 
                 widget.style.display = 'block'; widget.style.opacity = '1';
+
+                /* Fade out solid background */
+                const solidBg = el('solid-bg');
+                if (solidBg) {
+                    solidBg.style.transition = 'opacity 0.75s ease';
+                    solidBg.style.opacity = '0';
+                    animTimeouts.push(setTimeout(() => { solidBg.style.display = 'none'; }, 750));
+                }
 
                 /* Left sidebar fades/slides in */
                 el('left-sidebar').style.animation = 'leftbarIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.15s forwards';

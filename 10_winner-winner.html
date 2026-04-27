@@ -230,6 +230,10 @@
                         <span class="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2">POINTS</span>
                         <span id="f3" class="text-primary font-headline font-black text-7xl">33</span>
                     </div>
+                    <div class="stat-box">
+                        <span class="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-2">SURVIVAL TIME</span>
+                        <span id="f4" class="text-primary font-headline font-black text-7xl">00:00</span>
+                    </div>
                 </div>
             </div>
             <!-- Footer Accents -->
@@ -278,6 +282,23 @@
             }
         }
 
+        function parseTime(t) {
+            if (!t) return 0;
+            const s = t.toString().trim();
+            if (s.includes(':')) {
+                const p = s.split(':').reverse();
+                return (parseInt(p[0]) || 0) + (parseInt(p[1] || 0) * 60) + (parseInt(p[2] || 0) * 3600);
+            }
+            return parseInt(s) || 0;
+        }
+
+        function formatTime(secs) {
+            if (secs === 0) return "00:00";
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+        }
+
         async function fetchSheet(url) {
             try {
                 let cleanUrl = url.trim();
@@ -297,13 +318,16 @@
                         const teams = lines.slice(2, 27).map(cols => {
                             if (!cols[1] || cols[1].trim() === "" || cols[1].trim() === "TeamName") return null;
                             const pips = [cols[4], cols[5], cols[6], cols[7]].filter(c => c?.trim().toUpperCase() === 'TRUE').length;
+                            const survTimes = [cols[12], cols[13], cols[14], cols[15]].map(parseTime);
+                            const maxSurvTime = Math.max(...survTimes, 0);
                             return {
                                 name: cols[1].trim(),
                                 logo: cols[2]?.trim() || '',
                                 kills: parseInt(cols[8]?.trim()) || 0,
                                 rank: parseInt(cols[9]?.trim()) || 999,
                                 total: (parseInt(cols[10]?.trim()) || 0) + (parseInt(cols[9]?.trim()) === 1 ? 10 : 0),
-                                isAlive: pips > 0
+                                isAlive: pips > 0,
+                                survivalTime: formatTime(maxSurvTime)
                             };
                         }).filter(t => t !== null);
 
@@ -362,6 +386,7 @@
 
             document.getElementById('f2').innerText = winner.kills;
             document.getElementById('f3').innerText = winner.total;
+            if (document.getElementById('f4')) document.getElementById('f4').innerText = winner.survivalTime;
 
             const card = document.getElementById('card');
             card.className = "main-winner-card winner-pulse shine-element";
@@ -406,6 +431,7 @@
                     }
                     if (data.f2) document.getElementById('f2').innerText = data.f2;
                     if (data.f3) document.getElementById('f3').innerText = data.f3;
+                    if (data.f4) document.getElementById('f4').innerText = data.f4;
                 }
             } catch (e) {
                 console.error("Update failed:", e);
@@ -452,7 +478,8 @@
                 { "field": "f0", "ftype": "textfield", "title": "Team Name", "value": "TEAM TITANS" },
                 { "field": "f1", "ftype": "textfield", "title": "Logo Asset", "value": "titan" },
                 { "field": "f2", "ftype": "textfield", "title": "Kills", "value": "18" },
-                { "field": "f3", "ftype": "textfield", "title": "Total Points", "value": "33" }
+                { "field": "f3", "ftype": "textfield", "title": "Total Points", "value": "33" },
+                { "field": "f4", "ftype": "textfield", "title": "Survival Time", "value": "00:00" }
             ]
         };
     </script>
